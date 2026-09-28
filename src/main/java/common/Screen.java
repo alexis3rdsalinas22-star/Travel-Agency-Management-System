@@ -6,45 +6,47 @@ import javax.swing.*;
 
 public class Screen extends JFrame {
     public Screen(String title, int width, int height) {
+        InitScreen(title, width, height);
+        centerScreen();
+    }
+    
+    public Screen(String title){
+        InitScreen(title, 960, 540);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        centerScreen();
+    }
+    
+    public Screen(){
+        InitScreen("Screen", 960, 540);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        centerScreen();
+    }
+    
+    public final void InitScreen(String title, int width, int height){
         setTitle(title);
         setSize(width, height);
         setLayout(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
     }
-    
-    public Screen(String title){
-        setTitle(title);
-        setSize(960, 540);
-        setLayout(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setResizable(false);
-        
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-    }
 
-    public void showScreen() {
+    public final void showScreen() {
         setVisible(true);
     }
 
-    public void hideScreen() {
+    public final void hideScreen() {
         setVisible(false);
     }
 
-    public void closeScreen() {
+    public final void closeScreen() {
         dispose();
     }
     
-    public void addComponent(JComponent component, int x, int y, int width, int height) {
-        component.setBounds(x, y, width, height);
-        add(component);
-    }
-    
-    public void centerScreen() {
+    public final void centerScreen() {
         setLocationRelativeTo(null);
     }
     
-    public void setFullscreen(boolean choice){
+    public final void setFullscreen(boolean choice){
         if(choice){
             setExtendedState(JFrame.MAXIMIZED_BOTH);
         } else {
@@ -52,24 +54,25 @@ public class Screen extends JFrame {
         }
     }
     
-    public void toggleFullscreen() {
+    public final void toggleFullscreen() {
         if (getExtendedState() == JFrame.MAXIMIZED_BOTH) {
             setExtendedState(JFrame.NORMAL);
         } else {
             setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
     }
-    
-    public void setBackgroundColor(Color color) {
-        getContentPane().setBackground(color);
-    }
 
-    public void navigateTo(Screen nextScreen) {
+    public final void navigateTo(Screen nextScreen) {
         nextScreen.showScreen();
         closeScreen();
     }
     
-    // Swing components
+    // CREATE SWING COMPONENT METHODS
+    
+    public void addComponent(JComponent component, int x, int y, int width, int height) {
+        component.setBounds(x, y, width, height);
+        add(component);
+    }
     
     public JLabel createLabel(String text, int x, int y, int width, int height) {
         JLabel label = new JLabel(text);
@@ -144,7 +147,7 @@ public class Screen extends JFrame {
         return textArea;
     }
     
-    // DIalog Screens
+    // DIALOG SCREEN METHODS
     
     public boolean confirm(String message) {
         int result = JOptionPane.showConfirmDialog(this, message, "Confirmation", JOptionPane.YES_NO_OPTION);
@@ -157,5 +160,20 @@ public class Screen extends JFrame {
 
     public void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    // DESIGN METHODS FOR COMPONENTS
+    
+    public final void setFont(JComponent component, String fontName, int style, int size) {
+        component.setFont(new Font(fontName, style, size));
+    }
+
+    public final void setBackground(JComponent component, Color color) {
+        component.setOpaque(true);
+        component.setBackground(color);
+    }
+
+    public final void setTextColor(JComponent component, Color color) {
+        component.setForeground(color);
     }
 }
