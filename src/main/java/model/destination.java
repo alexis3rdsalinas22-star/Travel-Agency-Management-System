@@ -46,7 +46,7 @@ public class destination {
     public void setdescription(String description) {
         this.description = description;
     }
-
+ 
     public String getstatus() {
         return status;
     }
