@@ -1,6 +1,5 @@
 package model;
 
-import java.math.BigDecimal;
 
 public class travelPackage {
     private int packageId;
