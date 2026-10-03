@@ -1,5 +1,5 @@
 package model;
- 
+  
 public class adminAccount {
     private int adminAccountId;
     private String username;

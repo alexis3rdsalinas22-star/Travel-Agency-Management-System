@@ -54,4 +54,4 @@ public class destination {
     public void setstatus(String status) {
         this.status = status;
     }
-} 
+}  

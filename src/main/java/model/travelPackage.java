@@ -4,7 +4,7 @@ package model;
 public class travelPackage {
     private int packageId;
     private int destinationId;
-    private String name;
+    private String name; 
     private String description;
     private double pricePerTraveller;
     private String status;
