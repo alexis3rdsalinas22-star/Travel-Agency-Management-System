@@ -1,5 +1,5 @@
 package model;
-
+ 
 
 public class travelPackage {
     private int packageId;
