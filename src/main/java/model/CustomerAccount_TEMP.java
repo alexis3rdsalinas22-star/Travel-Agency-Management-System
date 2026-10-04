@@ -2,7 +2,7 @@ package model;
 
 import java.time.LocalDateTime;
 
-public class customerAccount {
+public class CustomerAccount_TEMP {
     private int customerAccountId;
     private int customerId;          
     private String username;
@@ -10,7 +10,7 @@ public class customerAccount {
     private String status;           
     private LocalDateTime createdAt;
 
-    public customerAccount(int customerAccountId, int customerId, String username, String password, String status, LocalDateTime createdAt) {
+    public CustomerAccount_TEMP(int customerAccountId, int customerId, String username, String password, String status, LocalDateTime createdAt) {
         this.customerAccountId = customerAccountId;
         this.customerId = customerId;
         this.username = username;

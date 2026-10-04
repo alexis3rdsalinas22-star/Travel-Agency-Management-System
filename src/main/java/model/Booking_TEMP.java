@@ -2,7 +2,7 @@ package model;
    
 import java.time.LocalDateTime;
 
-public class booking {
+public class Booking_TEMP {
     private int bookingId;
     private int customerAccountId;
     private int packageId;
@@ -10,7 +10,7 @@ public class booking {
     private LocalDateTime bookingDate;
     private LocalDateTime travelDate;
 
-    public booking(int bookingId, int customerAccountId, int packageId, String status, LocalDateTime bookingDate, LocalDateTime travelDate) {
+    public Booking_TEMP(int bookingId, int customerAccountId, int packageId, String status, LocalDateTime bookingDate, LocalDateTime travelDate) {
         this.bookingId = bookingId;
         this.customerAccountId = customerAccountId;
         this.packageId = packageId;

@@ -2,7 +2,7 @@ package model;
 
 import java.time.LocalDateTime;
 
-public class payment {
+public class Payment_TEMP {
     private int paymentId;
     private int bookingId;
     private LocalDateTime date;
@@ -10,7 +10,7 @@ public class payment {
     private String method;
     private String source;
 
-    public payment(int paymentId, int bookingId, LocalDateTime date, double amount, String method, String source) {
+    public Payment_TEMP(int paymentId, int bookingId, LocalDateTime date, double amount, String method, String source) {
         this.paymentId = paymentId;
         this.bookingId = bookingId;
         this.date = date;

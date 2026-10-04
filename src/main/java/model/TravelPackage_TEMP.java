@@ -1,7 +1,7 @@
 package model;
  
 
-public class travelPackage {
+public class TravelPackage_TEMP {
     private int packageId;
     private int destinationId;
     private String name;  
@@ -11,7 +11,7 @@ public class travelPackage {
     private int minTraveller;
     private int maxTraveller;
 
-    public travelPackage(int packageId, int destinationId, String name, String description, double pricePerTraveller, String status, int minTraveller, int maxTraveller) {
+    public TravelPackage_TEMP(int packageId, int destinationId, String name, String description, double pricePerTraveller, String status, int minTraveller, int maxTraveller) {
         this.packageId = packageId;
         this.destinationId = destinationId;
         this.name = name;

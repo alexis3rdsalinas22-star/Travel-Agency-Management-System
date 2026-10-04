@@ -2,7 +2,7 @@ package model;
    
 import java.time.LocalDate;
 
-public class traveler {
+public class Traveler_TEMP {
     private int travelerId;
     private int bookingId;
     private String firstName;
@@ -10,7 +10,7 @@ public class traveler {
     private LocalDate dateOfBirth;
     private String contactNumber;
 
-    public traveler(int travelerId, int bookingId, String firstName, String lastName, LocalDate dateOfBirth, String contactNumber) {
+    public Traveler_TEMP(int travelerId, int bookingId, String firstName, String lastName, LocalDate dateOfBirth, String contactNumber) {
         this.travelerId = travelerId;
         this.bookingId = bookingId;
         this.firstName = firstName;

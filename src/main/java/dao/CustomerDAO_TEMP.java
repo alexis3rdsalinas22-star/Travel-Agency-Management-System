@@ -1,13 +1,13 @@
 package dao;
 
 import common.DBConenction;
-import model.customer;
+import model.Customer_TEMP;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class customerDAO {
+public class CustomerDAO_TEMP {
     
 }
