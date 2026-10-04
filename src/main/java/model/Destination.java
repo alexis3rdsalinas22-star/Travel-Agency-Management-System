@@ -1,13 +1,13 @@
 package model;
 
-public class Destination_TEMP {
+public class Destination {
     private int destinationId;
     private String name;
     private String country;
     private String description;
     private String status;
 
-    public Destination_TEMP(int destinationId, String name, String country,String description, String status) {                     
+    public Destination(int destinationId, String name, String country,String description, String status) {                     
         this.destinationId = destinationId;
         this.name = name;
         this.country = country;

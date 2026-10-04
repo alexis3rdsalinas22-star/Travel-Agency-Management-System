@@ -1,12 +1,12 @@
 package model;
    
-public class AdminAccount_TEMP {
+public class AdminAccount {
     private int adminAccountId;
     private String username;
     private String password;
     private String role;
 
-    public AdminAccount_TEMP(int adminAccountId, String username, String password, String role) {
+    public AdminAccount(int adminAccountId, String username, String password, String role) {
         this.adminAccountId = adminAccountId;
         this.username = username;
         this.password = password;

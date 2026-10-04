@@ -1,6 +1,6 @@
 package model;
 
-public class Customer_TEMP {
+public class Customer {
     private int customerId;
     private String firstName;
     private String lastName;
@@ -9,7 +9,7 @@ public class Customer_TEMP {
     private String sex;
     private int age;
 
-    public Customer_TEMP(int customerId, String firstName, String lastName,String middleName, String email, String sex, int age) {
+    public Customer(int customerId, String firstName, String lastName,String middleName, String email, String sex, int age) {
         this.customerId = customerId;
         this.firstName = firstName;
         this.lastName = lastName;
