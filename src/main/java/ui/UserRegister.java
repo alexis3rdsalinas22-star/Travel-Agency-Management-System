@@ -33,7 +33,9 @@ public class UserRegister extends Screen{
         JPasswordField password = createPasswordField(200, 450);
         
         createButton("Register", 125, 550).addActionListener(e -> {
-            
+            System.out.println(
+                    firstName.getText()
+            );
         });
         
         createButton("Go Back", 50, 700).addActionListener(e -> {
