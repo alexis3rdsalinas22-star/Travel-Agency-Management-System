@@ -1,6 +1,6 @@
 package model;
 
-public class Customer {
+public class CustomerTemp {
     private int customerId;
     private String firstName;
     private String lastName;
@@ -9,7 +9,7 @@ public class Customer {
     private String sex;
     private int age;
 
-    public Customer(int customerId, String firstName, String lastName,String middleName, String email, String sex, int age) {
+    public CustomerTemp(int customerId, String firstName, String lastName,String middleName, String email, String sex, int age) {
         this.customerId = customerId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -74,4 +74,4 @@ public class Customer {
     public void setage(int age) {
         this.age = age;
     }
-}
+} // nilagyan ko comment potangina kasi sino ba sumira nito
