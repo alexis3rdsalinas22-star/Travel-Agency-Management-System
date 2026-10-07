@@ -17,7 +17,7 @@ public class UserRegister extends Screen {
 
         createLabel("First Name: ", 50, 100);
         JTextField firstName = createTextField(200, 100);
-
+  
         createLabel("Middle Name: ", 50, 150);
         JTextField middleName = createTextField(200, 150);
 

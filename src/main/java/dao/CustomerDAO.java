@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class CustomerDAO {
-
     
     public int insertCustomer(Connection con, String first, String middle, String last,
                               String email, int age) throws SQLException {
@@ -26,8 +25,8 @@ public class CustomerDAO {
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 keys.next();
-                return keys.getInt(1);
+                return keys.getInt(1);   
             }
-        }
-    }  
+        }  
+    }    
 }

@@ -58,7 +58,7 @@ public class CustomerAccountDAO {
             ps.setString(2, hash(password));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && "Active".equals(rs.getString("status"))) {
-                    return rs.getInt("customerID");
+                     return rs.getInt("customerID");
                 }
                 return -1;
             }
