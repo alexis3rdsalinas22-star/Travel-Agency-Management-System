@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
+import ui.customer.CustomerDashboard;
 
 public class UserLogin extends Screen {
 
@@ -63,7 +64,7 @@ public class UserLogin extends Screen {
                 int customerId = new CustomerAccountDAO().login(con, user, pass);
                 if (customerId != -1) {
                     showInfo("Welcome back! Login successful.");
-                    // Reserved: navigate to Customer Dashboard when implemented
+                    navigateTo(new CustomerDashboard(customerId));
                 } else {
                     showError("Invalid username or password, or account is not active.");
                 }
