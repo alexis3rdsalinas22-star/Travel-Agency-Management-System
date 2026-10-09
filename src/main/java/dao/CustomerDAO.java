@@ -13,14 +13,20 @@ public class CustomerDAO {
     
     public int insertCustomer(Connection con, String first, String middle, String last,
                               String email, int age) throws SQLException {
-        String sql = "INSERT INTO customer (firstName, lastName, middleName, email, age) "
-                   + "VALUES (?,?,?,?,?)";
+        return insertCustomer(con, first, middle, last, email, null, age);
+    }    
+
+    public int insertCustomer(Connection con, String first, String middle, String last,
+                              String email, String sex, int age) throws SQLException {
+        String sql = "INSERT INTO customer (firstName, lastName, middleName, email, sex, age) "
+                   + "VALUES (?,?,?,?,?,?)";
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, first);
             ps.setString(2, last);
             ps.setString(3, middle);
             ps.setString(4, email);
-            ps.setInt(5, age);
+            ps.setString(5, sex);
+            ps.setInt(6, age);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
