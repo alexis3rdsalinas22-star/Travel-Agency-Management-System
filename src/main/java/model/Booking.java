@@ -19,8 +19,8 @@ public class Booking {
         this.travelDate = travelDate;
     }
 
-
-
+    
+    
     public int getbookingId() {
         return bookingId;
     }

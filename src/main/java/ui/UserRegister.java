@@ -23,62 +23,61 @@ public class UserRegister extends Screen {
 
         // Header and subtitle
         JLabel header = createHeader("Create an Account", 50, 25, 450, 32);
-        setFont(header, "Segoe UI", Font.BOLD, 22);
+        setFontSize(header, 22);
         setTextColor(header, new Color(28, 55, 90));
 
         JLabel subheader = createLabel("Please fill in your details to register as a new traveler.", 50, 58, 450, 20);
-        setFont(subheader, "Segoe UI", Font.PLAIN, 13);
+        setFontSize(subheader, 13);
         setTextColor(subheader, new Color(100, 116, 139));
 
-        // Form Fields
+        // Form Labels
         JLabel firstLbl = createLabel("First Name *", 50, 90, 130, 30);
-        setFont(firstLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(firstLbl, Font.BOLD);
+        setFontSize(firstLbl, 13);
         JTextField firstName = createTextField(180, 90, 320, 30);
-        setFont(firstName, "Segoe UI", Font.PLAIN, 13);
 
         JLabel midLbl = createLabel("Middle Name", 50, 132, 130, 30);
-        setFont(midLbl, "Segoe UI", Font.PLAIN, 13);
+        setFontSize(midLbl, 13);
         JTextField middleName = createTextField(180, 132, 320, 30);
-        setFont(middleName, "Segoe UI", Font.PLAIN, 13);
 
         JLabel lastLbl = createLabel("Last Name *", 50, 174, 130, 30);
-        setFont(lastLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(lastLbl, Font.BOLD);
+        setFontSize(lastLbl, 13);
         JTextField lastName = createTextField(180, 174, 320, 30);
-        setFont(lastName, "Segoe UI", Font.PLAIN, 13);
 
         JLabel genderLbl = createLabel("Gender *", 50, 216, 130, 30);
-        setFont(genderLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(genderLbl, Font.BOLD);
+        setFontSize(genderLbl, 13);
         JComboBox<String> genderCombo = createComboBox(new String[]{"Male", "Female"}, 180, 216, 320, 30);
-        setFont(genderCombo, "Segoe UI", Font.PLAIN, 13);
 
         JLabel ageLbl = createLabel("Age *", 50, 258, 130, 30);
-        setFont(ageLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(ageLbl, Font.BOLD);
+        setFontSize(ageLbl, 13);
         JTextField age = createTextField(180, 258, 320, 30);
-        setFont(age, "Segoe UI", Font.PLAIN, 13);
 
         JLabel emailLbl = createLabel("Email *", 50, 300, 130, 30);
-        setFont(emailLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(emailLbl, Font.BOLD);
+        setFontSize(emailLbl, 13);
         JTextField email = createTextField(180, 300, 320, 30);
-        setFont(email, "Segoe UI", Font.PLAIN, 13);
 
         JLabel userLbl = createLabel("Username *", 50, 342, 130, 30);
-        setFont(userLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(userLbl, Font.BOLD);
+        setFontSize(userLbl, 13);
         JTextField username = createTextField(180, 342, 320, 30);
-        setFont(username, "Segoe UI", Font.PLAIN, 13);
 
         JLabel passLbl = createLabel("Password *", 50, 384, 130, 30);
-        setFont(passLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(passLbl, Font.BOLD);
+        setFontSize(passLbl, 13);
         JPasswordField password = createPasswordField(180, 384, 320, 30);
-        setFont(password, "Segoe UI", Font.PLAIN, 13);
 
         JLabel confirmLbl = createLabel("Confirm Pass *", 50, 426, 130, 30);
-        setFont(confirmLbl, "Segoe UI", Font.BOLD, 13);
+        setFontStyle(confirmLbl, Font.BOLD);
+        setFontSize(confirmLbl, 13);
         JPasswordField confirmPassword = createPasswordField(180, 426, 320, 30);
-        setFont(confirmPassword, "Segoe UI", Font.PLAIN, 13);
 
         // Buttons
         JButton registerBtn = createButton("Register Account", 50, 480, 450, 40);
-        setFont(registerBtn, "Segoe UI", Font.BOLD, 14);
+        setFontStyle(registerBtn, Font.BOLD);
         setBackground(registerBtn, new Color(16, 149, 93));
         setTextColor(registerBtn, Color.WHITE);
         registerBtn.setFocusPainted(false);
@@ -144,14 +143,14 @@ public class UserRegister extends Screen {
         });
 
         JButton loginLinkBtn = createButton("Already have an account? Login here", 50, 530, 450, 35);
-        setFont(loginLinkBtn, "Segoe UI", Font.PLAIN, 13);
+        setFontSize(loginLinkBtn, 13);
         setBackground(loginLinkBtn, new Color(230, 235, 245));
         setTextColor(loginLinkBtn, new Color(37, 99, 235));
         loginLinkBtn.setFocusPainted(false);
         loginLinkBtn.addActionListener(e -> navigateTo(new UserLogin()));
 
         JButton backBtn = createButton("Back to Home", 50, 575, 450, 35);
-        setFont(backBtn, "Segoe UI", Font.PLAIN, 13);
+        setFontSize(backBtn, 13);
         setBackground(backBtn, new Color(229, 231, 235));
         setTextColor(backBtn, new Color(55, 65, 81));
         backBtn.setFocusPainted(false);

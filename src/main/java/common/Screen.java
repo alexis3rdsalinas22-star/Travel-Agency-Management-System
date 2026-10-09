@@ -5,6 +5,19 @@ import java.awt.Font;
 import javax.swing.*;
 
 public class Screen extends JFrame {
+
+    // Default Font Attributes
+    protected String defaultFontFamily = "Segoe UI";
+    protected int defaultFontStyle = Font.PLAIN;
+    protected int defaultFontSize = 15;
+    protected Font defaultFont = new Font(defaultFontFamily, defaultFontStyle, defaultFontSize);
+
+    // Header Font Attributes
+    protected String defaultHeaderFontFamily = "Segoe UI";
+    protected int defaultHeaderFontStyle = Font.BOLD;
+    protected int defaultHeaderFontSize = 20;
+    protected Font defaultHeaderFont = new Font(defaultHeaderFontFamily, defaultHeaderFontStyle, defaultHeaderFontSize);
+
     public Screen(String title, int width, int height) {
         InitScreen(title, width, height);
         centerScreen();
@@ -76,6 +89,7 @@ public class Screen extends JFrame {
     
     public JLabel createLabel(String text, int x, int y, int width, int height) {
         JLabel label = new JLabel(text);
+        label.setFont(defaultFont);
         label.setBounds(x, y, width, height);
         add(label);
         return label;
@@ -87,7 +101,7 @@ public class Screen extends JFrame {
 
     public JLabel createHeader(String text, int x, int y, int width, int height) {
         JLabel header = new JLabel(text);
-        header.setFont(new Font("Arial", Font.BOLD, 20));
+        header.setFont(defaultHeaderFont);
         header.setBounds(x, y, width, height);
         add(header);
         return header;
@@ -95,6 +109,7 @@ public class Screen extends JFrame {
     
     public JButton createButton(String text, int x, int y, int width, int height) {
         JButton button = new JButton(text);
+        button.setFont(defaultFont);
         button.setBounds(x, y, width, height);
         add(button);
         return button;
@@ -106,6 +121,7 @@ public class Screen extends JFrame {
 
     public JTextField createTextField(int x, int y, int width, int height) {
         JTextField textField = new JTextField();
+        textField.setFont(defaultFont);
         textField.setBounds(x, y, width, height);
         add(textField);
         return textField;
@@ -117,6 +133,7 @@ public class Screen extends JFrame {
 
     public JPasswordField createPasswordField(int x, int y, int width, int height) {
         JPasswordField passwordField = new JPasswordField();
+        passwordField.setFont(defaultFont);
         passwordField.setBounds(x, y, width, height);
         add(passwordField);
         return passwordField;
@@ -128,6 +145,7 @@ public class Screen extends JFrame {
 
     public <T> JComboBox<T> createComboBox(T[] items, int x, int y, int width, int height) {
         JComboBox<T> comboBox = new JComboBox<>(items);
+        comboBox.setFont(defaultFont);
         comboBox.setBounds(x, y, width, height);
         add(comboBox);
         return comboBox;
@@ -139,6 +157,7 @@ public class Screen extends JFrame {
 
     public JTextArea createTextArea(int x, int y, int width, int height) {
         JTextArea textArea = new JTextArea();
+        textArea.setFont(defaultFont);
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
         JScrollPane scrollPane = new JScrollPane(textArea);
@@ -166,6 +185,24 @@ public class Screen extends JFrame {
     
     public final void setFont(JComponent component, String fontName, int style, int size) {
         component.setFont(new Font(fontName, style, size));
+    }
+
+    public final void setFontSize(JComponent component, int size) {
+        Font currentFont = component.getFont();
+        if (currentFont != null) {
+            component.setFont(new Font(currentFont.getName(), currentFont.getStyle(), size));
+        } else {
+            component.setFont(new Font(defaultFontFamily, defaultFontStyle, size));
+        }
+    }
+
+    public final void setFontStyle(JComponent component, int style) {
+        Font currentFont = component.getFont();
+        if (currentFont != null) {
+            component.setFont(new Font(currentFont.getName(), style, currentFont.getSize()));
+        } else {
+            component.setFont(new Font(defaultFontFamily, style, defaultFontSize));
+        }
     }
 
     public final void setBackground(JComponent component, Color color) {

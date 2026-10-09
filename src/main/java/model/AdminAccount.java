@@ -13,8 +13,8 @@ public class AdminAccount {
         this.role = role;
     }
 
-
-
+    
+    
     public int getadminAccountId() {
         return adminAccountId;
     }
