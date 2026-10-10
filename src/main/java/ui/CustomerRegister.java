@@ -14,9 +14,9 @@ import javax.swing.JLabel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
-public class UserRegister extends Screen {
+public class CustomerRegister extends Screen {
 
-    public UserRegister() {
+    public CustomerRegister() {
         super("Account Registration", 560, 720);
 
         getContentPane().setBackground(new Color(245, 247, 250));
@@ -132,7 +132,7 @@ public class UserRegister extends Screen {
                     con.commit();
 
                     showInfo("Registration successful! You may now log in.");
-                    navigateTo(new UserLogin());
+                    navigateTo(new CustomerLogin());
                 } catch (SQLException ex) {
                     con.rollback();
                     throw ex;
@@ -147,7 +147,7 @@ public class UserRegister extends Screen {
         setBackground(loginLinkBtn, new Color(230, 235, 245));
         setTextColor(loginLinkBtn, new Color(37, 99, 235));
         loginLinkBtn.setFocusPainted(false);
-        loginLinkBtn.addActionListener(e -> navigateTo(new UserLogin()));
+        loginLinkBtn.addActionListener(e -> navigateTo(new CustomerLogin()));
 
         JButton backBtn = createButton("Back to Home", 50, 575, 450, 35);
         setFontSize(backBtn, 13);

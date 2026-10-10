@@ -13,9 +13,9 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import ui.customer.CustomerDashboard;
 
-public class UserLogin extends Screen {
+public class CustomerLogin extends Screen {
 
-    public UserLogin() {
+    public CustomerLogin() {
         super("Account Login", 500, 500);
 
         getContentPane().setBackground(new Color(245, 247, 250));
@@ -63,6 +63,7 @@ public class UserLogin extends Screen {
             try (Connection con = DBConnection.getConnection()) {
                 int customerId = new CustomerAccountDAO().login(con, user, pass);
                 if (customerId != -1) {
+                    common.Session.setCustomerSession(customerId, user);
                     showInfo("Welcome back! Login successful.");
                     navigateTo(new CustomerDashboard(customerId));
                 } else {
@@ -78,7 +79,7 @@ public class UserLogin extends Screen {
         setBackground(registerBtn, new Color(230, 235, 245));
         setTextColor(registerBtn, new Color(37, 99, 235));
         registerBtn.setFocusPainted(false);
-        registerBtn.addActionListener(e -> navigateTo(new UserRegister()));
+        registerBtn.addActionListener(e -> navigateTo(new CustomerRegister()));
 
         JButton backBtn = createButton("Back to Home", 60, 380, 380, 35);
         setFontSize(backBtn, 13);

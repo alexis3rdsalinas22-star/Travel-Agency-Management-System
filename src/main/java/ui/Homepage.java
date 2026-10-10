@@ -30,7 +30,7 @@ public class Homepage extends Screen {
         setBackground(loginBtn, new Color(37, 99, 235));
         setTextColor(loginBtn, Color.WHITE);
         loginBtn.setFocusPainted(false);
-        loginBtn.addActionListener(e -> navigateTo(new UserLogin()));
+        loginBtn.addActionListener(e -> navigateTo(new CustomerLogin()));
 
         // Register Section
         JLabel registerLabel = createLabel("New customer? Join today!", 80, 295, 300, 25);
@@ -41,7 +41,18 @@ public class Homepage extends Screen {
         setBackground(registerBtn, new Color(16, 149, 93));
         setTextColor(registerBtn, Color.WHITE);
         registerBtn.setFocusPainted(false);
-        registerBtn.addActionListener(e -> navigateTo(new UserRegister()));
+        registerBtn.addActionListener(e -> navigateTo(new CustomerRegister()));
+
+        // Admin Section
+        JLabel adminLabel = createLabel("System Administrator?", 360, 190, 300, 25);
+        setTextColor(adminLabel, new Color(55, 65, 81));
+
+        JButton adminBtn = createButton("Admin Login", 360, 225, 240, 42);
+        setFontStyle(adminBtn, Font.BOLD);
+        setBackground(adminBtn, new Color(75, 85, 99));
+        setTextColor(adminBtn, Color.WHITE);
+        adminBtn.setFocusPainted(false);
+        adminBtn.addActionListener(e -> navigateTo(new AdminLogin()));
 
         // Exit Application Button
         JButton exitBtn = createButton("Exit System", 80, 400, 240, 38);

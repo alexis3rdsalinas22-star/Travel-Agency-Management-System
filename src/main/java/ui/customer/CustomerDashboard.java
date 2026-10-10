@@ -48,6 +48,7 @@ public class CustomerDashboard extends Screen {
         logoutBtn.setFocusPainted(false);
         logoutBtn.addActionListener(e -> {
             if (confirm("Are you sure you want to log out?")) {
+                common.Session.clear();
                 navigateTo(new Homepage());
             }
         });
