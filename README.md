@@ -235,24 +235,3 @@ Travel-Agency-Management-System/
 ├── pom.xml                             # Project Object Model & Maven dependencies
 └── README.md                           # Project technical documentation
 ```
-
----
-
-## 🎓 Academic Credits
-
-Developed under the curriculum of **Technological University of the Philippines – Taguig City**, College of Science and Technology.
-
-* **Course**: Computer Programming 4 (BSIT-T-2B-T)
-* **Instructor**: Prof. Maria Cristina D. Baloloy
-* **Development Team (Group 8)**:
-  * Alexis B. Salinas
-  * Abenadi E. Corregidor
-  * John Rey D. Luzada
-  * Rene Clert N. Baterbonia
-  * *Collaborators & Group Members*
-
----
-
-<div align="center">
-  <sub>Built with Java & Apache Derby • Maintained by TAMS Development Team</sub>
-</div>
