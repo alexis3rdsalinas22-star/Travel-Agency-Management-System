@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AdminAccountDAO {
 
@@ -131,5 +133,49 @@ public class AdminAccountDAO {
             }
             return ps.executeUpdate() > 0;
         }
+    }
+
+    /**
+     * Retrieves all admin accounts.
+     */
+    public List<AdminAccount> getAllAccounts(Connection con) throws SQLException {
+        List<AdminAccount> list = new ArrayList<>();
+        String sql = "SELECT adminAccountID, username, role FROM adminAccount ORDER BY adminAccountID";
+        try (Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(new AdminAccount(
+                        rs.getInt("adminAccountID"),
+                        rs.getString("username"),
+                        null,
+                        rs.getString("role")));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Searches admin accounts by username or role.
+     */
+    public List<AdminAccount> searchAccounts(Connection con, String keyword) throws SQLException {
+        List<AdminAccount> list = new ArrayList<>();
+        String sql = "SELECT adminAccountID, username, role FROM adminAccount "
+                   + "WHERE LOWER(username) LIKE ? OR LOWER(role) LIKE ? "
+                   + "ORDER BY adminAccountID";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            String pattern = "%" + keyword.toLowerCase().trim() + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new AdminAccount(
+                            rs.getInt("adminAccountID"),
+                            rs.getString("username"),
+                            null,
+                            rs.getString("role")));
+                }
+            }
+        }
+        return list;
     }
 }
