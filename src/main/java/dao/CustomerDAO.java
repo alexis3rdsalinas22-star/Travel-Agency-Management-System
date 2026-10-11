@@ -121,10 +121,7 @@ public class CustomerDAO {
 
         String like = "%" + keyword.trim().toLowerCase() + "%";
 
-        int id = -1;
-        try {
-            id = Integer.parseInt(keyword.trim());
-        } catch (NumberFormatException ignored) { }
+        int id = common.ValidationUtil.parseSearchId(keyword);
 
         List<CustomerRecord> list = new ArrayList<>();
         try (PreparedStatement ps = con.prepareStatement(sql)) {

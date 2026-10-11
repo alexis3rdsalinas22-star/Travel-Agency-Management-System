@@ -81,37 +81,16 @@ public class AdminManagement extends Screen {
         backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
 
         // Search Section
-        createLabel("Search:", 380, 20, 60, 30);
-        searchField = createTextField(445, 20, 230, 30);
-
-        JButton searchBtn = createButton("Search", 685, 20, 100, 30);
-        searchBtn.addActionListener(e -> handleSearch());
-
-        JButton showAllBtn = createButton("Show All", 795, 20, 105, 30);
-        showAllBtn.addActionListener(e -> {
-            searchField.setText("");
-            loadAccounts(null);
-        });
+        searchField = createSearchBar(380, 20, 520, 30, this::handleSearch, () -> loadAccounts(null));
 
         // Table
-        String[] columnNames = {"Admin ID", "Username", "Role"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        accountsTable = new JTable(tableModel);
-        accountsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tableModel = createReadOnlyTableModel(new String[]{"Admin ID", "Username", "Role"});
+        accountsTable = createTable(tableModel, 380, 60, 520, 430);
         accountsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
-
-        JScrollPane scrollPane = new JScrollPane(accountsTable);
-        addComponent(scrollPane, 380, 60, 520, 430);
     }
 
     private void loadAccounts(String keyword) {

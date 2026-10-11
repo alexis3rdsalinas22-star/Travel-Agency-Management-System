@@ -111,37 +111,17 @@ public class CustomerManagement extends Screen {
         backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
 
         // Search Section
-        createLabel("Search:", 380, 18, 55, 30);
-        searchField = createTextField(440, 18, 270, 30);
-
-        JButton searchBtn = createButton("Search", 720, 18, 95, 30);
-        searchBtn.addActionListener(e -> handleSearch());
-
-        JButton showAllBtn = createButton("Show All", 825, 18, 95, 30);
-        showAllBtn.addActionListener(e -> {
-            searchField.setText("");
-            loadCustomers(null);
-        });
+        searchField = createSearchBar(380, 18, 620, 30, this::handleSearch, () -> loadCustomers(null));
 
         // Table
         String[] columnNames = {"ID", "Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
-        tableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-
-        customerTable = new JTable(tableModel);
-        customerTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tableModel = createReadOnlyTableModel(columnNames);
+        customerTable = createTable(tableModel, 380, 55, 620, 500);
         customerTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
-
-        JScrollPane scrollPane = new JScrollPane(customerTable);
-        addComponent(scrollPane, 380, 55, 620, 500);
     }
 
     private void loadCustomers(String keyword) {
@@ -212,15 +192,9 @@ public class CustomerManagement extends Screen {
             return;
         }
 
-        int ageValue;
-        try {
-            ageValue = Integer.parseInt(ageStr);
-            if (ageValue <= 0 || ageValue > 130) {
-                showError("Please enter a valid age.");
-                return;
-            }
-        } catch (NumberFormatException ex) {
-            showError("Age must be a valid number.");
+        Integer ageValue = common.ValidationUtil.parsePositiveInt(ageStr);
+        if (ageValue == null || ageValue > 130) {
+            showError("Please enter a valid age.");
             return;
         }
 
@@ -281,15 +255,9 @@ public class CustomerManagement extends Screen {
             return;
         }
 
-        int ageValue;
-        try {
-            ageValue = Integer.parseInt(ageStr);
-            if (ageValue <= 0 || ageValue > 130) {
-                showError("Please enter a valid age.");
-                return;
-            }
-        } catch (NumberFormatException ex) {
-            showError("Age must be a valid number.");
+        Integer ageValue = common.ValidationUtil.parsePositiveInt(ageStr);
+        if (ageValue == null || ageValue > 130) {
+            showError("Please enter a valid age.");
             return;
         }
 

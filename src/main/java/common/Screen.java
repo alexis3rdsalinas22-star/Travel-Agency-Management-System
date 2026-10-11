@@ -3,6 +3,7 @@ package common;
 import java.awt.Color;
 import java.awt.Font;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class Screen extends JFrame {
 
@@ -212,5 +213,45 @@ public class Screen extends JFrame {
 
     public final void setTextColor(JComponent component, Color color) {
         component.setForeground(color);
+    }
+
+    // TABLE AND SEARCH HELPER METHODS
+
+    public DefaultTableModel createReadOnlyTableModel(String[] columns) {
+        return new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+    }
+
+    public JTable createTable(DefaultTableModel model, int x, int y, int width, int height) {
+        JTable table = new JTable(model);
+        table.setFont(defaultFont);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JScrollPane scrollPane = new JScrollPane(table);
+        addComponent(scrollPane, x, y, width, height);
+        return table;
+    }
+
+    public JTextField createSearchBar(int x, int y, int width, int height,
+                                      Runnable onSearch, Runnable onShowAll) {
+        createLabel("Search:", x, y, 55, height);
+        JTextField searchField = createTextField(x + 60, y, width - 215, height);
+        JButton searchBtn = createButton("Search", x + width - 150, y, 70, height);
+        searchBtn.addActionListener(e -> {
+            if (onSearch != null) {
+                onSearch.run();
+            }
+        });
+        JButton showAllBtn = createButton("Show All", x + width - 75, y, 75, height);
+        showAllBtn.addActionListener(e -> {
+            searchField.setText("");
+            if (onShowAll != null) {
+                onShowAll.run();
+            }
+        });
+        return searchField;
     }
 }
