@@ -124,4 +124,15 @@ public class CustomerAccountDAO {
     public boolean deactivateAccount(Connection con, int customerAccountId) throws SQLException {
         return updateStatus(con, customerAccountId, "Inactive");
     }
+
+    // Admin reset password without needing old password
+    public boolean resetPassword(Connection con, int customerAccountId, String newPassword)
+            throws SQLException {
+        String sql = "UPDATE customeraccount SET password = ? WHERE customerAccountID = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, hash(newPassword));
+            ps.setInt(2, customerAccountId);
+            return ps.executeUpdate() > 0;
+        }
+    }
 }

@@ -44,7 +44,6 @@ public class AdminManagement extends Screen {
     }
 
     private void initUI() {
-        // Header and subtitle
         createHeader("Admin Account Management", 40, 20, 320, 30);
         createLabel("Manage administrator credentials and roles.", 40, 55, 320, 20);
 

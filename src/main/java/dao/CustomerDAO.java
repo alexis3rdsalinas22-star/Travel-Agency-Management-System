@@ -16,16 +16,22 @@ public class CustomerDAO {
    
     public static class CustomerRecord {
         public int customerID;
+        public int customerAccountID;
+        public String username;
         public String firstName;
         public String middleName;
         public String lastName;
         public String email;
         public String sex;
         public int age;
+        public String status;
     }
 
     private static final String BASE_SELECT =
-            "SELECT customerID, firstName, middleName, lastName, email, sex, age FROM customer ";
+            "SELECT c.customerID, c.firstName, c.middleName, c.lastName, c.email, c.sex, c.age, "
+          + "ca.customerAccountID, ca.username, ca.status "
+          + "FROM customer c "
+          + "LEFT JOIN customerAccount ca ON c.customerID = ca.customerID ";
 
     public int insertCustomer(Connection con, String first, String middle, String last,
                               String email, int age) throws SQLException {
@@ -65,7 +71,7 @@ public class CustomerDAO {
 
    
     public List<CustomerRecord> getAllCustomers(Connection con) throws SQLException {
-        String sql = BASE_SELECT + "ORDER BY lastName, firstName";
+        String sql = BASE_SELECT + "ORDER BY c.customerID";
         List<CustomerRecord> list = new ArrayList<>();
         try (PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -76,7 +82,6 @@ public class CustomerDAO {
         return list;
     }
 
-    
     public boolean updateCustomer(Connection con, int customerId, String first, String middle,
                                   String last, String email, String sex, int age)
             throws SQLException {
@@ -94,20 +99,28 @@ public class CustomerDAO {
         }
     }
 
-   
+    public boolean deleteCustomer(Connection con, int customerId) throws SQLException {
+        String sql = "DELETE FROM customer WHERE customerID = ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, customerId);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     public List<CustomerRecord> searchCustomer(Connection con, String keyword)
             throws SQLException {
         String sql = BASE_SELECT
-                   + "WHERE customerID = ? "
-                   + "OR LOWER(firstName) LIKE ? "
-                   + "OR LOWER(middleName) LIKE ? "
-                   + "OR LOWER(lastName) LIKE ? "
-                   + "OR LOWER(email) LIKE ? "
-                   + "ORDER BY lastName, firstName";
+                   + "WHERE c.customerID = ? "
+                   + "OR LOWER(c.firstName) LIKE ? "
+                   + "OR LOWER(c.middleName) LIKE ? "
+                   + "OR LOWER(c.lastName) LIKE ? "
+                   + "OR LOWER(c.email) LIKE ? "
+                   + "OR LOWER(ca.username) LIKE ? "
+                   + "OR LOWER(ca.status) LIKE ? "
+                   + "ORDER BY c.customerID";
 
         String like = "%" + keyword.trim().toLowerCase() + "%";
 
-       
         int id = -1;
         try {
             id = Integer.parseInt(keyword.trim());
@@ -120,6 +133,8 @@ public class CustomerDAO {
             ps.setString(3, like);
             ps.setString(4, like);
             ps.setString(5, like);
+            ps.setString(6, like);
+            ps.setString(7, like);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(mapRow(rs));
@@ -138,6 +153,9 @@ public class CustomerDAO {
         c.email = rs.getString("email");
         c.sex = rs.getString("sex");
         c.age = rs.getInt("age");
+        c.customerAccountID = rs.getInt("customerAccountID");
+        c.username = rs.getString("username");
+        c.status = rs.getString("status");
         return c;
     }
 }
