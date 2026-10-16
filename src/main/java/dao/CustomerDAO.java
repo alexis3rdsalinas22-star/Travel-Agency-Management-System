@@ -52,11 +52,41 @@ public class CustomerDAO {
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                keys.next();
-                return keys.getInt(1);
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+                return -1;
             }
         }
     }
+
+    public boolean emailExists(Connection con, String email) throws SQLException {
+        if (email == null) {
+            return false;
+        }
+        String sql = "SELECT email FROM customer WHERE LOWER(email) = LOWER(?)";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    public boolean emailExistsForOther(Connection con, String email, int customerId) throws SQLException {
+        if (email == null) {
+            return false;
+        }
+        String sql = "SELECT email FROM customer WHERE LOWER(email) = LOWER(?) AND customerID <> ?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            ps.setInt(2, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
 
    
     public CustomerRecord getCustomerById(Connection con, int customerId) throws SQLException {

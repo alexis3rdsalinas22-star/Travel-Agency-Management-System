@@ -37,20 +37,37 @@ public class CustomerAccountDAO {
         }
     }
 
-    public int login(Connection con, String username, String password) throws SQLException {
-        String sql = "SELECT customerID, status FROM customeraccount "
+    public static class CustomerLoginResult {
+        public final int customerId;
+        public final int customerAccountId;
+        public final String username;
+
+        public CustomerLoginResult(int customerId, int customerAccountId, String username) {
+            this.customerId = customerId;
+            this.customerAccountId = customerAccountId;
+            this.username = username;
+        }
+    }
+
+    public CustomerLoginResult login(Connection con, String username, String password) throws SQLException {
+        String sql = "SELECT customerID, customerAccountID, status FROM customeraccount "
                    + "WHERE username = ? AND password = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, username);
             ps.setString(2, hash(password));
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next() && "Active".equals(rs.getString("status"))) {
-                    return rs.getInt("customerID");
+                    return new CustomerLoginResult(
+                            rs.getInt("customerID"),
+                            rs.getInt("customerAccountID"),
+                            username
+                    );
                 }
-                return -1;
+                return null;
             }
         }
     }
+
 
   
 

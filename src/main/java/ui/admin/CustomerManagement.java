@@ -6,6 +6,8 @@ import dao.CustomerAccountDAO;
 import dao.CustomerDAO;
 import dao.CustomerDAO.CustomerRecord;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -48,7 +50,9 @@ public class CustomerManagement extends Screen {
     private List<CustomerRecord> currentRecords = new ArrayList<>();
 
     public CustomerManagement() {
-        super("Customer Management", 1040, 620);
+        super("Customer Management", 1000, 600);
+
+        getContentPane().setBackground(new Color(245, 247, 250));
 
         initUI();
         loadCustomers(null);
@@ -56,67 +60,135 @@ public class CustomerManagement extends Screen {
 
     private void initUI() {
         // Header and subtitle
-        createHeader("Customer Management", 40, 15, 340, 30);
-        createLabel("View, search, and manage registered customers.", 40, 45, 340, 20);
+        JLabel header = createHeader("Customer Management", 40, 15, 320, 28);
+        setFontSize(header, 22);
+        setTextColor(header, new Color(28, 55, 90));
+
+        JLabel subheader = createLabel("View, search, and manage registered customers.", 40, 44, 320, 18);
+        setFontSize(subheader, 13);
+        setTextColor(subheader, new Color(100, 116, 139));
 
         // Form Fields
-        createLabel("Customer ID:", 40, 75, 110, 25);
-        idField = createTextField(150, 75, 210, 30);
+        JLabel idLbl = createLabel("Customer ID:", 40, 68, 105, 26);
+        setFontStyle(idLbl, Font.BOLD);
+        setFontSize(idLbl, 13);
+        setTextColor(idLbl, new Color(55, 65, 81));
+        idField = createTextField(150, 68, 200, 28);
         idField.setEditable(false);
 
-        createLabel("Username *:", 40, 110, 110, 25);
-        usernameField = createTextField(150, 110, 210, 30);
+        JLabel userLbl = createLabel("Username *:", 40, 100, 105, 26);
+        setFontStyle(userLbl, Font.BOLD);
+        setFontSize(userLbl, 13);
+        setTextColor(userLbl, new Color(55, 65, 81));
+        usernameField = createTextField(150, 100, 200, 28);
 
-        createLabel("First Name *:", 40, 145, 110, 25);
-        firstNameField = createTextField(150, 145, 210, 30);
+        JLabel firstLbl = createLabel("First Name *:", 40, 132, 105, 26);
+        setFontStyle(firstLbl, Font.BOLD);
+        setFontSize(firstLbl, 13);
+        setTextColor(firstLbl, new Color(55, 65, 81));
+        firstNameField = createTextField(150, 132, 200, 28);
 
-        createLabel("Middle Name:", 40, 180, 110, 25);
-        middleNameField = createTextField(150, 180, 210, 30);
+        JLabel midLbl = createLabel("Middle Name:", 40, 164, 105, 26);
+        setFontSize(midLbl, 13);
+        setTextColor(midLbl, new Color(55, 65, 81));
+        middleNameField = createTextField(150, 164, 200, 28);
 
-        createLabel("Last Name *:", 40, 215, 110, 25);
-        lastNameField = createTextField(150, 215, 210, 30);
+        JLabel lastLbl = createLabel("Last Name *:", 40, 196, 105, 26);
+        setFontStyle(lastLbl, Font.BOLD);
+        setFontSize(lastLbl, 13);
+        setTextColor(lastLbl, new Color(55, 65, 81));
+        lastNameField = createTextField(150, 196, 200, 28);
 
-        createLabel("Email *:", 40, 250, 110, 25);
-        emailField = createTextField(150, 250, 210, 30);
+        JLabel emailLbl = createLabel("Email *:", 40, 228, 105, 26);
+        setFontStyle(emailLbl, Font.BOLD);
+        setFontSize(emailLbl, 13);
+        setTextColor(emailLbl, new Color(55, 65, 81));
+        emailField = createTextField(150, 228, 200, 28);
 
-        createLabel("Gender *:", 40, 285, 110, 25);
-        genderCombo = createComboBox(new String[]{"Male", "Female"}, 150, 285, 210, 30);
+        JLabel genderLbl = createLabel("Gender *:", 40, 260, 105, 26);
+        setFontStyle(genderLbl, Font.BOLD);
+        setFontSize(genderLbl, 13);
+        setTextColor(genderLbl, new Color(55, 65, 81));
+        genderCombo = createComboBox(new String[]{"Male", "Female"}, 150, 260, 200, 28);
 
-        createLabel("Age *:", 40, 320, 110, 25);
-        ageField = createTextField(150, 320, 210, 30);
+        JLabel ageLbl = createLabel("Age *:", 40, 292, 105, 26);
+        setFontStyle(ageLbl, Font.BOLD);
+        setFontSize(ageLbl, 13);
+        setTextColor(ageLbl, new Color(55, 65, 81));
+        ageField = createTextField(150, 292, 200, 28);
 
-        createLabel("Status *:", 40, 355, 110, 25);
-        statusCombo = createComboBox(new String[]{"Active", "Inactive", "Suspended"}, 150, 355, 210, 30);
+        JLabel statusLbl = createLabel("Status *:", 40, 324, 105, 26);
+        setFontStyle(statusLbl, Font.BOLD);
+        setFontSize(statusLbl, 13);
+        setTextColor(statusLbl, new Color(55, 65, 81));
+        statusCombo = createComboBox(new String[]{"Active", "Inactive", "Suspended"}, 150, 324, 200, 28);
 
-        createLabel("Password:", 40, 390, 110, 25);
-        passwordField = createPasswordField(150, 390, 210, 30);
+        JLabel passLbl = createLabel("Password:", 40, 356, 105, 26);
+        setFontStyle(passLbl, Font.BOLD);
+        setFontSize(passLbl, 13);
+        setTextColor(passLbl, new Color(55, 65, 81));
+        passwordField = createPasswordField(150, 356, 200, 28);
 
-        JLabel passNote = createLabel("(Leave blank to keep unchanged)", 150, 420, 210, 18);
+        JLabel passNote = createLabel("(Leave blank to keep unchanged)", 150, 384, 200, 16);
         setFontSize(passNote, 11);
+        setTextColor(passNote, new Color(100, 116, 139));
 
         // Action Buttons
-        JButton saveBtn = createButton("Save", 40, 445, 100, 32);
+        JButton saveBtn = createButton("Save", 40, 408, 98, 32);
+        setFontStyle(saveBtn, Font.BOLD);
+        setBackground(saveBtn, new Color(16, 149, 93));
+        setTextColor(saveBtn, Color.WHITE);
+        saveBtn.setFocusPainted(false);
         saveBtn.addActionListener(e -> handleSave());
 
-        JButton updateBtn = createButton("Update", 150, 445, 100, 32);
+        JButton updateBtn = createButton("Update", 146, 408, 98, 32);
+        setFontStyle(updateBtn, Font.BOLD);
+        setBackground(updateBtn, new Color(37, 99, 235));
+        setTextColor(updateBtn, Color.WHITE);
+        updateBtn.setFocusPainted(false);
         updateBtn.addActionListener(e -> handleUpdate());
 
-        JButton deleteBtn = createButton("Delete", 260, 445, 100, 32);
+        JButton deleteBtn = createButton("Delete", 252, 408, 98, 32);
+        setFontStyle(deleteBtn, Font.BOLD);
+        setBackground(deleteBtn, new Color(220, 53, 69));
+        setTextColor(deleteBtn, Color.WHITE);
+        deleteBtn.setFocusPainted(false);
         deleteBtn.addActionListener(e -> handleDelete());
 
-        JButton clearBtn = createButton("Clear Form", 40, 485, 320, 32);
+        JButton clearBtn = createButton("Clear Form", 40, 448, 310, 32);
+        setFontSize(clearBtn, 13);
+        setBackground(clearBtn, new Color(229, 231, 235));
+        setTextColor(clearBtn, new Color(55, 65, 81));
+        clearBtn.setFocusPainted(false);
         clearBtn.addActionListener(e -> clearForm());
 
-        JButton backBtn = createButton("Back to Dashboard", 40, 525, 320, 32);
+        JButton backBtn = createButton("Back to Dashboard", 40, 488, 310, 32);
+        setFontSize(backBtn, 13);
+        setBackground(backBtn, new Color(220, 225, 235));
+        setTextColor(backBtn, new Color(51, 65, 85));
+        backBtn.setFocusPainted(false);
         backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
 
         // Search Section
-        searchField = createSearchBar(380, 18, 620, 30, this::handleSearch, () -> loadCustomers(null));
+        searchField = createSearchBar(370, 18, 590, 30, this::handleSearch, () -> loadCustomers(null));
+        searchField.addActionListener(e -> handleSearch());
 
         // Table
         String[] columnNames = {"ID", "Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
         tableModel = createReadOnlyTableModel(columnNames);
-        customerTable = createTable(tableModel, 380, 55, 620, 500);
+        customerTable = createTable(tableModel, 370, 52, 590, 468);
+        customerTable.setRowHeight(24);
+        if (customerTable.getColumnModel().getColumnCount() >= 8) {
+            customerTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+            customerTable.getColumnModel().getColumn(0).setMaxWidth(55);
+            customerTable.getColumnModel().getColumn(1).setPreferredWidth(80);
+            customerTable.getColumnModel().getColumn(2).setPreferredWidth(75);
+            customerTable.getColumnModel().getColumn(3).setPreferredWidth(75);
+            customerTable.getColumnModel().getColumn(4).setPreferredWidth(140);
+            customerTable.getColumnModel().getColumn(5).setPreferredWidth(65);
+            customerTable.getColumnModel().getColumn(6).setPreferredWidth(45);
+            customerTable.getColumnModel().getColumn(7).setPreferredWidth(70);
+        }
         customerTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
@@ -201,6 +273,11 @@ public class CustomerManagement extends Screen {
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
+                if (customerDAO.emailExists(con, email)) {
+                    showError("The email address '" + email + "' is already in use by another customer.");
+                    return;
+                }
+
                 if (accountDAO.usernameExists(con, username)) {
                     showError("Username '" + username + "' is already taken. Please choose another.");
                     return;
@@ -261,16 +338,25 @@ public class CustomerManagement extends Screen {
             return;
         }
 
-        int selectedRow = customerTable.getSelectedRow();
-        CustomerRecord existing = (selectedRow >= 0 && selectedRow < currentRecords.size())
-                ? currentRecords.get(selectedRow) : null;
-
         try (Connection con = DBConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
+                CustomerRecord existing = customerDAO.getCustomerById(con, customerId);
+                if (existing == null) {
+                    showError("Customer with ID " + customerId + " not found.");
+                    con.rollback();
+                    return;
+                }
+
+                if (customerDAO.emailExistsForOther(con, email, customerId)) {
+                    showError("The email address '" + email + "' is already in use by another customer.");
+                    con.rollback();
+                    return;
+                }
+
                 customerDAO.updateCustomer(con, customerId, first, middle.isEmpty() ? null : middle, last, email, sex, ageValue);
 
-                if (existing != null && existing.customerAccountID > 0) {
+                if (existing.customerAccountID > 0) {
                     if (!username.isEmpty() && !username.equals(existing.username)) {
                         boolean edited = accountDAO.editUsername(con, existing.customerAccountID, username);
                         if (!edited) {
@@ -285,7 +371,18 @@ public class CustomerManagement extends Screen {
                     if (!password.isEmpty()) {
                         accountDAO.resetPassword(con, existing.customerAccountID, password);
                     }
-                } else if (!username.isEmpty() && !password.isEmpty()) {
+                } else if (!username.isEmpty()) {
+                    if (password.isEmpty()) {
+                        showError("Please specify a password when creating a login account for this customer.");
+                        con.rollback();
+                        return;
+                    }
+                    if (accountDAO.usernameExists(con, username)) {
+                        showError("Username '" + username + "' is already taken. Please choose another.");
+                        con.rollback();
+                        return;
+                    }
+
                     accountDAO.insertAccount(con, customerId, username, password);
                     if (!"Active".equals(status)) {
                         CustomerRecord rec = customerDAO.getCustomerById(con, customerId);

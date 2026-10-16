@@ -68,8 +68,10 @@ public class AdminAccountDAO {
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
-                keys.next();
-                return keys.getInt(1);
+                if (keys.next()) {
+                    return keys.getInt(1);
+                }
+                return -1;
             }
         }
     }
@@ -144,17 +146,23 @@ public class AdminAccountDAO {
     }
 
     /**
-     * Searches admin accounts by username or role.
+     * Searches admin accounts by ID, username, or role.
      */
     public List<AdminAccount> searchAccounts(Connection con, String keyword) throws SQLException {
         List<AdminAccount> list = new ArrayList<>();
         String sql = "SELECT adminAccountID, username, role FROM adminAccount "
-                   + "WHERE LOWER(username) LIKE ? OR LOWER(role) LIKE ? "
+                   + "WHERE adminAccountID = ? "
+                   + "OR LOWER(username) LIKE ? "
+                   + "OR LOWER(role) LIKE ? "
                    + "ORDER BY adminAccountID";
+
+        int id = common.ValidationUtil.parseSearchId(keyword);
+        String pattern = "%" + (keyword == null ? "" : keyword.toLowerCase().trim()) + "%";
+
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-            String pattern = "%" + keyword.toLowerCase().trim() + "%";
-            ps.setString(1, pattern);
+            ps.setInt(1, id);
             ps.setString(2, pattern);
+            ps.setString(3, pattern);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     list.add(new AdminAccount(

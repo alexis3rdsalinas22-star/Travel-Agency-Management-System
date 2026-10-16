@@ -35,21 +35,28 @@ public class CustomerLogin extends Screen {
         setFontSize(userLabel, 13);
         setTextColor(userLabel, new Color(55, 65, 81));
 
-        JTextField username = createTextField(60, 145, 380, 35);
+        JTextField username = createTextField(60, 145, 380, 36);
+        setFontSize(username, 14);
 
         JLabel passLabel = createLabel("Password", 60, 195, 380, 20);
         setFontStyle(passLabel, Font.BOLD);
         setFontSize(passLabel, 13);
         setTextColor(passLabel, new Color(55, 65, 81));
 
-        JPasswordField password = createPasswordField(60, 220, 380, 35);
+        JPasswordField password = createPasswordField(60, 220, 380, 36);
+        setFontSize(password, 14);
 
         // Buttons
-        JButton loginBtn = createButton("Login", 60, 280, 380, 40);
+        JButton loginBtn = createButton("Sign In to Account", 60, 280, 380, 42);
         setFontStyle(loginBtn, Font.BOLD);
+        setFontSize(loginBtn, 14);
         setBackground(loginBtn, new Color(37, 99, 235));
         setTextColor(loginBtn, Color.WHITE);
         loginBtn.setFocusPainted(false);
+
+        // Keyboard ergonomics
+        username.addActionListener(e -> password.requestFocusInWindow());
+        password.addActionListener(e -> loginBtn.doClick());
 
         loginBtn.addActionListener(e -> {
             String user = username.getText().trim();
@@ -61,11 +68,11 @@ public class CustomerLogin extends Screen {
             }
 
             try (Connection con = DBConnection.getConnection()) {
-                int customerId = new CustomerAccountDAO().login(con, user, pass);
-                if (customerId != -1) {
-                    common.Session.setCustomerSession(customerId, user);
+                CustomerAccountDAO.CustomerLoginResult result = new CustomerAccountDAO().login(con, user, pass);
+                if (result != null) {
+                    common.Session.setCustomerSession(result.customerId, result.customerAccountId, user);
                     showInfo("Welcome back! Login successful.");
-                    navigateTo(new CustomerDashboard(customerId));
+                    navigateTo(new CustomerDashboard(result.customerId));
                 } else {
                     showError("Invalid username or password, or account is not active.");
                 }
@@ -74,14 +81,14 @@ public class CustomerLogin extends Screen {
             }
         });
 
-        JButton registerBtn = createButton("Don't have an account? Register here", 60, 335, 380, 35);
+        JButton registerBtn = createButton("Don't have an account? Register here", 60, 335, 380, 36);
         setFontSize(registerBtn, 13);
         setBackground(registerBtn, new Color(230, 235, 245));
         setTextColor(registerBtn, new Color(37, 99, 235));
         registerBtn.setFocusPainted(false);
         registerBtn.addActionListener(e -> navigateTo(new CustomerRegister()));
 
-        JButton backBtn = createButton("Back to Home", 60, 380, 380, 35);
+        JButton backBtn = createButton("Back to Home", 60, 380, 380, 36);
         setFontSize(backBtn, 13);
         setBackground(backBtn, new Color(229, 231, 235));
         setTextColor(backBtn, new Color(55, 65, 81));

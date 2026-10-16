@@ -2,6 +2,7 @@ package common;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Insets;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -237,15 +238,27 @@ public class Screen extends JFrame {
 
     public JTextField createSearchBar(int x, int y, int width, int height,
                                       Runnable onSearch, Runnable onShowAll) {
-        createLabel("Search:", x, y, 55, height);
-        JTextField searchField = createTextField(x + 60, y, width - 215, height);
-        JButton searchBtn = createButton("Search", x + width - 150, y, 70, height);
+        int labelWidth = 55;
+        int showAllWidth = 90;
+        int searchBtnWidth = 85;
+        int gap = 8;
+        int buttonsTotal = searchBtnWidth + gap + showAllWidth;
+
+        createLabel("Search:", x, y, labelWidth, height);
+        JTextField searchField = createTextField(x + labelWidth + 5, y, width - labelWidth - 5 - buttonsTotal - gap, height);
+
+        JButton searchBtn = createButton("Search", x + width - buttonsTotal, y, searchBtnWidth, height);
+        searchBtn.setMargin(new Insets(2, 4, 2, 4));
+        searchBtn.setFocusPainted(false);
         searchBtn.addActionListener(e -> {
             if (onSearch != null) {
                 onSearch.run();
             }
         });
-        JButton showAllBtn = createButton("Show All", x + width - 75, y, 75, height);
+
+        JButton showAllBtn = createButton("Show All", x + width - showAllWidth, y, showAllWidth, height);
+        showAllBtn.setMargin(new Insets(2, 4, 2, 4));
+        showAllBtn.setFocusPainted(false);
         showAllBtn.addActionListener(e -> {
             searchField.setText("");
             if (onShowAll != null) {
