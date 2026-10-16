@@ -60,7 +60,7 @@ public class CustomerDAO {
 
    
     public CustomerRecord getCustomerById(Connection con, int customerId) throws SQLException {
-        String sql = BASE_SELECT + "WHERE customerID = ?";
+        String sql = BASE_SELECT + "WHERE c.customerID = ?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
