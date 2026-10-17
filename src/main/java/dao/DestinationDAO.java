@@ -18,19 +18,21 @@ public class DestinationDAO {
         public String name;
         public String country;
         public String description;
+        public String imagePath;
         public String status;
     }
 
-    // Adds a destination (status defaults to Active) and returns the new destinationID
-    public int addDestination(String name, String country, String description)
+    // Adds a destination with image and returns the new destinationID
+    public int addDestination(String name, String country, String description, String imagePath)
             throws SQLException {
-        String sql = "INSERT INTO destination (name, country, description, status) "
-                   + "VALUES (?,?,?,'Active')";
+        String sql = "INSERT INTO destination (name, country, description, imagePath, status) "
+                   + "VALUES (?,?,?,?,'Active')";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, name);
             ps.setString(2, country);
             ps.setString(3, description);
+            ps.setString(4, imagePath);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -39,9 +41,15 @@ public class DestinationDAO {
         }
     }
 
+    // Adds a destination (status defaults to Active) and returns the new destinationID
+    public int addDestination(String name, String country, String description)
+            throws SQLException {
+        return addDestination(name, country, description, null);
+    }
+
     // Returns all destinations (handy for filling a table on your screen)
     public List<DestinationRecord> getAllDestinations() throws SQLException {
-        String sql = "SELECT destinationID, name, country, description, status "
+        String sql = "SELECT destinationID, name, country, description, imagePath, status "
                    + "FROM destination ORDER BY name";
         List<DestinationRecord> list = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -56,7 +64,7 @@ public class DestinationDAO {
 
     // Searches by destination ID, name, country, description or status
     public List<DestinationRecord> search(String keyword) throws SQLException {
-        String sql = "SELECT destinationID, name, country, description, status "
+        String sql = "SELECT destinationID, name, country, description, imagePath, status "
                    + "FROM destination "
                    + "WHERE destinationID = ? "
                    + "OR LOWER(name) LIKE ? "
@@ -90,24 +98,51 @@ public class DestinationDAO {
         return list;
     }
 
-    // Edits a destination. Status must be Active or Inactive.
+    // Searches destinations strictly by name
+    public List<DestinationRecord> searchByName(String keyword) throws SQLException {
+        String sql = "SELECT destinationID, name, country, description, imagePath, status "
+                   + "FROM destination "
+                   + "WHERE LOWER(name) LIKE ? "
+                   + "ORDER BY name";
+        String like = "%" + keyword.trim().toLowerCase() + "%";
+        List<DestinationRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, like);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
+    // Edits a destination with imagePath. Status must be Active or Inactive.
     public boolean editDestination(int destinationId, String name, String country,
-                                   String description, String status) throws SQLException {
+                                   String description, String imagePath, String status) throws SQLException {
         if (!"Active".equals(status) && !"Inactive".equals(status)) {
             throw new IllegalArgumentException("Status must be Active or Inactive.");
         }
         String sql = "UPDATE destination "
-                   + "SET name = ?, country = ?, description = ?, status = ? "
+                   + "SET name = ?, country = ?, description = ?, imagePath = ?, status = ? "
                    + "WHERE destinationID = ?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, country);
             ps.setString(3, description);
-            ps.setString(4, status);
-            ps.setInt(5, destinationId);
+            ps.setString(4, imagePath);
+            ps.setString(5, status);
+            ps.setInt(6, destinationId);
             return ps.executeUpdate() > 0;
         }
+    }
+
+    // Edits a destination without altering imagePath (or setting null).
+    public boolean editDestination(int destinationId, String name, String country,
+                                   String description, String status) throws SQLException {
+        return editDestination(destinationId, name, country, description, null, status);
     }
 
     // Deletes a destination. Fails with a clear message if packages still use it.
@@ -134,6 +169,9 @@ public class DestinationDAO {
         d.name = rs.getString("name");
         d.country = rs.getString("country");
         d.description = rs.getString("description");
+        try {
+            d.imagePath = rs.getString("imagePath");
+        } catch (SQLException ignored) {}
         d.status = rs.getString("status");
         return d;
     }

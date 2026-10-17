@@ -1,5 +1,6 @@
 package ui.admin;
 
+import common.ImageUtil;
 import common.Screen;
 import dao.DestinationDAO;
 import dao.DestinationDAO.DestinationRecord;
@@ -8,19 +9,23 @@ import dao.TravelPackageDAO.PackageRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.io.File;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 public class PackageManagement extends Screen {
@@ -54,6 +59,10 @@ public class PackageManagement extends Screen {
     private JComboBox<String> statusCombo;
     private JTextArea descArea;
 
+    // Image preview and path
+    private JLabel imagePreviewLabel;
+    private String selectedImagePath = null;
+
     // Search and Table
     private JTextField searchField;
     private DefaultTableModel tableModel;
@@ -85,43 +94,76 @@ public class PackageManagement extends Screen {
         JPanel formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "PACKAGE DETAILS");
 
+        // Hidden ID Field to preserve programmatic access
+        idField = new JTextField();
+
         // Fields inside Card
-        idField = addFormField(formCard, "Package ID:", 36, false);
-        nameField = addFormField(formCard, "Name *:", 72, true);
+        nameField = addFormField(formCard, "Name *:", 34, true);
 
         // Destination Dropdown
-        JLabel destLbl = createLabel(formCard, "Destination *:", 16, 108, 95, 26);
+        JLabel destLbl = createLabel(formCard, "Destination *:", 16, 60, 95, 24);
         setFontStyle(destLbl, Font.BOLD);
         setFontSize(destLbl, 11);
 
         destinationCombo = new JComboBox<>();
         destinationCombo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        destinationCombo.setBounds(115, 108, 214, 26);
+        destinationCombo.setBounds(115, 60, 214, 24);
         formCard.add(destinationCombo);
 
-        priceField = addFormField(formCard, "Price/Person *:", 144, true);
-        minTravelersField = addFormField(formCard, "Min Travelers *:", 180, true);
-        maxTravelersField = addFormField(formCard, "Max Travelers *:", 216, true);
+        priceField = addFormField(formCard, "Price/Pax *:", 86, true);
+
+        // Min & Max Pax side-by-side
+        JLabel minLbl = createLabel(formCard, "Min Pax *:", 16, 112, 60, 24);
+        setFontStyle(minLbl, Font.BOLD);
+        setFontSize(minLbl, 11);
+        minTravelersField = new JTextField();
+        minTravelersField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        minTravelersField.setBounds(78, 112, 76, 24);
+        formCard.add(minTravelersField);
+
+        JLabel maxLbl = createLabel(formCard, "Max Pax *:", 168, 112, 65, 24);
+        setFontStyle(maxLbl, Font.BOLD);
+        setFontSize(maxLbl, 11);
+        maxTravelersField = new JTextField();
+        maxTravelersField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        maxTravelersField.setBounds(238, 112, 91, 24);
+        formCard.add(maxTravelersField);
 
         // Status Combo
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 252, 95, 26);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 138, 95, 24);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 252, 214, 26);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 138, 214, 24);
 
-        // Description
-        JLabel descLbl = createLabel(formCard, "Description:", 16, 288, 95, 24);
+        // Description - Full Width and Taller
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 166, 150, 18);
         setFontStyle(descLbl, Font.BOLD);
         setFontSize(descLbl, 11);
-        descArea = createTextArea(formCard, 115, 288, 214, 65);
+        descArea = createTextArea(formCard, 16, 186, 313, 72);
+
+        // Image Preview & Browse
+        JLabel imgHeader = createLabel(formCard, "Package Photo:", 16, 266, 110, 20);
+        setFontStyle(imgHeader, Font.BOLD);
+        setFontSize(imgHeader, 11);
+
+        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 264, 99, 22,
+                Color.WHITE, new Color(51, 65, 85), new Color(203, 213, 225), 11, this::handleBrowseImage);
+
+        imagePreviewLabel = new JLabel("", JLabel.CENTER);
+        imagePreviewLabel.setBounds(16, 288, 313, 90);
+        imagePreviewLabel.setOpaque(true);
+        imagePreviewLabel.setBackground(new Color(248, 250, 252));
+        imagePreviewLabel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 90, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+        formCard.add(imagePreviewLabel);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 365, 98, 32, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 365, 98, 32, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 365, 101, 32, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 407, 313, 30, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 386, 98, 30, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 386, 98, 30, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 386, 101, 30, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 422, 313, 28, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select a package from the table to view or edit", 16, 520, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select a package from the table to view or edit", 16, 456, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -130,10 +172,10 @@ public class PackageManagement extends Screen {
         searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadPackages(null));
         searchField.addActionListener(e -> handleSearch());
 
-        String[] columns = {"ID", "Package Name", "Destination", "Price / Person", "Min", "Max", "Status"};
+        String[] columns = {"Package Name", "Destination", "Price / Pax", "Min", "Max", "Status"};
         tableModel = createReadOnlyTableModel(columns);
         packageTable = createTable(tableModel, 410, 132, 745, 511);
-        setColumnWidths(packageTable, 50, 175, 135, 115, 75, 75, 90);
+        setColumnWidths(packageTable, 220, 155, 125, 75, 75, 95);
 
         packageTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -162,13 +204,12 @@ public class PackageManagement extends Screen {
             if (keyword == null || keyword.trim().isEmpty()) {
                 list = packageDAO.getAllPackages();
             } else {
-                list = packageDAO.searchPackage(keyword);
+                list = packageDAO.searchByName(keyword);
             }
             currentRecords = list;
 
             for (PackageRecord p : list) {
                 tableModel.addRow(new Object[]{
-                    p.packageID,
                     p.name,
                     p.destinationName != null ? p.destinationName : ("Dest ID: " + p.destinationID),
                     p.pricePerTraveller != null ? String.format("PHP %,.2f", p.pricePerTraveller) : "PHP 0.00",
@@ -194,6 +235,10 @@ public class PackageManagement extends Screen {
             statusCombo.setSelectedItem(p.status != null ? p.status : "Active");
             descArea.setText(p.description != null ? p.description : "");
 
+            // Image Preview
+            selectedImagePath = p.imagePath;
+            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+
             // Select destination in combo
             for (int i = 0; i < destinationCombo.getItemCount(); i++) {
                 DestinationItem item = destinationCombo.getItemAt(i);
@@ -201,6 +246,24 @@ public class PackageManagement extends Screen {
                     destinationCombo.setSelectedIndex(i);
                     break;
                 }
+            }
+        }
+    }
+
+    private void handleBrowseImage() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Package Photo");
+        chooser.setFileFilter(new FileNameExtensionFilter("Image Files (*.jpg, *.png, *.webp, *.jpeg)", "jpg", "jpeg", "png", "webp", "gif"));
+        int res = chooser.showOpenDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                String savedName = ImageUtil.saveUploadedImage(selectedFile, ImageUtil.DATA_PACKAGES_DIR, "pkg");
+                selectedImagePath = savedName;
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+                showInfo("Image selected and staged for this package.");
+            } catch (Exception ex) {
+                showError("Failed to save image file: " + ex.getMessage());
             }
         }
     }
@@ -242,7 +305,8 @@ public class PackageManagement extends Screen {
         }
 
         try {
-            int newId = packageDAO.addPackage(selectedDest.id, name, desc.isEmpty() ? null : desc, price, min, max);
+            int newId = packageDAO.addPackage(selectedDest.id, name, desc.isEmpty() ? null : desc,
+                    selectedImagePath, price, min, max);
             if (newId > 0) {
                 showInfo("Package '" + name + "' created successfully (ID: " + newId + ").");
                 clearForm();
@@ -302,7 +366,7 @@ public class PackageManagement extends Screen {
 
         try {
             boolean updated = packageDAO.updatePackage(packageId, selectedDest.id, name,
-                    desc.isEmpty() ? null : desc, price, status, min, max);
+                    desc.isEmpty() ? null : desc, selectedImagePath, price, status, min, max);
             if (updated) {
                 showInfo("Package ID " + packageId + " updated successfully.");
                 clearForm();
@@ -362,6 +426,8 @@ public class PackageManagement extends Screen {
         maxTravelersField.setText("");
         statusCombo.setSelectedIndex(0);
         descArea.setText("");
+        selectedImagePath = null;
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
         packageTable.clearSelection();
     }
 }

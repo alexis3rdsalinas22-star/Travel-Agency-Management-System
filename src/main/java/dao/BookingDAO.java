@@ -125,6 +125,77 @@ public class BookingDAO {
         return list;
     }
 
+    public static class TravelerRecord {
+        public int travelerID;
+        public int bookingID;
+        public String firstName;
+        public String lastName;
+        public java.sql.Date dateOfBirth;
+        public String contactNumber;
+    }
+
+    // Creates a booking with custom status (e.g. for seeder)
+    public int createBooking(int customerAccountId, int packageId, Timestamp travelDate, String status)
+            throws SQLException {
+        String sql = "INSERT INTO booking (customerAccountID, packageID, status, bookingDate, travelDate) "
+                   + "VALUES (?,?,?,?,?)";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, customerAccountId);
+            ps.setInt(2, packageId);
+            ps.setString(3, status != null ? status : "Pending");
+            ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
+            ps.setTimestamp(5, travelDate);
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : -1;
+            }
+        }
+    }
+
+    public List<TravelerRecord> getTravelersByBooking(int bookingId) throws SQLException {
+        String sql = "SELECT travelerID, bookingID, firstName, lastName, dateOfBirth, contactNumber "
+                   + "FROM traveler WHERE bookingID = ? ORDER BY travelerID";
+        List<TravelerRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, bookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    TravelerRecord t = new TravelerRecord();
+                    t.travelerID = rs.getInt("travelerID");
+                    t.bookingID = rs.getInt("bookingID");
+                    t.firstName = rs.getString("firstName");
+                    t.lastName = rs.getString("lastName");
+                    t.dateOfBirth = rs.getDate("dateOfBirth");
+                    t.contactNumber = rs.getString("contactNumber");
+                    list.add(t);
+                }
+            }
+        }
+        return list;
+    }
+
+    public int addTraveler(int bookingId, String firstName, String lastName, java.sql.Date dateOfBirth, String contactNumber)
+            throws SQLException {
+        String sql = "INSERT INTO traveler (bookingID, firstName, lastName, dateOfBirth, contactNumber) "
+                   + "VALUES (?,?,?,?,?)";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setInt(1, bookingId);
+            ps.setString(2, firstName);
+            ps.setString(3, lastName);
+            ps.setDate(4, dateOfBirth);
+            ps.setString(5, contactNumber);
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                return keys.next() ? keys.getInt(1) : -1;
+            }
+        }
+    }
+
     // Converts one result row into a BookingRecord
     private BookingRecord mapRow(ResultSet rs) throws SQLException {
         BookingRecord r = new BookingRecord();

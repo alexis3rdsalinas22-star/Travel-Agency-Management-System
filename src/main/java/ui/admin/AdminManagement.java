@@ -34,9 +34,10 @@ public class AdminManagement extends Screen {
     // Search input
     private JTextField searchField;
 
-    // Table
+    // Table and Accounts Cache
     private DefaultTableModel tableModel;
     private JTable accountsTable;
+    private List<AdminAccount> currentAccounts = new java.util.ArrayList<>();
 
     public AdminManagement() {
         super("Admin Account Management - Admin Console", STD_WIDTH, STD_HEIGHT);
@@ -60,35 +61,37 @@ public class AdminManagement extends Screen {
         JPanel formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "ADMIN CREDENTIALS");
 
+        // Hidden ID field to preserve programmatic access
+        idField = new JTextField();
+
         // Fields inside Card
-        idField = addFormField(formCard, "Admin ID:", 45, false);
-        usernameField = addFormField(formCard, "Username *:", 90, true);
+        usernameField = addFormField(formCard, "Username *:", 45, true);
 
         // Password Field
-        JLabel passLbl = createLabel(formCard, "Password:", 16, 135, 95, 26);
+        JLabel passLbl = createLabel(formCard, "Password:", 16, 90, 95, 26);
         setFontStyle(passLbl, Font.BOLD);
         setFontSize(passLbl, 11);
 
-        passwordField = createPasswordField(formCard, 115, 135, 214, 26);
+        passwordField = createPasswordField(formCard, 115, 90, 214, 26);
 
-        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 163, 214, 14);
+        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 118, 214, 14);
         setFontSize(passNote, 10);
         setTextColor(passNote, COLOR_TEXT_MUTED);
 
         // Role Combo
-        JLabel roleLbl = createLabel(formCard, "Role *:", 16, 190, 95, 26);
+        JLabel roleLbl = createLabel(formCard, "Role *:", 16, 145, 95, 26);
         setFontStyle(roleLbl, Font.BOLD);
         setFontSize(roleLbl, 11);
 
-        roleCombo = createComboBox(formCard, new String[]{"Admin", "Manager"}, 115, 190, 214, 26);
+        roleCombo = createComboBox(formCard, new String[]{"Admin", "Manager"}, 115, 145, 214, 26);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 250, 98, 32, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 250, 98, 32, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 250, 101, 32, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 292, 313, 30, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 205, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 205, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 205, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 247, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select an admin from the table to modify credentials", 16, 520, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select an admin from the table to modify credentials", 16, 290, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -97,9 +100,9 @@ public class AdminManagement extends Screen {
         searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadAccounts(null));
         searchField.addActionListener(e -> handleSearch());
 
-        tableModel = createReadOnlyTableModel(new String[]{"Admin ID", "Username", "Role"});
+        tableModel = createReadOnlyTableModel(new String[]{"Username", "Role"});
         accountsTable = createTable(tableModel, 410, 132, 745, 511);
-        setColumnWidths(accountsTable, 120, 390, 225);
+        setColumnWidths(accountsTable, 495, 250);
 
         accountsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -110,6 +113,7 @@ public class AdminManagement extends Screen {
 
     private void loadAccounts(String keyword) {
         tableModel.setRowCount(0);
+        currentAccounts.clear();
         try (Connection con = DBConnection.getConnection()) {
             List<AdminAccount> accounts;
             if (keyword == null || keyword.trim().isEmpty()) {
@@ -117,10 +121,10 @@ public class AdminManagement extends Screen {
             } else {
                 accounts = adminDAO.searchAccounts(con, keyword);
             }
+            currentAccounts = accounts;
 
             for (AdminAccount a : accounts) {
                 tableModel.addRow(new Object[]{
-                    a.getadminAccountId(),
                     a.getusername(),
                     a.getrole()
                 });
@@ -132,12 +136,17 @@ public class AdminManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = accountsTable.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < tableModel.getRowCount()) {
-            idField.setText(tableModel.getValueAt(selectedRow, 0).toString());
-            usernameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
+        if (selectedRow >= 0 && selectedRow < currentAccounts.size()) {
+            AdminAccount a = currentAccounts.get(selectedRow);
+            idField.setText(String.valueOf(a.getadminAccountId()));
+            usernameField.setText(a.getusername());
             passwordField.setText("");
-            roleCombo.setSelectedItem(tableModel.getValueAt(selectedRow, 2).toString());
+            roleCombo.setSelectedItem(a.getrole());
         }
+    }
+
+    private boolean isSuperAdmin() {
+        return "Admin".equalsIgnoreCase(Session.getUserRole());
     }
 
     private void handleSave() {
@@ -147,6 +156,11 @@ public class AdminManagement extends Screen {
 
         if (username.isEmpty() || password.isEmpty()) {
             showError("Please provide both username and password to create a new account.");
+            return;
+        }
+
+        if (!isSuperAdmin() && "Admin".equalsIgnoreCase(role)) {
+            showError("Access Denied: Managers can only create accounts with the Manager role.");
             return;
         }
 
@@ -180,6 +194,20 @@ public class AdminManagement extends Screen {
             return;
         }
 
+        if (!isSuperAdmin()) {
+            int row = accountsTable.getSelectedRow();
+            String targetRole = (row >= 0 && row < tableModel.getRowCount())
+                    ? tableModel.getValueAt(row, 2).toString() : "";
+            if ("Admin".equalsIgnoreCase(targetRole)) {
+                showError("Access Denied: Managers cannot modify Administrator accounts.");
+                return;
+            }
+            if ("Admin".equalsIgnoreCase(role)) {
+                showError("Access Denied: Managers cannot promote accounts to Administrator.");
+                return;
+            }
+        }
+
         try (Connection con = DBConnection.getConnection()) {
             boolean updated = adminDAO.editAccount(con, adminId, username, password, role);
             if (!updated) {
@@ -198,6 +226,11 @@ public class AdminManagement extends Screen {
         Integer adminId = getIntOrNull(idField);
         if (adminId == null) {
             showError("Please select an admin account from the table to delete.");
+            return;
+        }
+
+        if (!isSuperAdmin()) {
+            showError("Access Denied: Only system Administrators have permission to delete accounts.");
             return;
         }
 

@@ -1,22 +1,28 @@
 package ui.admin;
 
+import common.ImageUtil;
 import common.Screen;
 import dao.DestinationDAO;
 import dao.DestinationDAO.DestinationRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.io.File;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 
 public class DestinationManagement extends Screen {
@@ -30,10 +36,17 @@ public class DestinationManagement extends Screen {
     private JComboBox<String> statusCombo;
     private JTextArea descArea;
 
+    // Image preview and path
+    private JLabel imagePreviewLabel;
+    private String selectedImagePath = null;
+
     // Search and Table
     private JTextField searchField;
     private DefaultTableModel tableModel;
     private JTable destTable;
+
+    // Current records cache
+    private List<DestinationRecord> currentRecords = new ArrayList<>();
 
     public DestinationManagement() {
         super("Destination Management - Admin Console", STD_WIDTH, STD_HEIGHT);
@@ -57,30 +70,48 @@ public class DestinationManagement extends Screen {
         JPanel formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "DESTINATION DETAILS");
 
+        // Hidden ID Field to preserve programmatic access
+        idField = new JTextField();
+
         // Fields inside Card
-        idField = addFormField(formCard, "Destination ID:", 42, false);
-        nameField = addFormField(formCard, "Name *:", 86, true);
-        countryField = addFormField(formCard, "Country *:", 130, true);
+        nameField = addFormField(formCard, "Name *:", 36, true);
+        countryField = addFormField(formCard, "Country *:", 68, true);
 
         // Status Combo
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 174, 95, 26);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 100, 95, 24);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 174, 214, 26);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 100, 214, 24);
 
-        // Description
-        JLabel descLbl = createLabel(formCard, "Description:", 16, 218, 95, 26);
+        // Description - Full Width and Taller
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 130, 150, 18);
         setFontStyle(descLbl, Font.BOLD);
         setFontSize(descLbl, 11);
-        descArea = createTextArea(formCard, 115, 218, 214, 115);
+        descArea = createTextArea(formCard, 16, 150, 313, 90);
+
+        // Image Preview & Browse
+        JLabel imgHeader = createLabel(formCard, "Destination Photo:", 16, 248, 130, 20);
+        setFontStyle(imgHeader, Font.BOLD);
+        setFontSize(imgHeader, 11);
+
+        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 246, 99, 22,
+                Color.WHITE, new Color(51, 65, 85), new Color(203, 213, 225), 11, this::handleBrowseImage);
+
+        imagePreviewLabel = new JLabel("", JLabel.CENTER);
+        imagePreviewLabel.setBounds(16, 270, 313, 105);
+        imagePreviewLabel.setOpaque(true);
+        imagePreviewLabel.setBackground(new Color(248, 250, 252));
+        imagePreviewLabel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 105, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+        formCard.add(imagePreviewLabel);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 365, 98, 32, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 365, 98, 32, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 365, 101, 32, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 407, 313, 30, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 385, 98, 30, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 385, 98, 30, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 385, 101, 30, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 421, 313, 28, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select a destination row to edit or delete", 16, 520, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select a destination row to edit or delete", 16, 455, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -89,10 +120,10 @@ public class DestinationManagement extends Screen {
         searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadDestinations(null));
         searchField.addActionListener(e -> handleSearch());
 
-        String[] columns = {"ID", "Destination Name", "Country", "Description", "Status"};
+        String[] columns = {"Destination Name", "Country", "Description", "Status"};
         tableModel = createReadOnlyTableModel(columns);
         destTable = createTable(tableModel, 410, 132, 745, 511);
-        setColumnWidths(destTable, 50, 170, 130, 290, 95);
+        setColumnWidths(destTable, 160, 120, 380, 85);
 
         destTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -103,17 +134,18 @@ public class DestinationManagement extends Screen {
 
     private void loadDestinations(String keyword) {
         tableModel.setRowCount(0);
+        currentRecords.clear();
         try {
             List<DestinationRecord> list;
             if (keyword == null || keyword.trim().isEmpty()) {
                 list = destinationDAO.getAllDestinations();
             } else {
-                list = destinationDAO.search(keyword);
+                list = destinationDAO.searchByName(keyword);
             }
+            currentRecords = list;
 
             for (DestinationRecord d : list) {
                 tableModel.addRow(new Object[]{
-                    d.destinationID,
                     d.name,
                     d.country,
                     d.description != null ? d.description : "",
@@ -127,12 +159,34 @@ public class DestinationManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = destTable.getSelectedRow();
-        if (selectedRow >= 0) {
-            idField.setText(tableModel.getValueAt(selectedRow, 0).toString());
-            nameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
-            countryField.setText(tableModel.getValueAt(selectedRow, 2).toString());
-            descArea.setText(tableModel.getValueAt(selectedRow, 3).toString());
-            statusCombo.setSelectedItem(tableModel.getValueAt(selectedRow, 4).toString());
+        if (selectedRow >= 0 && selectedRow < currentRecords.size()) {
+            DestinationRecord d = currentRecords.get(selectedRow);
+            idField.setText(String.valueOf(d.destinationID));
+            nameField.setText(d.name);
+            countryField.setText(d.country);
+            descArea.setText(d.description != null ? d.description : "");
+            statusCombo.setSelectedItem(d.status != null ? d.status : "Active");
+
+            selectedImagePath = d.imagePath;
+            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+        }
+    }
+
+    private void handleBrowseImage() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Select Destination Photo");
+        chooser.setFileFilter(new FileNameExtensionFilter("Image Files (*.jpg, *.png, *.webp, *.jpeg)", "jpg", "jpeg", "png", "webp", "gif"));
+        int res = chooser.showOpenDialog(this);
+        if (res == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = chooser.getSelectedFile();
+            try {
+                String savedName = ImageUtil.saveUploadedImage(selectedFile, ImageUtil.DATA_DESTINATIONS_DIR, "dest");
+                selectedImagePath = savedName;
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+                showInfo("Destination image staged successfully.");
+            } catch (Exception ex) {
+                showError("Failed to save image file: " + ex.getMessage());
+            }
         }
     }
 
@@ -147,7 +201,7 @@ public class DestinationManagement extends Screen {
         }
 
         try {
-            int newId = destinationDAO.addDestination(name, country, desc.isEmpty() ? null : desc);
+            int newId = destinationDAO.addDestination(name, country, desc.isEmpty() ? null : desc, selectedImagePath);
             showInfo("Destination '" + name + "' added successfully (ID: " + newId + ").");
             clearForm();
             loadDestinations(null);
@@ -174,7 +228,8 @@ public class DestinationManagement extends Screen {
         }
 
         try {
-            boolean updated = destinationDAO.editDestination(destId, name, country, desc.isEmpty() ? null : desc, status);
+            boolean updated = destinationDAO.editDestination(destId, name, country,
+                    desc.isEmpty() ? null : desc, selectedImagePath, status);
             if (updated) {
                 showInfo("Destination ID " + destId + " updated successfully.");
                 clearForm();
@@ -227,6 +282,8 @@ public class DestinationManagement extends Screen {
         countryField.setText("");
         descArea.setText("");
         statusCombo.setSelectedIndex(0);
+        selectedImagePath = null;
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
         destTable.clearSelection();
     }
 }

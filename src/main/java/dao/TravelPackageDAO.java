@@ -21,43 +21,49 @@ public class TravelPackageDAO {
         public String country;
         public String name;
         public String description;
+        public String imagePath;
         public BigDecimal pricePerTraveller;
         public String status;
         public int minTraveller;
         public int maxTraveller;
     }
 
-    
     private static final String BASE_SELECT =
-            "SELECT p.packageID, p.destinationID, p.name, p.description, "
+            "SELECT p.packageID, p.destinationID, p.name, p.description, p.imagePath, "
           + "p.pricePerTraveller, p.status, p.minTraveller, p.maxTraveller, "
           + "d.name AS destinationName, d.country "
           + "FROM package p "
           + "JOIN destination d ON p.destinationID = d.destinationID ";
 
-    
-    public int addPackage(int destinationId, String name, String description,
+    public int addPackage(int destinationId, String name, String description, String imagePath,
                           BigDecimal pricePerTraveller, int minTraveller, int maxTraveller)
             throws SQLException {
         validate(pricePerTraveller, minTraveller, maxTraveller);
 
-        String sql = "INSERT INTO package (destinationID, name, description, "
+        String sql = "INSERT INTO package (destinationID, name, description, imagePath, "
                    + "pricePerTraveller, status, minTraveller, maxTraveller) "
-                   + "VALUES (?,?,?,?,'Active',?,?)";
+                   + "VALUES (?,?,?,?,?,'Active',?,?)";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, destinationId);
             ps.setString(2, name);
             ps.setString(3, description);
-            ps.setBigDecimal(4, pricePerTraveller);
-            ps.setInt(5, minTraveller);
-            ps.setInt(6, maxTraveller);
+            ps.setString(4, imagePath);
+            ps.setBigDecimal(5, pricePerTraveller);
+            ps.setInt(6, minTraveller);
+            ps.setInt(7, maxTraveller);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 return keys.next() ? keys.getInt(1) : -1;
             }
         }
+    }
+
+    public int addPackage(int destinationId, String name, String description,
+                          BigDecimal pricePerTraveller, int minTraveller, int maxTraveller)
+            throws SQLException {
+        return addPackage(destinationId, name, description, null, pricePerTraveller, minTraveller, maxTraveller);
     }
 
   
@@ -123,9 +129,26 @@ public class TravelPackageDAO {
         return list;
     }
 
-   
+    public List<PackageRecord> searchByName(String keyword) throws SQLException {
+        String sql = BASE_SELECT
+                   + "WHERE LOWER(p.name) LIKE ? "
+                   + "ORDER BY d.name, p.name";
+        String like = "%" + keyword.trim().toLowerCase() + "%";
+        List<PackageRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, like);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     public boolean updatePackage(int packageId, int destinationId, String name,
-                                 String description, BigDecimal pricePerTraveller,
+                                 String description, String imagePath, BigDecimal pricePerTraveller,
                                  String status, int minTraveller, int maxTraveller)
             throws SQLException {
         validate(pricePerTraveller, minTraveller, maxTraveller);
@@ -133,7 +156,7 @@ public class TravelPackageDAO {
             throw new IllegalArgumentException("Status must be Active or Inactive.");
         }
 
-        String sql = "UPDATE package SET destinationID = ?, name = ?, description = ?, "
+        String sql = "UPDATE package SET destinationID = ?, name = ?, description = ?, imagePath = ?, "
                    + "pricePerTraveller = ?, status = ?, minTraveller = ?, maxTraveller = ? "
                    + "WHERE packageID = ?";
         try (Connection con = DBConnection.getConnection();
@@ -141,16 +164,23 @@ public class TravelPackageDAO {
             ps.setInt(1, destinationId);
             ps.setString(2, name);
             ps.setString(3, description);
-            ps.setBigDecimal(4, pricePerTraveller);
-            ps.setString(5, status);
-            ps.setInt(6, minTraveller);
-            ps.setInt(7, maxTraveller);
-            ps.setInt(8, packageId);
+            ps.setString(4, imagePath);
+            ps.setBigDecimal(5, pricePerTraveller);
+            ps.setString(6, status);
+            ps.setInt(7, minTraveller);
+            ps.setInt(8, maxTraveller);
+            ps.setInt(9, packageId);
             return ps.executeUpdate() > 0;
         }
     }
 
-    
+    public boolean updatePackage(int packageId, int destinationId, String name,
+                                 String description, BigDecimal pricePerTraveller,
+                                 String status, int minTraveller, int maxTraveller)
+            throws SQLException {
+        return updatePackage(packageId, destinationId, name, description, null, pricePerTraveller, status, minTraveller, maxTraveller);
+    }
+
     public boolean deletePackage(int packageId) throws SQLException {
         String sql = "DELETE FROM package WHERE packageID = ?";
         try (Connection con = DBConnection.getConnection();
@@ -188,6 +218,9 @@ public class TravelPackageDAO {
         r.country = rs.getString("country");
         r.name = rs.getString("name");
         r.description = rs.getString("description");
+        try {
+            r.imagePath = rs.getString("imagePath");
+        } catch (SQLException ignored) {}
         r.pricePerTraveller = rs.getBigDecimal("pricePerTraveller");
         r.status = rs.getString("status");
         r.minTraveller = rs.getInt("minTraveller");

@@ -66,7 +66,27 @@ public class PaymentDAO {
         }
     }
 
-    
+    public List<PaymentRecord> getAllPayments() throws SQLException {
+        String sql = "SELECT paymentID, bookingID, paymentDate, amount, method, source "
+                   + "FROM payment ORDER BY paymentDate DESC";
+        List<PaymentRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                PaymentRecord p = new PaymentRecord();
+                p.paymentID = rs.getInt("paymentID");
+                p.bookingID = rs.getInt("bookingID");
+                p.paymentDate = rs.getTimestamp("paymentDate");
+                p.amount = rs.getBigDecimal("amount");
+                p.method = rs.getString("method");
+                p.source = rs.getString("source");
+                list.add(p);
+            }
+        }
+        return list;
+    }
+
     public List<PaymentRecord> getPaymentsByBooking(int bookingId) throws SQLException {
         String sql = "SELECT paymentID, bookingID, paymentDate, amount, method, source "
                    + "FROM payment WHERE bookingID = ? ORDER BY paymentDate DESC";
