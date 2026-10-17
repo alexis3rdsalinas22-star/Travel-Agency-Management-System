@@ -95,9 +95,15 @@ public class AdminDashboard extends Screen {
         // Col 1: x = 45, Col 2: x = 421, Col 3: x = 797 (width = 353 each)
         // -------------------------------------------------------------
 
+        // -------------------------------------------------------------
+        // Module Launcher Grid (6 Executive Feature Cards with Icon Badges)
+        // Row 1: y = 178, Row 2: y = 380
+        // Col 1: x = 45, Col 2: x = 421, Col 3: x = 797 (width = 353 each)
+        // -------------------------------------------------------------
+
         // 1. Destinations
         createModuleCard(
-            "CATALOG", "Destinations",
+            "destinations.png", "CATALOG", "Destinations",
             "Configure tourist spots, countries, regional descriptions, and operational statuses.",
             "Manage Destinations →", new Color(14, 116, 144),
             45, 178, 353, 185,
@@ -106,7 +112,7 @@ public class AdminDashboard extends Screen {
 
         // 2. Packages
         createModuleCard(
-            "ITINERARIES", "Travel Packages",
+            "packages.png", "ITINERARIES", "Travel Packages",
             "Set bundle pricing, group traveler capacities, and destination links.",
             "Manage Packages →", new Color(79, 70, 229),
             421, 178, 353, 185,
@@ -115,7 +121,7 @@ public class AdminDashboard extends Screen {
 
         // 3. Bookings
         createModuleCard(
-            "RESERVATIONS", "Booking Oversight",
+            "bookings.png", "RESERVATIONS", "Booking Oversight",
             "Track customer reservations, review departure dates, and update statuses.",
             "Manage Bookings →", COLOR_PRIMARY,
             797, 178, 353, 185,
@@ -124,7 +130,7 @@ public class AdminDashboard extends Screen {
 
         // 4. Customers
         createModuleCard(
-            "DIRECTORY", "Customer Accounts",
+            "customers.png", "DIRECTORY", "Customer Accounts",
             "Inspect traveler records, manage login credentials, and update customer profiles.",
             "Manage Customers →", COLOR_SUCCESS,
             45, 380, 353, 185,
@@ -133,7 +139,7 @@ public class AdminDashboard extends Screen {
 
         // 5. Sales & Reports
         createModuleCard(
-            "AUDITING", "Sales & Revenue",
+            "sales.png", "AUDITING", "Sales & Revenue",
             "Audit payment transactions, revenue summaries, and financial payment methods.",
             "View Sales Reports →", new Color(217, 119, 6),
             421, 380, 353, 185,
@@ -142,7 +148,7 @@ public class AdminDashboard extends Screen {
 
         // 6. Admin Management
         createModuleCard(
-            "SECURITY", "Administrator Accounts",
+            "security.png", "SECURITY", "Administrator Accounts",
             "Manage administrative credentials, assign roles (Admin / Manager), and access logs.",
             "Manage Admin Accounts →", new Color(51, 65, 85),
             797, 380, 353, 185,
@@ -181,24 +187,46 @@ public class AdminDashboard extends Screen {
         add(card);
     }
 
-    private void createModuleCard(String tag, String title, String desc, String btnText, Color accentColor,
-                                  int x, int y, int w, int h, Runnable onAction) {
+    private void createModuleCard(String iconFileName, String tag, String title, String desc, String btnText,
+                                  Color accentColor, int x, int y, int w, int h, Runnable onAction) {
         JPanel card = createCard(x, y, w, h);
 
-        JLabel tagLbl = createLabel(card, tag, 18, 14, w - 36, 16);
+        // Top-right Icon Badge
+        int badgeSize = 38;
+        int badgeX = w - 18 - badgeSize;
+        int badgeY = 14;
+
+        JLabel iconBadge = new JLabel();
+        iconBadge.setBounds(badgeX, badgeY, badgeSize, badgeSize);
+        iconBadge.setOpaque(true);
+        iconBadge.setBackground(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 22));
+        iconBadge.setBorder(BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 70), 1));
+        iconBadge.setHorizontalAlignment(JLabel.CENTER);
+
+        javax.swing.ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 22, 22);
+        if (icon != null) {
+            iconBadge.setIcon(icon);
+        }
+        card.add(iconBadge);
+
+        // Tag & Title (accommodate badge on right)
+        int textWidth = badgeX - 18 - 8;
+        JLabel tagLbl = createLabel(card, tag, 18, 14, textWidth, 16);
         setFontStyle(tagLbl, Font.BOLD);
         setFontSize(tagLbl, 10);
         setTextColor(tagLbl, accentColor);
 
-        JLabel titleLbl = createLabel(card, title, 18, 34, w - 36, 24);
+        JLabel titleLbl = createLabel(card, title, 18, 34, textWidth, 24);
         setFontStyle(titleLbl, Font.BOLD);
         setFontSize(titleLbl, 16);
         setTextColor(titleLbl, COLOR_TEXT_MAIN);
 
-        JLabel descLbl = createLabel(card, "<html><body style='width: " + (w - 40) + "px;'>" + desc + "</body></html>", 18, 62, w - 36, 44);
+        // Body Description
+        JLabel descLbl = createLabel(card, "<html><body style='width: " + (w - 40) + "px;'>" + desc + "</body></html>", 18, 64, w - 36, 44);
         setFontSize(descLbl, 12);
         setTextColor(descLbl, COLOR_TEXT_MUTED);
 
+        // Bottom Action Button
         JButton actionBtn = createStyledButton(card, btnText, 18, 126, w - 36, 38,
             COLOR_BG, accentColor, COLOR_BORDER, 12, onAction);
         setFontStyle(actionBtn, Font.BOLD);

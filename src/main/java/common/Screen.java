@@ -3,9 +3,11 @@ package common;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -562,5 +564,21 @@ public class Screen extends JFrame {
             showError(fieldName + " must be a valid numeric amount.");
             return null;
         }
+    }
+
+    // -------------------------------------------------------------
+    // Image & Icon Loading Helpers
+    // -------------------------------------------------------------
+
+    public ImageIcon loadIcon(String resourcePath, int targetWidth, int targetHeight) {
+        try {
+            java.net.URL url = getClass().getResource(resourcePath);
+            if (url != null) {
+                ImageIcon icon = new ImageIcon(url);
+                Image img = icon.getImage().getScaledInstance(targetWidth, targetHeight, Image.SCALE_SMOOTH);
+                return new ImageIcon(img);
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }
