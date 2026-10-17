@@ -17,7 +17,7 @@ import javax.swing.table.TableRowSorter;
 
 public class MyBookings extends Screen {
 
-    // Not in the Screen design tokens yet (could be moved there later)
+    
     private static final Color COLOR_WARNING = new Color(217, 119, 6);
 
     private DefaultTableModel tableModel;
