@@ -7,13 +7,12 @@ import common.ValidationUtil;
 import dao.CustomerDAO;
 import dao.CustomerDAO.CustomerRecord;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 public class CustomerProfile extends Screen {
@@ -31,102 +30,55 @@ public class CustomerProfile extends Screen {
     private JTextField statusField;
 
     public CustomerProfile() {
-        super("My Profile", 1000, 600);
-
-        getContentPane().setBackground(new Color(245, 247, 250));
-
+        super("My Profile");
         initUI();
         loadProfile();
     }
 
     private void initUI() {
-        // Header & Subtitle
-        JLabel header = createHeader("My Profile", 200, 25, 600, 30);
-        setFontSize(header, 24);
-        setTextColor(header, new Color(28, 55, 90));
+      
+        createTopHeader(
+                "CUSTOMER",
+                "My Profile",
+                "View and update your personal account information.",
+                () -> navigateTo(new CustomerDashboard())
+        );
 
-        JLabel subheader = createLabel("View and update your personal account information.", 200, 56, 600, 20);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        
+        JPanel accountCard = createCard(45, 105, 345, 215);
+        createCardTag(accountCard, "ACCOUNT");
+        idField       = addFormField(accountCard, "Customer ID", 48,  false);
+        usernameField = addFormField(accountCard, "Username",    100, false);
+        statusField   = addFormField(accountCard, "Status",      152, false);
 
-        // Form Fields
-        JLabel idLbl = createLabel("Customer ID:", 200, 95, 130, 25);
-        setFontStyle(idLbl, Font.BOLD);
-        setFontSize(idLbl, 13);
-        setTextColor(idLbl, new Color(55, 65, 81));
-        idField = createTextField(340, 95, 460, 30);
-        idField.setEditable(false);
+    
+        JPanel nameCard = createCard(427, 105, 345, 215);
+        createCardTag(nameCard, "NAME");
+        firstNameField  = addFormField(nameCard, "First Name *", 48,  true);
+        middleNameField = addFormField(nameCard, "Middle Name",  100, true);
+        lastNameField   = addFormField(nameCard, "Last Name *",  152, true);
 
-        JLabel userLbl = createLabel("Username:", 200, 131, 130, 25);
-        setFontStyle(userLbl, Font.BOLD);
-        setFontSize(userLbl, 13);
-        setTextColor(userLbl, new Color(55, 65, 81));
-        usernameField = createTextField(340, 131, 460, 30);
-        usernameField.setEditable(false);
+ 
+        JPanel detailsCard = createCard(810, 105, 345, 215);
+        createCardTag(detailsCard, "CONTACT & DETAILS");
+        emailField  = addFormField(detailsCard, "Email *", 48, true);
+        genderCombo = addComboRow(detailsCard, "Sex *", new String[]{"Male", "Female"}, 100);
+        ageField    = addFormField(detailsCard, "Age *", 152, true);
 
-        JLabel firstLbl = createLabel("First Name *:", 200, 167, 130, 25);
-        setFontStyle(firstLbl, Font.BOLD);
-        setFontSize(firstLbl, 13);
-        setTextColor(firstLbl, new Color(55, 65, 81));
-        firstNameField = createTextField(340, 167, 460, 30);
-        setFontSize(firstNameField, 13);
+    
+        createSuccessButton("Save Changes", 940, 345, 215, 38, this::handleSaveProfile);
+    }
 
-        JLabel midLbl = createLabel("Middle Name:", 200, 203, 130, 25);
-        setFontSize(midLbl, 13);
-        setTextColor(midLbl, new Color(55, 65, 81));
-        middleNameField = createTextField(340, 203, 460, 30);
-        setFontSize(middleNameField, 13);
+   
+    private JComboBox<String> addComboRow(JPanel parent, String labelText, String[] items, int y) {
+        JLabel lbl = createLabel(parent, labelText, 16, y, 95, 26);
+        setFontStyle(lbl, Font.BOLD);
+        setFontSize(lbl, 11);
+        setTextColor(lbl, COLOR_TEXT_MAIN);
 
-        JLabel lastLbl = createLabel("Last Name *:", 200, 239, 130, 25);
-        setFontStyle(lastLbl, Font.BOLD);
-        setFontSize(lastLbl, 13);
-        setTextColor(lastLbl, new Color(55, 65, 81));
-        lastNameField = createTextField(340, 239, 460, 30);
-        setFontSize(lastNameField, 13);
-
-        JLabel emailLbl = createLabel("Email *:", 200, 275, 130, 25);
-        setFontStyle(emailLbl, Font.BOLD);
-        setFontSize(emailLbl, 13);
-        setTextColor(emailLbl, new Color(55, 65, 81));
-        emailField = createTextField(340, 275, 460, 30);
-        setFontSize(emailField, 13);
-
-        JLabel genderLbl = createLabel("Gender *:", 200, 311, 130, 25);
-        setFontStyle(genderLbl, Font.BOLD);
-        setFontSize(genderLbl, 13);
-        setTextColor(genderLbl, new Color(55, 65, 81));
-        genderCombo = createComboBox(new String[]{"Male", "Female"}, 340, 311, 460, 30);
-        setFontSize(genderCombo, 13);
-
-        JLabel ageLbl = createLabel("Age *:", 200, 347, 130, 25);
-        setFontStyle(ageLbl, Font.BOLD);
-        setFontSize(ageLbl, 13);
-        setTextColor(ageLbl, new Color(55, 65, 81));
-        ageField = createTextField(340, 347, 460, 30);
-        setFontSize(ageField, 13);
-
-        JLabel statusLbl = createLabel("Account Status:", 200, 383, 130, 25);
-        setFontStyle(statusLbl, Font.BOLD);
-        setFontSize(statusLbl, 13);
-        setTextColor(statusLbl, new Color(55, 65, 81));
-        statusField = createTextField(340, 383, 460, 30);
-        statusField.setEditable(false);
-
-        // Buttons
-        JButton saveBtn = createButton("Save Changes", 340, 435, 225, 40);
-        setFontStyle(saveBtn, Font.BOLD);
-        setFontSize(saveBtn, 14);
-        setBackground(saveBtn, new Color(16, 149, 93));
-        setTextColor(saveBtn, Color.WHITE);
-        saveBtn.setFocusPainted(false);
-        saveBtn.addActionListener(e -> handleSaveProfile());
-
-        JButton backBtn = createButton("Back to Dashboard", 575, 435, 225, 40);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(229, 231, 235));
-        setTextColor(backBtn, new Color(55, 65, 81));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new CustomerDashboard()));
+        JComboBox<String> combo = createComboBox(parent, items, 115, y, 214, 26);
+        setFontSize(combo, 12);
+        return combo;
     }
 
     private void loadProfile() {
