@@ -8,13 +8,15 @@ import java.awt.Color;
 import java.awt.Font;
 import java.sql.SQLException;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
 public class DestinationManagement extends Screen {
@@ -34,109 +36,64 @@ public class DestinationManagement extends Screen {
     private JTable destTable;
 
     public DestinationManagement() {
-        super("Destination Management", 1000, 600);
+        super("Destination Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+        getContentPane().setBackground(COLOR_BG);
 
         initUI();
         loadDestinations(null);
     }
 
     private void initUI() {
-        // Header & Subtitle
-        JLabel header = createHeader("Destination Management", 40, 20, 320, 30);
-        setFontSize(header, 22);
-        setTextColor(header, new Color(28, 55, 90));
+        // Top Header Bar
+        createTopHeader(
+            "ADMIN CONSOLE  •  TRAVEL CATALOG",
+            "Destination Management",
+            "Catalog tourist spots, countries, regional descriptions, and statuses.",
+            () -> navigateTo(new AdminDashboard())
+        );
 
-        JLabel subheader = createLabel("Add, update, or remove travel destinations.", 40, 52, 320, 20);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        // Left Column: Form Card Container
+        JPanel formCard = createCard(45, 88, 345, 555);
+        createCardTag(formCard, "DESTINATION DETAILS");
 
-        // Form fields
-        JLabel idLbl = createLabel("Destination ID:", 40, 95, 100, 25);
-        setFontStyle(idLbl, Font.BOLD);
-        setFontSize(idLbl, 13);
-        setTextColor(idLbl, new Color(55, 65, 81));
-        idField = createTextField(150, 95, 200, 30);
-        idField.setEditable(false);
+        // Fields inside Card
+        idField = addFormField(formCard, "Destination ID:", 42, false);
+        nameField = addFormField(formCard, "Name *:", 86, true);
+        countryField = addFormField(formCard, "Country *:", 130, true);
 
-        JLabel nameLbl = createLabel("Name *:", 40, 135, 100, 25);
-        setFontStyle(nameLbl, Font.BOLD);
-        setFontSize(nameLbl, 13);
-        setTextColor(nameLbl, new Color(55, 65, 81));
-        nameField = createTextField(150, 135, 200, 30);
-
-        JLabel countryLbl = createLabel("Country *:", 40, 175, 100, 25);
-        setFontStyle(countryLbl, Font.BOLD);
-        setFontSize(countryLbl, 13);
-        setTextColor(countryLbl, new Color(55, 65, 81));
-        countryField = createTextField(150, 175, 200, 30);
-
-        JLabel statusLbl = createLabel("Status *:", 40, 215, 100, 25);
+        // Status Combo
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 174, 95, 26);
         setFontStyle(statusLbl, Font.BOLD);
-        setFontSize(statusLbl, 13);
-        setTextColor(statusLbl, new Color(55, 65, 81));
-        statusCombo = createComboBox(new String[]{"Active", "Inactive"}, 150, 215, 200, 30);
+        setFontSize(statusLbl, 11);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 174, 214, 26);
 
-        JLabel descLbl = createLabel("Description:", 40, 255, 100, 25);
+        // Description
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 218, 95, 26);
         setFontStyle(descLbl, Font.BOLD);
-        setFontSize(descLbl, 13);
-        setTextColor(descLbl, new Color(55, 65, 81));
-        descArea = createTextArea(150, 255, 200, 65);
+        setFontSize(descLbl, 11);
+        descArea = createTextArea(formCard, 115, 218, 214, 115);
 
-        // Action Buttons
-        JButton saveBtn = createButton("Save", 40, 335, 95, 35);
-        setFontStyle(saveBtn, Font.BOLD);
-        setBackground(saveBtn, new Color(16, 149, 93));
-        setTextColor(saveBtn, Color.WHITE);
-        saveBtn.setFocusPainted(false);
-        saveBtn.addActionListener(e -> handleSave());
+        // Action Buttons inside Card
+        createSuccessButton(formCard, "Save", 16, 365, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 365, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 365, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 407, 313, 30, this::clearForm);
 
-        JButton updateBtn = createButton("Update", 145, 335, 95, 35);
-        setFontStyle(updateBtn, Font.BOLD);
-        setBackground(updateBtn, new Color(37, 99, 235));
-        setTextColor(updateBtn, Color.WHITE);
-        updateBtn.setFocusPainted(false);
-        updateBtn.addActionListener(e -> handleUpdate());
+        JLabel helperHint = createLabel(formCard, "Select a destination row to edit or delete", 16, 520, 313, 16);
+        setFontStyle(helperHint, Font.ITALIC);
+        setFontSize(helperHint, 10);
+        setTextColor(helperHint, COLOR_TEXT_MUTED);
 
-        JButton deleteBtn = createButton("Delete", 250, 335, 100, 35);
-        setFontStyle(deleteBtn, Font.BOLD);
-        setBackground(deleteBtn, new Color(220, 53, 69));
-        setTextColor(deleteBtn, Color.WHITE);
-        deleteBtn.setFocusPainted(false);
-        deleteBtn.addActionListener(e -> handleDelete());
-
-        JButton clearBtn = createButton("Clear Form", 40, 380, 310, 35);
-        setFontSize(clearBtn, 13);
-        setBackground(clearBtn, new Color(229, 231, 235));
-        setTextColor(clearBtn, new Color(55, 65, 81));
-        clearBtn.setFocusPainted(false);
-        clearBtn.addActionListener(e -> clearForm());
-
-        JButton backBtn = createButton("Back to Dashboard", 40, 425, 310, 35);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(220, 225, 235));
-        setTextColor(backBtn, new Color(51, 65, 85));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
-
-        // Search Section using Screen helper
-        searchField = createSearchBar(370, 18, 590, 30, this::handleSearch, () -> loadDestinations(null));
+        // Right Column: Search Bar & Table
+        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadDestinations(null));
         searchField.addActionListener(e -> handleSearch());
 
-        // Read-only Table using Screen helpers
         String[] columns = {"ID", "Destination Name", "Country", "Description", "Status"};
         tableModel = createReadOnlyTableModel(columns);
-        destTable = createTable(tableModel, 370, 52, 590, 480);
-        destTable.setRowHeight(24);
-        if (destTable.getColumnModel().getColumnCount() >= 5) {
-            destTable.getColumnModel().getColumn(0).setPreferredWidth(50);
-            destTable.getColumnModel().getColumn(0).setMaxWidth(70);
-            destTable.getColumnModel().getColumn(1).setPreferredWidth(160);
-            destTable.getColumnModel().getColumn(2).setPreferredWidth(120);
-            destTable.getColumnModel().getColumn(3).setPreferredWidth(170);
-            destTable.getColumnModel().getColumn(4).setPreferredWidth(90);
-        }
+        destTable = createTable(tableModel, 410, 132, 745, 511);
+        setColumnWidths(destTable, 50, 170, 130, 290, 95);
+
         destTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
@@ -180,9 +137,9 @@ public class DestinationManagement extends Screen {
     }
 
     private void handleSave() {
-        String name = nameField.getText().trim();
-        String country = countryField.getText().trim();
-        String desc = descArea.getText().trim();
+        String name = getTrimmedText(nameField);
+        String country = getTrimmedText(countryField);
+        String desc = getTrimmedText(descArea);
 
         if (name.isEmpty() || country.isEmpty()) {
             showError("Please enter both destination name and country.");
@@ -200,31 +157,30 @@ public class DestinationManagement extends Screen {
     }
 
     private void handleUpdate() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer destId = getIntOrNull(idField);
+        if (destId == null) {
             showError("Please select a destination from the table to update.");
             return;
         }
 
-        int id = Integer.parseInt(idText);
-        String name = nameField.getText().trim();
-        String country = countryField.getText().trim();
+        String name = getTrimmedText(nameField);
+        String country = getTrimmedText(countryField);
+        String desc = getTrimmedText(descArea);
         String status = (String) statusCombo.getSelectedItem();
-        String desc = descArea.getText().trim();
 
         if (name.isEmpty() || country.isEmpty()) {
-            showError("Name and Country cannot be empty.");
+            showError("Please enter both destination name and country.");
             return;
         }
 
         try {
-            boolean updated = destinationDAO.editDestination(id, name, country, desc.isEmpty() ? null : desc, status);
+            boolean updated = destinationDAO.editDestination(destId, name, country, desc.isEmpty() ? null : desc, status);
             if (updated) {
-                showInfo("Destination updated successfully.");
+                showInfo("Destination ID " + destId + " updated successfully.");
                 clearForm();
                 loadDestinations(null);
             } else {
-                showError("Update failed: destination not found.");
+                showError("Could not update destination. Record not found.");
             }
         } catch (SQLException ex) {
             showError("Failed to update destination: " + ex.getMessage());
@@ -232,33 +188,32 @@ public class DestinationManagement extends Screen {
     }
 
     private void handleDelete() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer destId = getIntOrNull(idField);
+        if (destId == null) {
             showError("Please select a destination from the table to delete.");
             return;
         }
 
-        int id = Integer.parseInt(idText);
-        String name = nameField.getText().trim();
+        String name = getTrimmedText(nameField);
 
-        if (confirm("Are you sure you want to delete destination '" + name + "' (ID: " + id + ")?")) {
+        if (confirm("Are you sure you want to delete destination '" + name + "' (ID: " + destId + ")?")) {
             try {
-                boolean deleted = destinationDAO.deleteDestination(id);
+                boolean deleted = destinationDAO.deleteDestination(destId);
                 if (deleted) {
-                    showInfo("Destination '" + name + "' deleted successfully.");
+                    showInfo("Destination '" + name + "' was deleted successfully.");
                     clearForm();
                     loadDestinations(null);
                 } else {
-                    showError("Delete failed: destination not found.");
+                    showError("Could not delete destination. Record not found.");
                 }
             } catch (SQLException ex) {
-                showError("Cannot delete destination: " + ex.getMessage());
+                showError("Cannot delete destination because it is currently linked to tour packages: " + ex.getMessage());
             }
         }
     }
 
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        String keyword = getTrimmedText(searchField);
         if (keyword.isEmpty()) {
             loadDestinations(null);
             return;
@@ -270,8 +225,8 @@ public class DestinationManagement extends Screen {
         idField.setText("");
         nameField.setText("");
         countryField.setText("");
-        statusCombo.setSelectedIndex(0);
         descArea.setText("");
+        statusCombo.setSelectedIndex(0);
         destTable.clearSelection();
     }
 }

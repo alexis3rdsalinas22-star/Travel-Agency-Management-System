@@ -1,12 +1,23 @@
 package ui.admin;
 
 import common.Screen;
+import dao.DestinationDAO;
+import dao.DestinationDAO.DestinationRecord;
+import dao.TravelPackageDAO;
+import dao.TravelPackageDAO.PackageRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -14,10 +25,29 @@ import javax.swing.table.DefaultTableModel;
 
 public class PackageManagement extends Screen {
 
+    private final TravelPackageDAO packageDAO = new TravelPackageDAO();
+    private final DestinationDAO destinationDAO = new DestinationDAO();
+
+    // Destination selector helper
+    public static class DestinationItem {
+        public final int id;
+        public final String name;
+
+        public DestinationItem(int id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name + " (ID: " + id + ")";
+        }
+    }
+
     // Form fields
     private JTextField idField;
     private JTextField nameField;
-    private JTextField destinationField;
+    private JComboBox<DestinationItem> destinationCombo;
     private JTextField priceField;
     private JTextField minTravelersField;
     private JTextField maxTravelersField;
@@ -29,131 +59,304 @@ public class PackageManagement extends Screen {
     private DefaultTableModel tableModel;
     private JTable packageTable;
 
-    public PackageManagement() {
-        super("Package Management", 1000, 600);
+    // Current records cache
+    private List<PackageRecord> currentRecords = new ArrayList<>();
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+    public PackageManagement() {
+        super("Package Management - Admin Console", STD_WIDTH, STD_HEIGHT);
+
+        getContentPane().setBackground(COLOR_BG);
 
         initUI();
+        loadDestinations();
+        loadPackages(null);
     }
 
     private void initUI() {
-        // Header & Subtitle
-        JLabel header = createHeader("Package Management", 40, 15, 320, 30);
-        setFontSize(header, 22);
-        setTextColor(header, new Color(28, 55, 90));
+        // Top Header Bar
+        createTopHeader(
+            "ADMIN CONSOLE  •  TOUR PACKAGES",
+            "Package Management",
+            "Create, edit, and configure curated tour packages.",
+            () -> navigateTo(new AdminDashboard())
+        );
 
-        JLabel subheader = createLabel("Create, edit, and configure tour packages.", 40, 48, 320, 20);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        // Left Column: Form Card Container
+        JPanel formCard = createCard(45, 88, 345, 555);
+        createCardTag(formCard, "PACKAGE DETAILS");
 
-        // Form fields
-        JLabel idLbl = createLabel("Package ID:", 40, 80, 110, 25);
-        setFontStyle(idLbl, Font.BOLD);
-        setFontSize(idLbl, 13);
-        setTextColor(idLbl, new Color(55, 65, 81));
-        idField = createTextField(150, 80, 210, 30);
-        idField.setEditable(false);
+        // Fields inside Card
+        idField = addFormField(formCard, "Package ID:", 36, false);
+        nameField = addFormField(formCard, "Name *:", 72, true);
 
-        JLabel nameLbl = createLabel("Package Name *:", 40, 115, 110, 25);
-        setFontStyle(nameLbl, Font.BOLD);
-        setFontSize(nameLbl, 13);
-        setTextColor(nameLbl, new Color(55, 65, 81));
-        nameField = createTextField(150, 115, 210, 30);
-
-        JLabel destLbl = createLabel("Destination *:", 40, 150, 110, 25);
+        // Destination Dropdown
+        JLabel destLbl = createLabel(formCard, "Destination *:", 16, 108, 95, 26);
         setFontStyle(destLbl, Font.BOLD);
-        setFontSize(destLbl, 13);
-        setTextColor(destLbl, new Color(55, 65, 81));
-        destinationField = createTextField(150, 150, 210, 30);
+        setFontSize(destLbl, 11);
 
-        JLabel priceLbl = createLabel("Price/Person *:", 40, 185, 110, 25);
-        setFontStyle(priceLbl, Font.BOLD);
-        setFontSize(priceLbl, 13);
-        setTextColor(priceLbl, new Color(55, 65, 81));
-        priceField = createTextField(150, 185, 210, 30);
+        destinationCombo = new JComboBox<>();
+        destinationCombo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        destinationCombo.setBounds(115, 108, 214, 26);
+        formCard.add(destinationCombo);
 
-        JLabel minLbl = createLabel("Min Travelers *:", 40, 220, 110, 25);
-        setFontStyle(minLbl, Font.BOLD);
-        setFontSize(minLbl, 13);
-        setTextColor(minLbl, new Color(55, 65, 81));
-        minTravelersField = createTextField(150, 220, 210, 30);
+        priceField = addFormField(formCard, "Price/Person *:", 144, true);
+        minTravelersField = addFormField(formCard, "Min Travelers *:", 180, true);
+        maxTravelersField = addFormField(formCard, "Max Travelers *:", 216, true);
 
-        JLabel maxLbl = createLabel("Max Travelers *:", 40, 255, 110, 25);
-        setFontStyle(maxLbl, Font.BOLD);
-        setFontSize(maxLbl, 13);
-        setTextColor(maxLbl, new Color(55, 65, 81));
-        maxTravelersField = createTextField(150, 255, 210, 30);
-
-        JLabel statusLbl = createLabel("Status *:", 40, 290, 110, 25);
+        // Status Combo
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 252, 95, 26);
         setFontStyle(statusLbl, Font.BOLD);
-        setFontSize(statusLbl, 13);
-        setTextColor(statusLbl, new Color(55, 65, 81));
-        statusCombo = createComboBox(new String[]{"Active", "Inactive"}, 150, 290, 210, 30);
+        setFontSize(statusLbl, 11);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 252, 214, 26);
 
-        JLabel descLbl = createLabel("Description:", 40, 325, 110, 25);
+        // Description
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 288, 95, 24);
         setFontStyle(descLbl, Font.BOLD);
-        setFontSize(descLbl, 13);
-        setTextColor(descLbl, new Color(55, 65, 81));
-        descArea = createTextArea(150, 325, 210, 60);
+        setFontSize(descLbl, 11);
+        descArea = createTextArea(formCard, 115, 288, 214, 65);
 
-        // Action Buttons
-        JButton saveBtn = createButton("Save", 40, 400, 100, 34);
-        setFontStyle(saveBtn, Font.BOLD);
-        setBackground(saveBtn, new Color(16, 149, 93));
-        setTextColor(saveBtn, Color.WHITE);
-        saveBtn.setFocusPainted(false);
+        // Action Buttons inside Card
+        createSuccessButton(formCard, "Save", 16, 365, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 365, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 365, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 407, 313, 30, this::clearForm);
 
-        JButton updateBtn = createButton("Update", 150, 400, 100, 34);
-        setFontStyle(updateBtn, Font.BOLD);
-        setBackground(updateBtn, new Color(37, 99, 235));
-        setTextColor(updateBtn, Color.WHITE);
-        updateBtn.setFocusPainted(false);
+        JLabel helperHint = createLabel(formCard, "Select a package from the table to view or edit", 16, 520, 313, 16);
+        setFontStyle(helperHint, Font.ITALIC);
+        setFontSize(helperHint, 10);
+        setTextColor(helperHint, COLOR_TEXT_MUTED);
 
-        JButton deleteBtn = createButton("Delete", 260, 400, 100, 34);
-        setFontStyle(deleteBtn, Font.BOLD);
-        setBackground(deleteBtn, new Color(220, 53, 69));
-        setTextColor(deleteBtn, Color.WHITE);
-        deleteBtn.setFocusPainted(false);
+        // Right Column: Search Bar & Table
+        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadPackages(null));
+        searchField.addActionListener(e -> handleSearch());
 
-        JButton clearBtn = createButton("Clear Form", 40, 440, 320, 34);
-        setFontSize(clearBtn, 13);
-        setBackground(clearBtn, new Color(229, 231, 235));
-        setTextColor(clearBtn, new Color(55, 65, 81));
-        clearBtn.setFocusPainted(false);
-        clearBtn.addActionListener(e -> clearForm());
-
-        JButton backBtn = createButton("Back to Dashboard", 40, 480, 320, 34);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(220, 225, 235));
-        setTextColor(backBtn, new Color(51, 65, 85));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
-
-        // Search Section using Screen helper (no DAO function attached)
-        searchField = createSearchBar(370, 18, 590, 30, () -> {}, () -> {});
-
-        // Read-only Table with columns
-        String[] columns = {"ID", "Package Name", "Destination", "Price / Traveler", "Min Travelers", "Max Travelers", "Status"};
+        String[] columns = {"ID", "Package Name", "Destination", "Price / Person", "Min", "Max", "Status"};
         tableModel = createReadOnlyTableModel(columns);
-        packageTable = createTable(tableModel, 370, 52, 590, 480);
-        packageTable.setRowHeight(24);
-        if (packageTable.getColumnModel().getColumnCount() >= 7) {
-            packageTable.getColumnModel().getColumn(0).setPreferredWidth(45);
-            packageTable.getColumnModel().getColumn(0).setMaxWidth(60);
-            packageTable.getColumnModel().getColumn(1).setPreferredWidth(145);
-            packageTable.getColumnModel().getColumn(2).setPreferredWidth(100);
-            packageTable.getColumnModel().getColumn(3).setPreferredWidth(95);
-            packageTable.getColumnModel().getColumn(4).setPreferredWidth(70);
-            packageTable.getColumnModel().getColumn(5).setPreferredWidth(70);
-            packageTable.getColumnModel().getColumn(6).setPreferredWidth(65);
+        packageTable = createTable(tableModel, 410, 132, 745, 511);
+        setColumnWidths(packageTable, 50, 175, 135, 115, 75, 75, 90);
+
+        packageTable.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                populateFormFromSelectedRow();
+            }
+        });
+    }
+
+    private void loadDestinations() {
+        destinationCombo.removeAllItems();
+        try {
+            List<DestinationRecord> destinations = destinationDAO.getAllDestinations();
+            for (DestinationRecord d : destinations) {
+                destinationCombo.addItem(new DestinationItem(d.destinationID, d.name));
+            }
+        } catch (SQLException ex) {
+            showError("Failed to load destinations: " + ex.getMessage());
         }
+    }
+
+    private void loadPackages(String keyword) {
+        tableModel.setRowCount(0);
+        currentRecords.clear();
+        try {
+            List<PackageRecord> list;
+            if (keyword == null || keyword.trim().isEmpty()) {
+                list = packageDAO.getAllPackages();
+            } else {
+                list = packageDAO.searchPackage(keyword);
+            }
+            currentRecords = list;
+
+            for (PackageRecord p : list) {
+                tableModel.addRow(new Object[]{
+                    p.packageID,
+                    p.name,
+                    p.destinationName != null ? p.destinationName : ("Dest ID: " + p.destinationID),
+                    p.pricePerTraveller != null ? String.format("PHP %,.2f", p.pricePerTraveller) : "PHP 0.00",
+                    p.minTraveller,
+                    p.maxTraveller,
+                    p.status
+                });
+            }
+        } catch (SQLException ex) {
+            showError("Database error loading packages: " + ex.getMessage());
+        }
+    }
+
+    private void populateFormFromSelectedRow() {
+        int row = packageTable.getSelectedRow();
+        if (row >= 0 && row < currentRecords.size()) {
+            PackageRecord p = currentRecords.get(row);
+            idField.setText(String.valueOf(p.packageID));
+            nameField.setText(p.name);
+            priceField.setText(p.pricePerTraveller != null ? p.pricePerTraveller.toPlainString() : "");
+            minTravelersField.setText(String.valueOf(p.minTraveller));
+            maxTravelersField.setText(String.valueOf(p.maxTraveller));
+            statusCombo.setSelectedItem(p.status != null ? p.status : "Active");
+            descArea.setText(p.description != null ? p.description : "");
+
+            // Select destination in combo
+            for (int i = 0; i < destinationCombo.getItemCount(); i++) {
+                DestinationItem item = destinationCombo.getItemAt(i);
+                if (item.id == p.destinationID) {
+                    destinationCombo.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void handleSave() {
+        String name = getTrimmedText(nameField);
+        DestinationItem selectedDest = (DestinationItem) destinationCombo.getSelectedItem();
+        BigDecimal price = getPriceOrNull(priceField);
+        Integer min = getIntOrNull(minTravelersField);
+        Integer max = getIntOrNull(maxTravelersField);
+        String desc = getTrimmedText(descArea);
+
+        if (name.isEmpty()) {
+            showError("Package name is required.");
+            return;
+        }
+        if (selectedDest == null) {
+            showError("Please select a destination from the dropdown.");
+            return;
+        }
+
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            showError("Please enter a valid numeric price greater than zero.");
+            return;
+        }
+
+        if (min == null || max == null) {
+            showError("Min and Max travelers must be valid integer numbers.");
+            return;
+        }
+
+        if (min < 1) {
+            showError("Minimum travelers must be at least 1.");
+            return;
+        }
+        if (max < min) {
+            showError("Maximum travelers cannot be less than minimum travelers.");
+            return;
+        }
+
+        try {
+            int newId = packageDAO.addPackage(selectedDest.id, name, desc.isEmpty() ? null : desc, price, min, max);
+            if (newId > 0) {
+                showInfo("Package '" + name + "' created successfully (ID: " + newId + ").");
+                clearForm();
+                loadPackages(null);
+            } else {
+                showError("Failed to save package record.");
+            }
+        } catch (SQLException ex) {
+            showError("Database error while creating package: " + ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            showError(ex.getMessage());
+        }
+    }
+
+    private void handleUpdate() {
+        Integer packageId = getIntOrNull(idField);
+        if (packageId == null) {
+            showError("Please select a package from the table to update.");
+            return;
+        }
+
+        String name = getTrimmedText(nameField);
+        DestinationItem selectedDest = (DestinationItem) destinationCombo.getSelectedItem();
+        BigDecimal price = getPriceOrNull(priceField);
+        Integer min = getIntOrNull(minTravelersField);
+        Integer max = getIntOrNull(maxTravelersField);
+        String status = (String) statusCombo.getSelectedItem();
+        String desc = getTrimmedText(descArea);
+
+        if (name.isEmpty()) {
+            showError("Package name is required.");
+            return;
+        }
+        if (selectedDest == null) {
+            showError("Please select a destination from the dropdown.");
+            return;
+        }
+
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            showError("Please enter a valid numeric price greater than zero.");
+            return;
+        }
+
+        if (min == null || max == null) {
+            showError("Min and Max travelers must be valid integer numbers.");
+            return;
+        }
+
+        if (min < 1) {
+            showError("Minimum travelers must be at least 1.");
+            return;
+        }
+        if (max < min) {
+            showError("Maximum travelers cannot be less than minimum travelers.");
+            return;
+        }
+
+        try {
+            boolean updated = packageDAO.updatePackage(packageId, selectedDest.id, name,
+                    desc.isEmpty() ? null : desc, price, status, min, max);
+            if (updated) {
+                showInfo("Package ID " + packageId + " updated successfully.");
+                clearForm();
+                loadPackages(null);
+            } else {
+                showError("Could not update package. Package not found.");
+            }
+        } catch (SQLException ex) {
+            showError("Database error while updating package: " + ex.getMessage());
+        } catch (IllegalArgumentException ex) {
+            showError(ex.getMessage());
+        }
+    }
+
+    private void handleDelete() {
+        Integer packageId = getIntOrNull(idField);
+        if (packageId == null) {
+            showError("Please select a package from the table to delete.");
+            return;
+        }
+
+        String name = getTrimmedText(nameField);
+
+        if (confirm("Are you sure you want to delete package '" + name + "' (ID: " + packageId + ")?")) {
+            try {
+                boolean deleted = packageDAO.deletePackage(packageId);
+                if (deleted) {
+                    showInfo("Package '" + name + "' was deleted successfully.");
+                    clearForm();
+                    loadPackages(null);
+                } else {
+                    showError("Could not delete package. Package not found.");
+                }
+            } catch (SQLException ex) {
+                showError("Cannot delete package: " + ex.getMessage());
+            }
+        }
+    }
+
+    private void handleSearch() {
+        String keyword = getTrimmedText(searchField);
+        if (keyword.isEmpty()) {
+            loadPackages(null);
+            return;
+        }
+        loadPackages(keyword);
     }
 
     private void clearForm() {
         idField.setText("");
         nameField.setText("");
-        destinationField.setText("");
+        if (destinationCombo.getItemCount() > 0) {
+            destinationCombo.setSelectedIndex(0);
+        }
         priceField.setText("");
         minTravelersField.setText("");
         maxTravelersField.setText("");

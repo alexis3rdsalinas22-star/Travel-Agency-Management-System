@@ -12,14 +12,14 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
 public class CustomerManagement extends Screen {
@@ -50,145 +50,80 @@ public class CustomerManagement extends Screen {
     private List<CustomerRecord> currentRecords = new ArrayList<>();
 
     public CustomerManagement() {
-        super("Customer Management", 1000, 600);
+        super("Customer Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+        getContentPane().setBackground(COLOR_BG);
 
         initUI();
         loadCustomers(null);
     }
 
     private void initUI() {
-        // Header and subtitle
-        JLabel header = createHeader("Customer Management", 40, 15, 320, 28);
-        setFontSize(header, 22);
-        setTextColor(header, new Color(28, 55, 90));
+        // Top Header Bar
+        createTopHeader(
+            "ADMIN CONSOLE  •  CUSTOMER DIRECTORY",
+            "Customer Management",
+            "Register, edit, search, and manage registered customer profiles.",
+            () -> navigateTo(new AdminDashboard())
+        );
 
-        JLabel subheader = createLabel("View, search, and manage registered customers.", 40, 44, 320, 18);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        // Left Column: Modern Card Container for Customer Form
+        JPanel formCard = createCard(45, 88, 345, 555);
+        createCardTag(formCard, "CUSTOMER PROFILE");
 
-        // Form Fields
-        JLabel idLbl = createLabel("Customer ID:", 40, 68, 105, 26);
-        setFontStyle(idLbl, Font.BOLD);
-        setFontSize(idLbl, 13);
-        setTextColor(idLbl, new Color(55, 65, 81));
-        idField = createTextField(150, 68, 200, 28);
-        idField.setEditable(false);
+        // Fields inside Card
+        idField = addFormField(formCard, "Customer ID:", 36, false);
+        usernameField = addFormField(formCard, "Username *:", 70, true);
+        firstNameField = addFormField(formCard, "First Name *:", 104, true);
+        middleNameField = addFormField(formCard, "Middle Name:", 138, true);
+        lastNameField = addFormField(formCard, "Last Name *:", 172, true);
+        emailField = addFormField(formCard, "Email *:", 206, true);
 
-        JLabel userLbl = createLabel("Username *:", 40, 100, 105, 26);
-        setFontStyle(userLbl, Font.BOLD);
-        setFontSize(userLbl, 13);
-        setTextColor(userLbl, new Color(55, 65, 81));
-        usernameField = createTextField(150, 100, 200, 28);
-
-        JLabel firstLbl = createLabel("First Name *:", 40, 132, 105, 26);
-        setFontStyle(firstLbl, Font.BOLD);
-        setFontSize(firstLbl, 13);
-        setTextColor(firstLbl, new Color(55, 65, 81));
-        firstNameField = createTextField(150, 132, 200, 28);
-
-        JLabel midLbl = createLabel("Middle Name:", 40, 164, 105, 26);
-        setFontSize(midLbl, 13);
-        setTextColor(midLbl, new Color(55, 65, 81));
-        middleNameField = createTextField(150, 164, 200, 28);
-
-        JLabel lastLbl = createLabel("Last Name *:", 40, 196, 105, 26);
-        setFontStyle(lastLbl, Font.BOLD);
-        setFontSize(lastLbl, 13);
-        setTextColor(lastLbl, new Color(55, 65, 81));
-        lastNameField = createTextField(150, 196, 200, 28);
-
-        JLabel emailLbl = createLabel("Email *:", 40, 228, 105, 26);
-        setFontStyle(emailLbl, Font.BOLD);
-        setFontSize(emailLbl, 13);
-        setTextColor(emailLbl, new Color(55, 65, 81));
-        emailField = createTextField(150, 228, 200, 28);
-
-        JLabel genderLbl = createLabel("Gender *:", 40, 260, 105, 26);
+        // Gender Combo
+        JLabel genderLbl = createLabel(formCard, "Gender *:", 16, 240, 95, 26);
         setFontStyle(genderLbl, Font.BOLD);
-        setFontSize(genderLbl, 13);
-        setTextColor(genderLbl, new Color(55, 65, 81));
-        genderCombo = createComboBox(new String[]{"Male", "Female"}, 150, 260, 200, 28);
+        setFontSize(genderLbl, 11);
+        genderCombo = createComboBox(formCard, new String[]{"Male", "Female"}, 115, 240, 214, 26);
 
-        JLabel ageLbl = createLabel("Age *:", 40, 292, 105, 26);
-        setFontStyle(ageLbl, Font.BOLD);
-        setFontSize(ageLbl, 13);
-        setTextColor(ageLbl, new Color(55, 65, 81));
-        ageField = createTextField(150, 292, 200, 28);
+        ageField = addFormField(formCard, "Age *:", 274, true);
 
-        JLabel statusLbl = createLabel("Status *:", 40, 324, 105, 26);
+        // Status Combo
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 308, 95, 26);
         setFontStyle(statusLbl, Font.BOLD);
-        setFontSize(statusLbl, 13);
-        setTextColor(statusLbl, new Color(55, 65, 81));
-        statusCombo = createComboBox(new String[]{"Active", "Inactive", "Suspended"}, 150, 324, 200, 28);
+        setFontSize(statusLbl, 11);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive", "Suspended"}, 115, 308, 214, 26);
 
-        JLabel passLbl = createLabel("Password:", 40, 356, 105, 26);
+        // Password Field
+        JLabel passLbl = createLabel(formCard, "Password:", 16, 342, 95, 26);
         setFontStyle(passLbl, Font.BOLD);
-        setFontSize(passLbl, 13);
-        setTextColor(passLbl, new Color(55, 65, 81));
-        passwordField = createPasswordField(150, 356, 200, 28);
+        setFontSize(passLbl, 11);
 
-        JLabel passNote = createLabel("(Leave blank to keep unchanged)", 150, 384, 200, 16);
-        setFontSize(passNote, 11);
-        setTextColor(passNote, new Color(100, 116, 139));
+        passwordField = createPasswordField(formCard, 115, 342, 214, 26);
 
-        // Action Buttons
-        JButton saveBtn = createButton("Save", 40, 408, 98, 32);
-        setFontStyle(saveBtn, Font.BOLD);
-        setBackground(saveBtn, new Color(16, 149, 93));
-        setTextColor(saveBtn, Color.WHITE);
-        saveBtn.setFocusPainted(false);
-        saveBtn.addActionListener(e -> handleSave());
+        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 369, 214, 14);
+        setFontSize(passNote, 10);
+        setTextColor(passNote, COLOR_TEXT_MUTED);
 
-        JButton updateBtn = createButton("Update", 146, 408, 98, 32);
-        setFontStyle(updateBtn, Font.BOLD);
-        setBackground(updateBtn, new Color(37, 99, 235));
-        setTextColor(updateBtn, Color.WHITE);
-        updateBtn.setFocusPainted(false);
-        updateBtn.addActionListener(e -> handleUpdate());
+        // Action Buttons inside Card
+        createSuccessButton(formCard, "Save", 16, 400, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 400, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 400, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 442, 313, 30, this::clearForm);
 
-        JButton deleteBtn = createButton("Delete", 252, 408, 98, 32);
-        setFontStyle(deleteBtn, Font.BOLD);
-        setBackground(deleteBtn, new Color(220, 53, 69));
-        setTextColor(deleteBtn, Color.WHITE);
-        deleteBtn.setFocusPainted(false);
-        deleteBtn.addActionListener(e -> handleDelete());
+        JLabel helperHint = createLabel(formCard, "Select a row in the table to edit or delete", 16, 520, 313, 16);
+        setFontStyle(helperHint, Font.ITALIC);
+        setFontSize(helperHint, 10);
+        setTextColor(helperHint, COLOR_TEXT_MUTED);
 
-        JButton clearBtn = createButton("Clear Form", 40, 448, 310, 32);
-        setFontSize(clearBtn, 13);
-        setBackground(clearBtn, new Color(229, 231, 235));
-        setTextColor(clearBtn, new Color(55, 65, 81));
-        clearBtn.setFocusPainted(false);
-        clearBtn.addActionListener(e -> clearForm());
-
-        JButton backBtn = createButton("Back to Dashboard", 40, 488, 310, 32);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(220, 225, 235));
-        setTextColor(backBtn, new Color(51, 65, 85));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
-
-        // Search Section
-        searchField = createSearchBar(370, 18, 590, 30, this::handleSearch, () -> loadCustomers(null));
+        // Right Column: Search Bar & Table
+        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadCustomers(null));
         searchField.addActionListener(e -> handleSearch());
 
-        // Table
         String[] columnNames = {"ID", "Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
         tableModel = createReadOnlyTableModel(columnNames);
-        customerTable = createTable(tableModel, 370, 52, 590, 468);
-        customerTable.setRowHeight(24);
-        if (customerTable.getColumnModel().getColumnCount() >= 8) {
-            customerTable.getColumnModel().getColumn(0).setPreferredWidth(40);
-            customerTable.getColumnModel().getColumn(0).setMaxWidth(55);
-            customerTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-            customerTable.getColumnModel().getColumn(2).setPreferredWidth(75);
-            customerTable.getColumnModel().getColumn(3).setPreferredWidth(75);
-            customerTable.getColumnModel().getColumn(4).setPreferredWidth(140);
-            customerTable.getColumnModel().getColumn(5).setPreferredWidth(65);
-            customerTable.getColumnModel().getColumn(6).setPreferredWidth(45);
-            customerTable.getColumnModel().getColumn(7).setPreferredWidth(70);
-        }
+        customerTable = createTable(tableModel, 410, 132, 745, 511);
+        setColumnWidths(customerTable, 50, 105, 95, 95, 180, 70, 55, 85);
+
         customerTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
@@ -244,17 +179,17 @@ public class CustomerManagement extends Screen {
     }
 
     private void handleSave() {
-        String username = usernameField.getText().trim();
-        String first = firstNameField.getText().trim();
-        String middle = middleNameField.getText().trim();
-        String last = lastNameField.getText().trim();
-        String email = emailField.getText().trim();
+        String username = getTrimmedText(usernameField);
+        String first = getTrimmedText(firstNameField);
+        String middle = getTrimmedText(middleNameField);
+        String last = getTrimmedText(lastNameField);
+        String email = getTrimmedText(emailField);
         String sex = (String) genderCombo.getSelectedItem();
-        String ageStr = ageField.getText().trim();
+        Integer ageValue = getIntOrNull(ageField);
         String status = (String) statusCombo.getSelectedItem();
         String password = new String(passwordField.getPassword());
 
-        if (username.isEmpty() || first.isEmpty() || last.isEmpty() || email.isEmpty() || ageStr.isEmpty()) {
+        if (username.isEmpty() || first.isEmpty() || last.isEmpty() || email.isEmpty() || ageValue == null) {
             showError("Please fill in all required fields (*).");
             return;
         }
@@ -264,8 +199,7 @@ public class CustomerManagement extends Screen {
             return;
         }
 
-        Integer ageValue = common.ValidationUtil.parsePositiveInt(ageStr);
-        if (ageValue == null || ageValue > 130) {
+        if (ageValue <= 0 || ageValue > 130) {
             showError("Please enter a valid age.");
             return;
         }
@@ -289,7 +223,6 @@ public class CustomerManagement extends Screen {
                 accountDAO.insertAccount(con, customerId, username, password);
 
                 if (!"Active".equals(status)) {
-                    // Update status if saved as Inactive or Suspended
                     CustomerRecord rec = customerDAO.getCustomerById(con, customerId);
                     if (rec != null && rec.customerAccountID > 0) {
                         accountDAO.updateStatus(con, rec.customerAccountID, status);
@@ -310,30 +243,28 @@ public class CustomerManagement extends Screen {
     }
 
     private void handleUpdate() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer customerId = getIntOrNull(idField);
+        if (customerId == null) {
             showError("Please select a customer from the table to update.");
             return;
         }
 
-        int customerId = Integer.parseInt(idText);
-        String username = usernameField.getText().trim();
-        String first = firstNameField.getText().trim();
-        String middle = middleNameField.getText().trim();
-        String last = lastNameField.getText().trim();
-        String email = emailField.getText().trim();
+        String username = getTrimmedText(usernameField);
+        String first = getTrimmedText(firstNameField);
+        String middle = getTrimmedText(middleNameField);
+        String last = getTrimmedText(lastNameField);
+        String email = getTrimmedText(emailField);
         String sex = (String) genderCombo.getSelectedItem();
-        String ageStr = ageField.getText().trim();
+        Integer ageValue = getIntOrNull(ageField);
         String status = (String) statusCombo.getSelectedItem();
         String password = new String(passwordField.getPassword());
 
-        if (first.isEmpty() || last.isEmpty() || email.isEmpty() || ageStr.isEmpty()) {
+        if (first.isEmpty() || last.isEmpty() || email.isEmpty() || ageValue == null) {
             showError("Please fill in all required customer details (*).");
             return;
         }
 
-        Integer ageValue = common.ValidationUtil.parsePositiveInt(ageStr);
-        if (ageValue == null || ageValue > 130) {
+        if (ageValue <= 0 || ageValue > 130) {
             showError("Please enter a valid age.");
             return;
         }
@@ -406,14 +337,13 @@ public class CustomerManagement extends Screen {
     }
 
     private void handleDelete() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer customerId = getIntOrNull(idField);
+        if (customerId == null) {
             showError("Please select a customer from the table to delete.");
             return;
         }
 
-        int customerId = Integer.parseInt(idText);
-        String name = firstNameField.getText().trim() + " " + lastNameField.getText().trim();
+        String name = getTrimmedText(firstNameField) + " " + getTrimmedText(lastNameField);
 
         if (confirm("Are you sure you want to permanently delete customer '" + name + "' (ID: " + customerId + ")?\nThis will also remove their login account and bookings.")) {
             try (Connection con = DBConnection.getConnection()) {
@@ -432,7 +362,7 @@ public class CustomerManagement extends Screen {
     }
 
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        String keyword = getTrimmedText(searchField);
         if (keyword.isEmpty()) {
             loadCustomers(null);
             return;

@@ -2,109 +2,205 @@ package ui.admin;
 
 import common.Screen;
 import common.Session;
-import ui.Homepage;
+import dao.BookingDAO;
+import dao.DestinationDAO;
+import dao.PaymentDAO;
+import dao.PaymentDAO.SalesSummary;
+import dao.TravelPackageDAO;
 
 import java.awt.Color;
 import java.awt.Font;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
+import ui.Homepage;
 
 public class AdminDashboard extends Screen {
+
     public AdminDashboard() {
-        super("Admin Dashboard", 1000, 600);
+        super("Admin Dashboard - Executive Suite", STD_WIDTH, STD_HEIGHT);
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+        getContentPane().setBackground(COLOR_BG);
 
-        // Welcome Header & Subtitle
-        JLabel title = createHeader("Admin Dashboard", 100, 45, 800, 35);
-        setFontSize(title, 26);
-        setTextColor(title, new Color(28, 55, 90));
+        initUI();
+    }
+
+    private void initUI() {
+        // -------------------------------------------------------------
+        // Header & Active Session Info
+        // -------------------------------------------------------------
+        JLabel categoryTag = createLabel("ADMINISTRATION PORTAL  •  COMMAND CENTER", 45, 16, 500, 16);
+        setFontStyle(categoryTag, Font.BOLD);
+        setFontSize(categoryTag, 11);
+        setTextColor(categoryTag, COLOR_PRIMARY);
+
+        JLabel title = createHeader("Administrator Dashboard", 45, 34, 600, 32);
+        setFontSize(title, 24);
+        setTextColor(title, COLOR_TEXT_MAIN);
 
         String welcome = "Welcome to the Admin Portal";
         if (Session.getUsername() != null) {
-            welcome += ", " + Session.getUsername() + " (" + Session.getUserRole() + ")";
+            welcome = "Active Session: " + Session.getUsername() + " (" + Session.getUserRole() + ")";
         }
+        JLabel subtitle = createLabel(welcome + "  •  Manage trip catalogs, reservations, accounts, and audit reports.", 45, 68, 800, 18);
+        setFontSize(subtitle, 12);
+        setTextColor(subtitle, COLOR_TEXT_MUTED);
 
-        JLabel subtitle = createLabel(welcome + " | Manage trips, reservations, and system users.", 100, 85, 800, 22);
-        setFontSize(subtitle, 13);
-        setTextColor(subtitle, new Color(100, 116, 139));
-
-        // -------------------------------------------------------------
-        // Column 1: Catalog & Reservations (x = 100, width = 360)
-        // -------------------------------------------------------------
-        JLabel col1Badge = createLabel("CATALOG & TRIPS", 100, 145, 360, 20);
-        setFontStyle(col1Badge, Font.BOLD);
-        setFontSize(col1Badge, 12);
-        setTextColor(col1Badge, new Color(14, 116, 144));
-
-        JButton destBtn = createButton("Manage Destinations", 100, 175, 360, 44);
-        setFontStyle(destBtn, Font.BOLD);
-        setFontSize(destBtn, 14);
-        setBackground(destBtn, new Color(14, 116, 144));
-        setTextColor(destBtn, Color.WHITE);
-        destBtn.setFocusPainted(false);
-        destBtn.addActionListener(e -> navigateTo(new DestinationManagement()));
-
-        JButton pkgBtn = createButton("Manage Packages", 100, 235, 360, 44);
-        setFontStyle(pkgBtn, Font.BOLD);
-        setFontSize(pkgBtn, 14);
-        setBackground(pkgBtn, new Color(79, 70, 229));
-        setTextColor(pkgBtn, Color.WHITE);
-        pkgBtn.setFocusPainted(false);
-        pkgBtn.addActionListener(e -> navigateTo(new PackageManagement()));
-
-        JButton bookBtn = createButton("Manage Bookings", 100, 295, 360, 44);
-        setFontStyle(bookBtn, Font.BOLD);
-        setFontSize(bookBtn, 14);
-        setBackground(bookBtn, new Color(37, 99, 235));
-        setTextColor(bookBtn, Color.WHITE);
-        bookBtn.setFocusPainted(false);
-        bookBtn.addActionListener(e -> navigateTo(new BookingManagement()));
-
-        // -------------------------------------------------------------
-        // Column 2: Accounts & Financials (x = 540, width = 360)
-        // -------------------------------------------------------------
-        JLabel col2Badge = createLabel("USERS & OPERATIONS", 540, 145, 360, 20);
-        setFontStyle(col2Badge, Font.BOLD);
-        setFontSize(col2Badge, 12);
-        setTextColor(col2Badge, new Color(75, 85, 99));
-
-        JButton custBtn = createButton("Manage Customers", 540, 175, 360, 44);
-        setFontStyle(custBtn, Font.BOLD);
-        setFontSize(custBtn, 14);
-        setBackground(custBtn, new Color(16, 149, 93));
-        setTextColor(custBtn, Color.WHITE);
-        custBtn.setFocusPainted(false);
-        custBtn.addActionListener(e -> navigateTo(new CustomerManagement()));
-
-        JButton salesBtn = createButton("Sales & Reports", 540, 235, 360, 44);
-        setFontStyle(salesBtn, Font.BOLD);
-        setFontSize(salesBtn, 14);
-        setBackground(salesBtn, new Color(217, 119, 6));
-        setTextColor(salesBtn, Color.WHITE);
-        salesBtn.setFocusPainted(false);
-        salesBtn.addActionListener(e -> navigateTo(new SalesManagement()));
-
-        JButton adminMgmtBtn = createButton("Admin Accounts", 540, 295, 360, 44);
-        setFontStyle(adminMgmtBtn, Font.BOLD);
-        setFontSize(adminMgmtBtn, 14);
-        setBackground(adminMgmtBtn, new Color(51, 65, 85));
-        setTextColor(adminMgmtBtn, Color.WHITE);
-        adminMgmtBtn.setFocusPainted(false);
-        adminMgmtBtn.addActionListener(e -> navigateTo(new AdminManagement()));
-
-        // Logout Button
-        JButton logoutBtn = createButton("Log Out", 100, 390, 800, 42);
-        setFontStyle(logoutBtn, Font.BOLD);
-        setFontSize(logoutBtn, 14);
-        setBackground(logoutBtn, new Color(220, 53, 69));
-        setTextColor(logoutBtn, Color.WHITE);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.addActionListener(e -> {
-            if (confirm("Are you sure you want to log out?")) {
+        // Quick Logout Button in Header
+        createDangerButton("Log Out", 1015, 24, 135, 36, () -> {
+            if (confirm("Are you sure you want to log out of the administration portal?")) {
                 Session.clear();
                 navigateTo(new Homepage());
             }
         });
+
+        // -------------------------------------------------------------
+        // Quick Stat Strip (4 Metric Indicator Pills with Live Counts)
+        // -------------------------------------------------------------
+        String destStat = "Catalog Spots";
+        try {
+            int count = new DestinationDAO().getAllDestinations().size();
+            destStat = count + " Active Destinations";
+        } catch (Exception ignored) {}
+
+        String pkgStat = "Itineraries & Pricing";
+        try {
+            int count = new TravelPackageDAO().getAllPackages().size();
+            pkgStat = count + " Tour Packages";
+        } catch (Exception ignored) {}
+
+        String resStat = "Bookings & Manifests";
+        try {
+            int count = new BookingDAO().getAllBookings().size();
+            resStat = count + " Total Bookings";
+        } catch (Exception ignored) {}
+
+        String revStat = "Revenue & Sales";
+        try {
+            SalesSummary summary = new PaymentDAO().getSalesReportSummary();
+            if (summary != null && summary.totalRevenue != null) {
+                revStat = String.format("PHP %,.2f Revenue", summary.totalRevenue);
+            }
+        } catch (Exception ignored) {}
+
+        createStatCard("DESTINATIONS", destStat, new Color(14, 116, 144), 45, 96, 265, 64);
+        createStatCard("PACKAGES", pkgStat, new Color(79, 70, 229), 325, 96, 265, 64);
+        createStatCard("RESERVATIONS", resStat, COLOR_PRIMARY, 605, 96, 265, 64);
+        createStatCard("ACCOUNTS & SALES", revStat, COLOR_SUCCESS, 885, 96, 265, 64);
+
+        // -------------------------------------------------------------
+        // Module Launcher Grid (6 Executive Feature Cards)
+        // Row 1: y = 178, Row 2: y = 380
+        // Col 1: x = 45, Col 2: x = 421, Col 3: x = 797 (width = 353 each)
+        // -------------------------------------------------------------
+
+        // 1. Destinations
+        createModuleCard(
+            "CATALOG", "Destinations",
+            "Configure tourist spots, countries, regional descriptions, and operational statuses.",
+            "Manage Destinations →", new Color(14, 116, 144),
+            45, 178, 353, 185,
+            () -> navigateTo(new DestinationManagement())
+        );
+
+        // 2. Packages
+        createModuleCard(
+            "ITINERARIES", "Travel Packages",
+            "Set bundle pricing, group traveler capacities, and destination links.",
+            "Manage Packages →", new Color(79, 70, 229),
+            421, 178, 353, 185,
+            () -> navigateTo(new PackageManagement())
+        );
+
+        // 3. Bookings
+        createModuleCard(
+            "RESERVATIONS", "Booking Oversight",
+            "Track customer reservations, review departure dates, and update statuses.",
+            "Manage Bookings →", COLOR_PRIMARY,
+            797, 178, 353, 185,
+            () -> navigateTo(new BookingManagement())
+        );
+
+        // 4. Customers
+        createModuleCard(
+            "DIRECTORY", "Customer Accounts",
+            "Inspect traveler records, manage login credentials, and update customer profiles.",
+            "Manage Customers →", COLOR_SUCCESS,
+            45, 380, 353, 185,
+            () -> navigateTo(new CustomerManagement())
+        );
+
+        // 5. Sales & Reports
+        createModuleCard(
+            "AUDITING", "Sales & Revenue",
+            "Audit payment transactions, revenue summaries, and financial payment methods.",
+            "View Sales Reports →", new Color(217, 119, 6),
+            421, 380, 353, 185,
+            () -> navigateTo(new SalesManagement())
+        );
+
+        // 6. Admin Management
+        createModuleCard(
+            "SECURITY", "Administrator Accounts",
+            "Manage administrative credentials, assign roles (Admin / Manager), and access logs.",
+            "Manage Admin Accounts →", new Color(51, 65, 85),
+            797, 380, 353, 185,
+            () -> navigateTo(new AdminManagement())
+        );
+
+        // -------------------------------------------------------------
+        // Footer Status Strip
+        // -------------------------------------------------------------
+        JLabel footerLbl = createLabel("TAMS Enterprise • Offline Desktop Solution • Connected to Apache Derby RDBMS", 45, 595, 800, 20);
+        setFontSize(footerLbl, 11);
+        setTextColor(footerLbl, COLOR_TEXT_MUTED);
+    }
+
+    private void createStatCard(String label, String sub, Color accentColor, int x, int y, int w, int h) {
+        JPanel card = new JPanel(null);
+        card.setBounds(x, y, w, h);
+        card.setBackground(COLOR_CARD_BG);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER, 1),
+                BorderFactory.createEmptyBorder(8, 12, 8, 12)
+            )
+        ));
+
+        JLabel titleLbl = createLabel(card, label, 14, 12, w - 28, 18);
+        setFontStyle(titleLbl, Font.BOLD);
+        setFontSize(titleLbl, 12);
+        setTextColor(titleLbl, accentColor);
+
+        JLabel descLbl = createLabel(card, sub, 14, 32, w - 28, 18);
+        setFontSize(descLbl, 11);
+        setTextColor(descLbl, COLOR_TEXT_MUTED);
+
+        add(card);
+    }
+
+    private void createModuleCard(String tag, String title, String desc, String btnText, Color accentColor,
+                                  int x, int y, int w, int h, Runnable onAction) {
+        JPanel card = createCard(x, y, w, h);
+
+        JLabel tagLbl = createLabel(card, tag, 18, 14, w - 36, 16);
+        setFontStyle(tagLbl, Font.BOLD);
+        setFontSize(tagLbl, 10);
+        setTextColor(tagLbl, accentColor);
+
+        JLabel titleLbl = createLabel(card, title, 18, 34, w - 36, 24);
+        setFontStyle(titleLbl, Font.BOLD);
+        setFontSize(titleLbl, 16);
+        setTextColor(titleLbl, COLOR_TEXT_MAIN);
+
+        JLabel descLbl = createLabel(card, "<html><body style='width: " + (w - 40) + "px;'>" + desc + "</body></html>", 18, 62, w - 36, 44);
+        setFontSize(descLbl, 12);
+        setTextColor(descLbl, COLOR_TEXT_MUTED);
+
+        JButton actionBtn = createStyledButton(card, btnText, 18, 126, w - 36, 38,
+            COLOR_BG, accentColor, COLOR_BORDER, 12, onAction);
+        setFontStyle(actionBtn, Font.BOLD);
     }
 }

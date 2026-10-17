@@ -11,14 +11,14 @@ import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 
 public class AdminManagement extends Screen {
@@ -39,103 +39,68 @@ public class AdminManagement extends Screen {
     private JTable accountsTable;
 
     public AdminManagement() {
-        super("Admin Account Management", 1000, 600);
+        super("Admin Account Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+        getContentPane().setBackground(COLOR_BG);
 
         initUI();
         loadAccounts(null);
     }
 
     private void initUI() {
-        JLabel header = createHeader("Admin Account Management", 40, 20, 320, 30);
-        setFontSize(header, 22);
-        setTextColor(header, new Color(28, 55, 90));
+        // Top Header Bar
+        createTopHeader(
+            "ADMIN CONSOLE  •  SECURITY & ACCESS",
+            "Admin Account Management",
+            "Manage administrator credentials, security accounts, and role privileges.",
+            () -> navigateTo(new AdminDashboard())
+        );
 
-        JLabel subheader = createLabel("Manage administrator credentials and roles.", 40, 52, 320, 20);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        // Left Column: Modern Card Container for Account Form
+        JPanel formCard = createCard(45, 88, 345, 555);
+        createCardTag(formCard, "ADMIN CREDENTIALS");
 
-        // Form Fields
-        JLabel idLbl = createLabel("Admin ID:", 40, 95, 100, 25);
-        setFontStyle(idLbl, Font.BOLD);
-        setFontSize(idLbl, 13);
-        setTextColor(idLbl, new Color(55, 65, 81));
-        idField = createTextField(150, 95, 200, 30);
-        idField.setEditable(false);
+        // Fields inside Card
+        idField = addFormField(formCard, "Admin ID:", 45, false);
+        usernameField = addFormField(formCard, "Username *:", 90, true);
 
-        JLabel userLbl = createLabel("Username *:", 40, 135, 100, 25);
-        setFontStyle(userLbl, Font.BOLD);
-        setFontSize(userLbl, 13);
-        setTextColor(userLbl, new Color(55, 65, 81));
-        usernameField = createTextField(150, 135, 200, 30);
-
-        JLabel passLbl = createLabel("Password:", 40, 175, 100, 25);
+        // Password Field
+        JLabel passLbl = createLabel(formCard, "Password:", 16, 135, 95, 26);
         setFontStyle(passLbl, Font.BOLD);
-        setFontSize(passLbl, 13);
-        setTextColor(passLbl, new Color(55, 65, 81));
-        passwordField = createPasswordField(150, 175, 200, 30);
+        setFontSize(passLbl, 11);
 
-        JLabel passNote = createLabel("(Leave blank to keep unchanged)", 150, 205, 210, 18);
-        setFontSize(passNote, 11);
-        setTextColor(passNote, new Color(100, 116, 139));
+        passwordField = createPasswordField(formCard, 115, 135, 214, 26);
 
-        JLabel roleLbl = createLabel("Role *:", 40, 230, 100, 25);
+        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 163, 214, 14);
+        setFontSize(passNote, 10);
+        setTextColor(passNote, COLOR_TEXT_MUTED);
+
+        // Role Combo
+        JLabel roleLbl = createLabel(formCard, "Role *:", 16, 190, 95, 26);
         setFontStyle(roleLbl, Font.BOLD);
-        setFontSize(roleLbl, 13);
-        setTextColor(roleLbl, new Color(55, 65, 81));
-        roleCombo = createComboBox(new String[]{"Admin", "Manager"}, 150, 230, 200, 30);
+        setFontSize(roleLbl, 11);
 
-        // CRUD Action Buttons
-        JButton saveBtn = createButton("Save", 40, 280, 95, 35);
-        setFontStyle(saveBtn, Font.BOLD);
-        setBackground(saveBtn, new Color(16, 149, 93));
-        setTextColor(saveBtn, Color.WHITE);
-        saveBtn.setFocusPainted(false);
-        saveBtn.addActionListener(e -> handleSave());
+        roleCombo = createComboBox(formCard, new String[]{"Admin", "Manager"}, 115, 190, 214, 26);
 
-        JButton updateBtn = createButton("Update", 145, 280, 95, 35);
-        setFontStyle(updateBtn, Font.BOLD);
-        setBackground(updateBtn, new Color(37, 99, 235));
-        setTextColor(updateBtn, Color.WHITE);
-        updateBtn.setFocusPainted(false);
-        updateBtn.addActionListener(e -> handleUpdate());
+        // Action Buttons inside Card
+        createSuccessButton(formCard, "Save", 16, 250, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 250, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 250, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 292, 313, 30, this::clearForm);
 
-        JButton deleteBtn = createButton("Delete", 250, 280, 100, 35);
-        setFontStyle(deleteBtn, Font.BOLD);
-        setBackground(deleteBtn, new Color(220, 53, 69));
-        setTextColor(deleteBtn, Color.WHITE);
-        deleteBtn.setFocusPainted(false);
-        deleteBtn.addActionListener(e -> handleDelete());
+        JLabel helperHint = createLabel(formCard, "Select an admin from the table to modify credentials", 16, 520, 313, 16);
+        setFontStyle(helperHint, Font.ITALIC);
+        setFontSize(helperHint, 10);
+        setTextColor(helperHint, COLOR_TEXT_MUTED);
 
-        JButton clearBtn = createButton("Clear Form", 40, 325, 310, 35);
-        setFontSize(clearBtn, 13);
-        setBackground(clearBtn, new Color(229, 231, 235));
-        setTextColor(clearBtn, new Color(55, 65, 81));
-        clearBtn.setFocusPainted(false);
-        clearBtn.addActionListener(e -> clearForm());
-
-        JButton backBtn = createButton("Back to Dashboard", 40, 375, 310, 35);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(220, 225, 235));
-        setTextColor(backBtn, new Color(51, 65, 85));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new AdminDashboard()));
-
-        // Search Section
-        searchField = createSearchBar(370, 18, 590, 30, this::handleSearch, () -> loadAccounts(null));
+        // Right Column: Search Bar & Table
+        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadAccounts(null));
         searchField.addActionListener(e -> handleSearch());
 
-        // Table
         tableModel = createReadOnlyTableModel(new String[]{"Admin ID", "Username", "Role"});
-        accountsTable = createTable(tableModel, 370, 52, 590, 480);
-        accountsTable.setRowHeight(24);
-        if (accountsTable.getColumnModel().getColumnCount() >= 3) {
-            accountsTable.getColumnModel().getColumn(0).setPreferredWidth(100);
-            accountsTable.getColumnModel().getColumn(0).setMaxWidth(120);
-            accountsTable.getColumnModel().getColumn(1).setPreferredWidth(310);
-            accountsTable.getColumnModel().getColumn(2).setPreferredWidth(180);
-        }
+        accountsTable = createTable(tableModel, 410, 132, 745, 511);
+        setColumnWidths(accountsTable, 120, 390, 225);
+
         accountsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
@@ -167,7 +132,7 @@ public class AdminManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = accountsTable.getSelectedRow();
-        if (selectedRow >= 0) {
+        if (selectedRow >= 0 && selectedRow < tableModel.getRowCount()) {
             idField.setText(tableModel.getValueAt(selectedRow, 0).toString());
             usernameField.setText(tableModel.getValueAt(selectedRow, 1).toString());
             passwordField.setText("");
@@ -176,7 +141,7 @@ public class AdminManagement extends Screen {
     }
 
     private void handleSave() {
-        String username = usernameField.getText().trim();
+        String username = getTrimmedText(usernameField);
         String password = new String(passwordField.getPassword());
         String role = (String) roleCombo.getSelectedItem();
 
@@ -200,14 +165,13 @@ public class AdminManagement extends Screen {
     }
 
     private void handleUpdate() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer adminId = getIntOrNull(idField);
+        if (adminId == null) {
             showError("Please select an admin account from the table to update.");
             return;
         }
 
-        int adminId = Integer.parseInt(idText);
-        String username = usernameField.getText().trim();
+        String username = getTrimmedText(usernameField);
         String password = new String(passwordField.getPassword());
         String role = (String) roleCombo.getSelectedItem();
 
@@ -231,14 +195,13 @@ public class AdminManagement extends Screen {
     }
 
     private void handleDelete() {
-        String idText = idField.getText().trim();
-        if (idText.isEmpty()) {
+        Integer adminId = getIntOrNull(idField);
+        if (adminId == null) {
             showError("Please select an admin account from the table to delete.");
             return;
         }
 
-        int adminId = Integer.parseInt(idText);
-        String username = usernameField.getText().trim();
+        String username = getTrimmedText(usernameField);
 
         // Prevent self-deletion if logged in
         if (Session.getCurrentAdmin() != null && Session.getCurrentAdmin().getadminAccountId() == adminId) {
@@ -263,7 +226,7 @@ public class AdminManagement extends Screen {
     }
 
     private void handleSearch() {
-        String keyword = searchField.getText().trim();
+        String keyword = getTrimmedText(searchField);
         if (keyword.isEmpty()) {
             loadAccounts(null);
             return;
