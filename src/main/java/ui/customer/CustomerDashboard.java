@@ -2,10 +2,8 @@ package ui.customer;
 
 import common.Screen;
 import common.Session;
-import java.awt.Color;
-import java.awt.Font;
-import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import ui.BrowseDestinations;
 import ui.BrowsePackages;
 import ui.Homepage;
@@ -15,88 +13,50 @@ public class CustomerDashboard extends Screen {
     private int customerId;
 
     public CustomerDashboard(int customerId) {
-        super("Customer Dashboard", 1000, 600);
+        super("Customer Dashboard");
         this.customerId = customerId;
 
-        getContentPane().setBackground(new Color(245, 247, 250));
-
-        // Welcome Header & Subtitle
-        JLabel title = createHeader("Customer Dashboard", 100, 45, 800, 35);
-        setFontSize(title, 26);
-        setTextColor(title, new Color(28, 55, 90));
-
+      
         String welcomeMsg = "Welcome! Explore destinations, manage your bookings, and plan your trips.";
         if (Session.getUsername() != null) {
             welcomeMsg = "Welcome back, " + Session.getUsername() + "! Plan your journeys and track reservations.";
         }
-        JLabel subtitle = createLabel(welcomeMsg, 100, 85, 800, 22);
-        setFontSize(subtitle, 13);
-        setTextColor(subtitle, new Color(100, 116, 139));
 
-        // -------------------------------------------------------------
-        // Column 1: My Reservations & Account (x = 100, width = 360)
-        // -------------------------------------------------------------
-        JLabel col1Badge = createLabel("MY RESERVATIONS", 100, 145, 360, 20);
-        setFontStyle(col1Badge, Font.BOLD);
-        setFontSize(col1Badge, 12);
-        setTextColor(col1Badge, new Color(37, 99, 235));
+ 
+        createTopHeader("CUSTOMER", "Customer Dashboard", welcomeMsg, null);
 
-        JButton myBookingsBtn = createButton("My Bookings", 100, 175, 360, 44);
-        setFontStyle(myBookingsBtn, Font.BOLD);
-        setFontSize(myBookingsBtn, 14);
-        setBackground(myBookingsBtn, new Color(37, 99, 235));
-        setTextColor(myBookingsBtn, Color.WHITE);
-        myBookingsBtn.setFocusPainted(false);
-        myBookingsBtn.addActionListener(e -> navigateTo(new MyBookings()));
+    
+        JPanel reservationsCard = createCard(45, 105, 545, 250);
+        createCardTag(reservationsCard, "MY RESERVATIONS");
 
-        JButton bookPackageBtn = createButton("Book a Package", 100, 235, 360, 44);
-        setFontStyle(bookPackageBtn, Font.BOLD);
-        setFontSize(bookPackageBtn, 14);
-        setBackground(bookPackageBtn, new Color(79, 70, 229));
-        setTextColor(bookPackageBtn, Color.WHITE);
-        bookPackageBtn.setFocusPainted(false);
-        bookPackageBtn.addActionListener(e -> navigateTo(new BookingScreen()));
+        createPrimaryButton(reservationsCard, "My Bookings", 16, 48, 513, 56,
+                () -> navigateTo(new MyBookings()));
+        addHint(reservationsCard, "View, track, and manage your reservations.", 110);
 
-        JButton profileBtn = createButton("My Profile", 100, 295, 360, 44);
-        setFontStyle(profileBtn, Font.BOLD);
-        setFontSize(profileBtn, 14);
-        setBackground(profileBtn, new Color(16, 149, 93));
-        setTextColor(profileBtn, Color.WHITE);
-        profileBtn.setFocusPainted(false);
-        profileBtn.addActionListener(e -> navigateTo(new CustomerProfile()));
+        createSuccessButton(reservationsCard, "Book a Package", 16, 148, 513, 56,
+                () -> navigateTo(new BookingScreen()));
+        addHint(reservationsCard, "Reserve a travel package for your next trip.", 210);
 
-        // -------------------------------------------------------------
-        // Column 2: Public Exploration (x = 540, width = 360)
-        // -------------------------------------------------------------
-        JLabel col2Badge = createLabel("EXPLORE & DISCOVER", 540, 145, 360, 20);
-        setFontStyle(col2Badge, Font.BOLD);
-        setFontSize(col2Badge, 12);
-        setTextColor(col2Badge, new Color(14, 116, 144));
+    
+        JPanel exploreCard = createCard(610, 105, 545, 250);
+        createCardTag(exploreCard, "EXPLORE & DISCOVER");
 
-        JButton browseDestBtn = createButton("Browse Destinations", 540, 175, 360, 44);
-        setFontStyle(browseDestBtn, Font.BOLD);
-        setFontSize(browseDestBtn, 14);
-        setBackground(browseDestBtn, new Color(14, 116, 144));
-        setTextColor(browseDestBtn, Color.WHITE);
-        browseDestBtn.setFocusPainted(false);
-        browseDestBtn.addActionListener(e -> navigateTo(new BrowseDestinations()));
+        createPrimaryButton(exploreCard, "Browse Destinations", 16, 48, 513, 56,
+                () -> navigateTo(new BrowseDestinations()));
+        addHint(exploreCard, "Discover places you can travel to.", 110);
 
-        JButton browsePkgBtn = createButton("Browse Packages", 540, 235, 360, 44);
-        setFontStyle(browsePkgBtn, Font.BOLD);
-        setFontSize(browsePkgBtn, 14);
-        setBackground(browsePkgBtn, new Color(217, 119, 6));
-        setTextColor(browsePkgBtn, Color.WHITE);
-        browsePkgBtn.setFocusPainted(false);
-        browsePkgBtn.addActionListener(e -> navigateTo(new BrowsePackages()));
+        createPrimaryButton(exploreCard, "Browse Packages", 16, 148, 513, 56,
+                () -> navigateTo(new BrowsePackages()));
+        addHint(exploreCard, "See available packages and their prices.", 210);
 
-        // Log out button spanning bottom
-        JButton logoutBtn = createButton("Log Out", 100, 390, 800, 42);
-        setFontStyle(logoutBtn, Font.BOLD);
-        setFontSize(logoutBtn, 14);
-        setBackground(logoutBtn, new Color(220, 53, 69));
-        setTextColor(logoutBtn, Color.WHITE);
-        logoutBtn.setFocusPainted(false);
-        logoutBtn.addActionListener(e -> {
+     
+        JPanel accountCard = createCard(45, 375, 1110, 110);
+        createCardTag(accountCard, "ACCOUNT");
+
+        createSecondaryButton(accountCard, "My Profile", 16, 48, 531, 48,
+                () -> navigateTo(new CustomerProfile()));
+
+        createDangerButton(accountCard, "Log Out", 563, 48, 531, 48, () -> {
             if (confirm("Are you sure you want to log out?")) {
                 Session.clear();
                 navigateTo(new Homepage());
@@ -110,5 +70,13 @@ public class CustomerDashboard extends Screen {
 
     public int getCustomerId() {
         return customerId;
+    }
+
+   
+    private JLabel addHint(JPanel parent, String text, int y) {
+        JLabel hint = createLabel(parent, text, 18, y, 509, 18);
+        setFontSize(hint, 12);
+        setTextColor(hint, COLOR_TEXT_MUTED);
+        return hint;
     }
 }
