@@ -101,6 +101,7 @@ public class CustomerRegister extends Screen {
         JButton registerBtn = createSuccessButton(card, "Register Account", 24, 412, 452, 40, null);
         setFontStyle(registerBtn, Font.BOLD);
         setFontSize(registerBtn, 14);
+        registerBtn.setIcon(loadIcon("/images/icons/add.png", 18, 18));
 
         confirmPassword.addActionListener(e -> registerBtn.doClick());
 
@@ -174,6 +175,7 @@ public class CustomerRegister extends Screen {
         JButton loginLinkBtn = createStyledButton(card, "Already have an account? Login here", 24, 460, 452, 34,
             new Color(239, 246, 255), COLOR_PRIMARY, new Color(191, 219, 254), 12, () -> navigateTo(new CustomerLogin()));
         setFontStyle(loginLinkBtn, Font.BOLD);
+        loginLinkBtn.setIcon(loadIcon("/images/icons/user.png", 16, 16));
 
         // Back button
         JButton backBtn = createSecondaryButton(card, "← Back to Home", 24, 502, 452, 34, () -> navigateTo(new Homepage()));

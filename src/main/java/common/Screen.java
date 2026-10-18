@@ -195,7 +195,7 @@ public class Screen extends JFrame {
         card.setBounds(x, y, width, height);
         card.setBackground(COLOR_CARD_BG);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER, 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
             BorderFactory.createEmptyBorder(0, 0, 0, 0)
         ));
         parent.add(card);

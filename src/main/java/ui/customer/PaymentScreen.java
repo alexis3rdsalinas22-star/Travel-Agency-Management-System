@@ -205,6 +205,7 @@ public class PaymentScreen extends Screen {
         confirmBtn = createPrimaryButton(summaryCard, "Confirm Payment →", 24, 285, 230, 42, this::handleConfirmPayment);
         confirmBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         confirmBtn.setBackground(new Color(5, 150, 105));
+        confirmBtn.setIcon(loadIcon("/images/icons/wallet.png", 18, 18));
 
         clearBtn = createSecondaryButton(summaryCard, "Clear", 265, 285, 90, 42, this::clearForm);
         setFontSize(clearBtn, 12);
@@ -592,13 +593,19 @@ public class PaymentScreen extends Screen {
         footer.setBackground(Color.WHITE);
         footer.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, COLOR_BORDER));
 
-        JButton printBtn = new JButton("🖨️ Print / Save Receipt");
+        JButton printBtn = new JButton("Print / Save Receipt");
         printBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         printBtn.setBackground(COLOR_PRIMARY);
         printBtn.setForeground(Color.WHITE);
         printBtn.setFocusPainted(false);
         printBtn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
         printBtn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        try {
+            java.net.URL pUrl = PaymentScreen.class.getResource("/images/icons/print.png");
+            if (pUrl != null) {
+                printBtn.setIcon(new ImageIcon(new ImageIcon(pUrl).getImage().getScaledInstance(16, 16, java.awt.Image.SCALE_SMOOTH)));
+            }
+        } catch (Exception ignored) {}
         printBtn.addActionListener(e -> {
             try {
                 PrinterJob job = PrinterJob.getPrinterJob();

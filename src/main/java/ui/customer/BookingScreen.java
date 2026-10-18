@@ -209,7 +209,7 @@ public class BookingScreen extends Screen {
             BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        createCardTag(formCard, "TRAVEL SPECIFICATIONS", "packages.png");
+        createCardTag(formCard, "TRAVEL SPECIFICATIONS", "calendar.png");
 
         // 1. Tour Package Dropdown
         pkgLbl = new JLabel("Select Tour Package *");
@@ -288,7 +288,7 @@ public class BookingScreen extends Screen {
             BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        createCardTag(travelersCard, "TRAVELER INFORMATION (PASSENGER MANIFEST - FR-09)", "customers.png");
+        createCardTag(travelersCard, "TRAVELER INFORMATION (PASSENGER MANIFEST - FR-09)", "user.png");
 
         travelersSubLbl = new JLabel("Enter full names, birthdates, and contacts for every passenger in this reservation.");
         travelersSubLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
@@ -380,7 +380,7 @@ public class BookingScreen extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(summaryCard, "RESERVATION SUMMARY", "sales.png");
+        createCardTag(summaryCard, "RESERVATION SUMMARY", "receipt.png");
 
         pkgNameLabel = new JLabel("Package Name");
         pkgNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -429,6 +429,7 @@ public class BookingScreen extends Screen {
         proceedBtn = createPrimaryButton(summaryCard, "Proceed to Payment →", 24, 325, 380, 44, this::handleProceedToPayment);
         proceedBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         proceedBtn.setBackground(new Color(79, 70, 229));
+        proceedBtn.setIcon(loadIcon("/images/icons/plane.png", 18, 18));
 
         container.add(summaryCard);
     }

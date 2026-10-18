@@ -106,6 +106,7 @@ public class AdminLogin extends Screen {
             adminAccent, Color.WHITE, null);
         setFontStyle(loginBtn, Font.BOLD);
         setFontSize(loginBtn, 14);
+        loginBtn.setIcon(loadIcon("/images/icons/security.png", 18, 18));
 
         loginBtn.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override

@@ -125,7 +125,8 @@ public class BrowseDestinations extends Screen {
         ));
         searchField.addActionListener(e -> handleSearch());
 
-        searchBtn = createPrimaryButton(this, "Search", 720, 88, 85, 34, this::handleSearch);
+        searchBtn = createPrimaryButton(this, "Search", 720, 88, 95, 34, this::handleSearch);
+        searchBtn.setIcon(loadIcon("/images/icons/search.png", 14, 14));
         setFontSize(searchBtn, 12);
 
         showAllBtn = createSecondaryButton(this, "Show All", 815, 88, 95, 34, () -> {
@@ -395,6 +396,7 @@ public class BrowseDestinations extends Screen {
                 navigateTo(new DestinationDetails(dest));
             });
             detailsBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            detailsBtn.setIcon(loadIcon("/images/icons/info.png", 13, 13));
             add(detailsBtn);
 
             exploreBtn = createPrimaryButton(this, "Packages →", 0, 0, 10, 10, () -> {
@@ -402,6 +404,7 @@ public class BrowseDestinations extends Screen {
             });
             exploreBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
             exploreBtn.setBackground(new Color(79, 70, 229));
+            exploreBtn.setIcon(loadIcon("/images/icons/packages.png", 13, 13));
             add(exploreBtn);
         }
 

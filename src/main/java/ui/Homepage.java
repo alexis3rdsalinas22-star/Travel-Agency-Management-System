@@ -512,14 +512,14 @@ public class Homepage extends Screen {
             "Customer Portal",
             "Access your passenger bookings, view reservation vouchers, check itinerary departure dates, and manage your account profile.",
             COLOR_PRIMARY,
-            new ActionButtonDef(custBtnText, COLOR_PRIMARY, Color.WHITE, () -> {
+            new ActionButtonDef(custBtnText, COLOR_PRIMARY, Color.WHITE, "user.png", () -> {
                 if (Session.isCustomer()) {
                     navigateTo(new CustomerDashboard());
                 } else {
                     navigateTo(new CustomerLogin());
                 }
             }),
-            new ActionButtonDef("Create New Account", COLOR_SUCCESS, Color.WHITE, () -> navigateTo(new CustomerRegister()))
+            new ActionButtonDef("Create New Account", COLOR_SUCCESS, Color.WHITE, "add.png", () -> navigateTo(new CustomerRegister()))
         );
         pageContainer.add(cardTraveler);
 
@@ -530,8 +530,8 @@ public class Homepage extends Screen {
             "Public Travel Catalogs",
             "Browse curated vacation destinations and tour packages with transparent pricing, traveler capacity limits, and trip descriptions.",
             new Color(14, 116, 144), // Cyan/Teal
-            new ActionButtonDef("Browse Destinations →", new Color(14, 116, 144), Color.WHITE, () -> navigateTo(new BrowseDestinations())),
-            new ActionButtonDef("Browse Tour Packages →", new Color(79, 70, 229), Color.WHITE, () -> navigateTo(new BrowsePackages()))
+            new ActionButtonDef("Browse Destinations →", new Color(14, 116, 144), Color.WHITE, "location.png", () -> navigateTo(new BrowseDestinations())),
+            new ActionButtonDef("Browse Tour Packages →", new Color(79, 70, 229), Color.WHITE, "packages.png", () -> navigateTo(new BrowsePackages()))
         );
         pageContainer.add(cardCatalogs);
 
@@ -543,14 +543,14 @@ public class Homepage extends Screen {
             "Administration Suite",
             "Access the administrative control center to configure trip catalogs, process customer bookings, audit sales reports, and manage access.",
             new Color(51, 65, 85), // Slate
-            new ActionButtonDef(adminBtnText, new Color(51, 65, 85), Color.WHITE, () -> {
+            new ActionButtonDef(adminBtnText, new Color(51, 65, 85), Color.WHITE, "security.png", () -> {
                 if (Session.isAdmin()) {
                     navigateTo(new AdminDashboard());
                 } else {
                     navigateTo(new AdminLogin());
                 }
             }),
-            new ActionButtonDef("Exit Application", COLOR_SECONDARY, new Color(71, 85, 105), () -> {
+            new ActionButtonDef("Exit Application", COLOR_SECONDARY, new Color(71, 85, 105), "logout.png", () -> {
                 if (confirm("Are you sure you want to exit the application?")) {
                     System.exit(0);
                 }
@@ -621,6 +621,9 @@ public class Homepage extends Screen {
             JButton b1 = createStyledButton(card, btn1.text, 24, 185, 280, 38, btn1.bg, btn1.fg, btn1.action);
             setFontStyle(b1, Font.BOLD);
             setFontSize(b1, 12);
+            if (btn1.iconName != null) {
+                b1.setIcon(loadIcon("/images/icons/" + btn1.iconName, 15, 15));
+            }
         }
 
         // Button 2
@@ -628,6 +631,9 @@ public class Homepage extends Screen {
             JButton b2 = createStyledButton(card, btn2.text, 24, 232, 280, 38, btn2.bg, btn2.fg, btn2.action);
             setFontStyle(b2, Font.BOLD);
             setFontSize(b2, 12);
+            if (btn2.iconName != null) {
+                b2.setIcon(loadIcon("/images/icons/" + btn2.iconName, 15, 15));
+            }
             if (btn2.bg.equals(COLOR_SECONDARY)) {
                 b2.setBorder(BorderFactory.createCompoundBorder(
                     BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
@@ -936,11 +942,17 @@ public class Homepage extends Screen {
         final Color bg;
         final Color fg;
         final Runnable action;
+        final String iconName;
 
         ActionButtonDef(String text, Color bg, Color fg, Runnable action) {
+            this(text, bg, fg, null, action);
+        }
+
+        ActionButtonDef(String text, Color bg, Color fg, String iconName, Runnable action) {
             this.text = text;
             this.bg = bg;
             this.fg = fg;
+            this.iconName = iconName;
             this.action = action;
         }
     }

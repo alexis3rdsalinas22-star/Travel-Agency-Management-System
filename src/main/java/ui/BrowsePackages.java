@@ -95,7 +95,7 @@ public class BrowsePackages extends Screen {
         setFontSize(subheader, 12);
         setTextColor(subheader, COLOR_TEXT_MUTED);
 
-        bookNowBtn = createPrimaryButton(this, "Book a Package →", 760, 18, 155, 36, () -> {
+        bookNowBtn = createPrimaryButton(this, "Book a Package →", 760, 18, 165, 36, () -> {
             if (common.Session.isCustomer()) {
                 navigateTo(new ui.customer.BookingScreen());
             } else {
@@ -105,8 +105,9 @@ public class BrowsePackages extends Screen {
             }
         });
         setFontSize(bookNowBtn, 12);
+        bookNowBtn.setIcon(loadIcon("/images/icons/plane.png", 16, 16));
 
-        backBtn = createSecondaryButton(this, common.Session.isCustomer() ? "← Dashboard" : "← Home", 925, 18, 130, 36, () -> {
+        backBtn = createSecondaryButton(this, common.Session.isCustomer() ? "← Dashboard" : "← Home", 935, 18, 120, 36, () -> {
             if (common.Session.isCustomer()) {
                 navigateTo(new ui.customer.CustomerDashboard());
             } else {
@@ -137,7 +138,8 @@ public class BrowsePackages extends Screen {
         ));
         searchField.addActionListener(e -> handleSearch());
 
-        searchBtn = createPrimaryButton(this, "Search", 720, 88, 85, 34, this::handleSearch);
+        searchBtn = createPrimaryButton(this, "Search", 720, 88, 95, 34, this::handleSearch);
+        searchBtn.setIcon(loadIcon("/images/icons/search.png", 14, 14));
         setFontSize(searchBtn, 12);
 
         showAllBtn = createSecondaryButton(this, "Show All", 815, 88, 95, 34, () -> {
@@ -431,6 +433,7 @@ public class BrowsePackages extends Screen {
                 navigateTo(new PackageDetails(pkg));
             });
             detailsBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            detailsBtn.setIcon(loadIcon("/images/icons/info.png", 13, 13));
             add(detailsBtn);
 
             bookBtn = createPrimaryButton(this, "Book Now →", 0, 0, 10, 10, () -> {
@@ -444,6 +447,7 @@ public class BrowsePackages extends Screen {
             });
             bookBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
             bookBtn.setBackground(new Color(79, 70, 229));
+            bookBtn.setIcon(loadIcon("/images/icons/plane.png", 13, 13));
             add(bookBtn);
         }
 

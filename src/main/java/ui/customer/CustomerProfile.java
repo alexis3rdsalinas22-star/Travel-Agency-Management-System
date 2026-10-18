@@ -115,6 +115,7 @@ public class CustomerProfile extends Screen {
 
         saveBtn = createSuccessButton(container, "Save Profile Changes →", 0, 0, 230, 42, this::handleSaveProfile);
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        saveBtn.setIcon(loadIcon("/images/icons/check.png", 16, 16));
     }
 
     private void buildAccountBadgeCard() {
@@ -125,7 +126,7 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(16, 20, 16, 20)
         ));
 
-        ImageIcon userIcon = loadIcon("/images/icons/customers.png", 26, 26);
+        ImageIcon userIcon = loadIcon("/images/icons/user.png", 28, 28);
         if (userIcon != null) {
             avatarBadge = new JLabel(userIcon, JLabel.CENTER);
         } else {
@@ -170,7 +171,7 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(personalCard, "PERSONAL INFORMATION", "customers.png");
+        createCardTag(personalCard, "PERSONAL INFORMATION", "user.png");
 
         firstNameField  = addFormField(personalCard, "First Name *", 48,  true);
         middleNameField = addFormField(personalCard, "Middle Name",  102, true);
@@ -187,7 +188,7 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(contactCard, "CONTACT & DEMOGRAPHICS", "destinations.png");
+        createCardTag(contactCard, "CONTACT & DEMOGRAPHICS", "edit.png");
 
         emailField  = addFormField(contactCard, "Email Address *", 48, true);
         genderCombo = addComboRow(contactCard, "Sex / Gender *", new String[]{"Male", "Female"}, 102);

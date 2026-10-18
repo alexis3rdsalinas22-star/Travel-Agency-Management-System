@@ -12,6 +12,10 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
@@ -153,26 +157,51 @@ public class CustomerDashboard extends Screen {
     }
 
     private void buildHero() {
-        hero = new JPanel(null);
-        hero.setBackground(COLOR_PRIMARY);
-        hero.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(67, 56, 202), 1, true),
-            BorderFactory.createEmptyBorder(0, 0, 0, 0)
-        ));
+        hero = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                // Rich diagonal gradient: Deep Navy -> Vibrant Royal Blue
+                GradientPaint gp = new GradientPaint(0, 0, new Color(26, 54, 138), w, h, new Color(37, 99, 235));
+                g2.setPaint(gp);
+                g2.fillRoundRect(0, 0, w, h, 16, 16);
 
-        greeting = new JLabel(greetingText().toUpperCase());
+                // Subtle glowing translucent decorative background rings
+                g2.setColor(new Color(255, 255, 255, 14));
+                g2.fillOval(w - 240, -80, 320, 320);
+                g2.setColor(new Color(255, 255, 255, 8));
+                g2.fillOval(w - 380, -40, 240, 240);
+
+                // Inner top highlight line
+                g2.setColor(new Color(255, 255, 255, 45));
+                g2.drawRoundRect(1, 1, w - 3, h - 3, 14, 14);
+                g2.dispose();
+            }
+        };
+        hero.setOpaque(false);
+        hero.setBorder(BorderFactory.createEmptyBorder());
+
+        greeting = new JLabel("  " + greetingText().toUpperCase());
         greeting.setFont(new Font("Segoe UI", Font.BOLD, 10));
         greeting.setForeground(COLOR_ON_PRIMARY_MUTED);
+        javax.swing.ImageIcon planeIcon = loadIcon("/images/icons/plane.png", 12, 12);
+        if (planeIcon != null) {
+            greeting.setIcon(planeIcon);
+        }
         hero.add(greeting);
 
         String username = Session.getUsername();
-        String title = username != null ? "Welcome back, " + username + "!" : "Welcome!";
+        String title = username != null ? "Welcome back, " + username + "!" : "Welcome back!";
         nameHeader = new JLabel(title);
         nameHeader.setFont(new Font("Segoe UI", Font.BOLD, 22));
         nameHeader.setForeground(Color.WHITE);
         hero.add(nameHeader);
 
-        subtitle = new JLabel("Plan your journeys, review reservations, and track departures.");
+        subtitle = new JLabel("Plan your journeys, review reservations, and track departures in real time.");
         subtitle.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         subtitle.setForeground(COLOR_ON_PRIMARY_MUTED);
         hero.add(subtitle);
@@ -183,14 +212,19 @@ public class CustomerDashboard extends Screen {
         dateLabel = new JLabel(today, SwingConstants.RIGHT);
         dateLabel.setFont(new Font("Segoe UI", Font.BOLD, 10));
         dateLabel.setForeground(COLOR_ON_PRIMARY_MUTED);
+        javax.swing.ImageIcon calIcon = loadIcon("/images/icons/calendar.png", 13, 13);
+        if (calIcon != null) {
+            dateLabel.setIcon(calIcon);
+            dateLabel.setHorizontalTextPosition(SwingConstants.RIGHT);
+        }
         hero.add(dateLabel);
 
         // Stats Pill inside Hero
         statsPill = new JPanel(null);
         statsPill.setOpaque(true);
-        statsPill.setBackground(new Color(255, 255, 255, 25));
+        statsPill.setBackground(new Color(255, 255, 255, 28));
         statsPill.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(255, 255, 255, 45), 1, true),
+            BorderFactory.createLineBorder(new Color(255, 255, 255, 55), 1, true),
             BorderFactory.createEmptyBorder(4, 12, 4, 12)
         ));
 
@@ -199,14 +233,21 @@ public class CustomerDashboard extends Screen {
         JLabel statsLbl = new JLabel(statsText);
         statsLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         statsLbl.setForeground(Color.WHITE);
+        javax.swing.ImageIcon statIcon = pendingPaymentsCount > 0
+                ? loadIcon("/images/icons/calendar.png", 13, 13)
+                : loadIcon("/images/icons/check.png", 13, 13);
+        if (statIcon != null) {
+            statsLbl.setIcon(statIcon);
+        }
         statsLbl.setBounds(10, 4, 280, 20);
         statsPill.add(statsLbl);
 
         hero.add(statsPill);
 
-        heroBookBtn = createStyledButton(hero, "Book a Package →", 0, 0, 180, 38,
+        heroBookBtn = createStyledButton(hero, "Book a Package →", 0, 0, 185, 38,
                 Color.WHITE, COLOR_PRIMARY, () -> navigateTo(new BookingScreen()));
         heroBookBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        heroBookBtn.setIcon(loadIcon("/images/icons/plane.png", 15, 15));
 
         container.add(hero);
     }
@@ -225,7 +266,7 @@ public class CustomerDashboard extends Screen {
                 totalBookingsCount > 0 ? totalBookingsCount + " Active reservation(s) on file." : "View, track, and manage your trips.",
                 COLOR_PRIMARY, () -> navigateTo(new MyBookings())));
 
-        actionTileHolders.add(createTile("packages.png", "Book a Package",
+        actionTileHolders.add(createTile("plane.png", "Book a Package",
                 "Reserve a vacation package for your next trip.",
                 COLOR_SUCCESS, () -> navigateTo(new BookingScreen())));
 
@@ -233,7 +274,7 @@ public class CustomerDashboard extends Screen {
                 "Discover scenic places and tourist spots.",
                 new Color(2, 132, 199), () -> navigateTo(new BrowseDestinations())));
 
-        actionTileHolders.add(createTile("packages.png", "Browse Tour Packages",
+        actionTileHolders.add(createTile("globe.png", "Browse Tour Packages",
                 "Compare available packages, itineraries and pricing.",
                 new Color(79, 70, 229), () -> navigateTo(new BrowsePackages())));
 
@@ -246,25 +287,41 @@ public class CustomerDashboard extends Screen {
         TileHolder holder = new TileHolder();
         holder.hintText = hint;
 
-        JPanel tile = new JPanel(null);
+        JPanel tile = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, w, h, 14, 14);
+                // Subtle bottom shadow / depth outline
+                g2.setColor(new Color(226, 232, 240));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                // Top accent bar
+                g2.setColor(accent);
+                g2.fillRoundRect(0, 0, w, 4, 4, 4);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         tile.setBackground(Color.WHITE);
-        tile.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(3, 0, 0, 0, accent),
-            BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(COLOR_BORDER, 1),
-                BorderFactory.createEmptyBorder(16, 20, 16, 20)
-            )
-        ));
+        tile.setOpaque(false);
+        tile.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
         holder.panel = tile;
 
-        int badgeSize = 36;
+        int badgeSize = 38;
         JLabel iconBadge = new JLabel();
         iconBadge.setOpaque(true);
-        iconBadge.setBackground(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 20));
-        iconBadge.setBorder(BorderFactory.createLineBorder(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 60), 1));
+        iconBadge.setBackground(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 22));
+        iconBadge.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 70), 1, true),
+            BorderFactory.createEmptyBorder(2, 2, 2, 2)
+        ));
         iconBadge.setHorizontalAlignment(JLabel.CENTER);
 
-        javax.swing.ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 20, 20);
+        javax.swing.ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 22, 22);
         if (icon != null) {
             iconBadge.setIcon(icon);
         }
@@ -293,24 +350,14 @@ public class CustomerDashboard extends Screen {
             @Override
             public void mouseEntered(MouseEvent e) {
                 tile.setBackground(COLOR_HOVER);
-                tile.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(3, 0, 0, 0, accent),
-                    BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(accent, 1),
-                        BorderFactory.createEmptyBorder(16, 20, 16, 20)
-                    )
-                ));
+                openLbl.setText("Open Portal  ➔");
+                tile.repaint();
             }
             @Override
             public void mouseExited(MouseEvent e) {
                 tile.setBackground(Color.WHITE);
-                tile.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createMatteBorder(3, 0, 0, 0, accent),
-                    BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(COLOR_BORDER, 1),
-                        BorderFactory.createEmptyBorder(16, 20, 16, 20)
-                    )
-                ));
+                openLbl.setText("Open Portal →");
+                tile.repaint();
             }
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -321,29 +368,56 @@ public class CustomerDashboard extends Screen {
     }
 
     private void buildRecentBookingsSection() {
-        recentSection = new JPanel(null);
+        recentSection = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, w, h, 16, 16);
+                g2.setColor(new Color(226, 232, 240));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         recentSection.setBackground(Color.WHITE);
-        recentSection.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
-            BorderFactory.createEmptyBorder(16, 20, 16, 20)
-        ));
+        recentSection.setOpaque(false);
+        recentSection.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
 
-        createCardTag(recentSection, "RECENT RESERVATIONS");
+        createCardTag(recentSection, "RECENT RESERVATIONS", "calendar.png");
 
         recentRowHolders.clear();
         int ry = 44;
         for (BookingRecord b : recentBookings) {
-            JPanel row = new JPanel(null);
+            JPanel row = new JPanel(null) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int w = getWidth();
+                    int h = getHeight();
+                    g2.setColor(getBackground());
+                    g2.fillRoundRect(0, 0, w, h, 10, 10);
+                    g2.setColor(new Color(226, 232, 240));
+                    g2.drawRoundRect(0, 0, w - 1, h - 1, 10, 10);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
             row.setBackground(new Color(248, 250, 252));
-            row.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(241, 245, 249), 1, true),
-                BorderFactory.createEmptyBorder(6, 12, 6, 12)
-            ));
+            row.setOpaque(false);
             row.setBounds(20, ry, 1000, 48);
 
             JLabel pName = new JLabel("<html><b>" + (b.packageName != null ? b.packageName : "Tour Package") + "</b></html>");
             pName.setFont(new Font("Segoe UI", Font.BOLD, 12));
             pName.setForeground(COLOR_TEXT_MAIN);
+            javax.swing.ImageIcon pkgIcon = loadIcon("/images/icons/packages.png", 16, 16);
+            if (pkgIcon != null) {
+                pName.setIcon(pkgIcon);
+            }
             pName.setBounds(14, 12, 380, 24);
             row.add(pName);
 
@@ -351,6 +425,10 @@ public class CustomerDashboard extends Screen {
             JLabel dName = new JLabel(dest);
             dName.setFont(new Font("Segoe UI", Font.PLAIN, 11));
             dName.setForeground(COLOR_TEXT_MUTED);
+            javax.swing.ImageIcon locIcon = loadIcon("/images/icons/location.png", 14, 14);
+            if (locIcon != null) {
+                dName.setIcon(locIcon);
+            }
             dName.setBounds(400, 12, 220, 24);
             row.add(dName);
 
@@ -379,9 +457,10 @@ public class CustomerDashboard extends Screen {
             st.setBounds(640, 13, 98, 22);
             row.add(st);
 
-            JButton actBtn = createSecondaryButton(row, "View →", 750, 8, 80, 30, () -> {
+            JButton actBtn = createSecondaryButton(row, "View →", 750, 8, 85, 30, () -> {
                 navigateTo(new MyBookings());
             });
+            actBtn.setIcon(loadIcon("/images/icons/info.png", 13, 13));
             setFontSize(actBtn, 11);
 
             RecentRowHolder rholder = new RecentRowHolder();
@@ -403,20 +482,32 @@ public class CustomerDashboard extends Screen {
     private final List<JLabel> stepDescs = new ArrayList<>();
 
     private void buildHowItWorks() {
-        howItWorks = new JPanel(null);
+        howItWorks = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, w, h, 16, 16);
+                g2.setColor(new Color(226, 232, 240));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 16, 16);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         howItWorks.setBackground(Color.WHITE);
-        howItWorks.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
-            BorderFactory.createEmptyBorder(16, 20, 16, 20)
-        ));
+        howItWorks.setOpaque(false);
+        howItWorks.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
 
-        createCardTag(howItWorks, "HOW IT WORKS");
+        createCardTag(howItWorks, "HOW IT WORKS", "info.png");
 
         String[][] steps = {
-            {"1", "Browse", "Explore scenic destinations and compare all-inclusive tour packages."},
-            {"2", "Book",   "Select your preferred dates, specify travelers, and confirm your itinerary."},
-            {"3", "Pay",    "Settle safely with GCash, bank transfer, card, or cash counter checkout."},
-            {"4", "Travel", "Track vouchers, check status updates, and enjoy your holiday!"}
+            {"1", "Browse", "Explore scenic destinations and compare all-inclusive tour packages.", "search.png"},
+            {"2", "Book",   "Select your preferred dates, specify travelers, and confirm your itinerary.", "calendar.png"},
+            {"3", "Pay",    "Settle safely with GCash, bank transfer, card, or cash counter checkout.", "wallet.png"},
+            {"4", "Travel", "Track vouchers, check status updates, and enjoy your holiday!", "plane.png"}
         };
 
         stepCols.clear();
@@ -426,22 +517,38 @@ public class CustomerDashboard extends Screen {
             JPanel stepCol = new JPanel(null);
             stepCol.setOpaque(false);
 
-            JLabel num = new JLabel(steps[i][0]);
-            num.setFont(new Font("Segoe UI", Font.BOLD, 24));
-            num.setForeground(COLOR_PRIMARY);
-            num.setBounds(0, 0, 28, 30);
+            String stepNum = steps[i][0];
+            JLabel num = new JLabel(stepNum, SwingConstants.CENTER) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(COLOR_PRIMARY);
+                    g2.fillOval(0, 0, getWidth(), getHeight());
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            num.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            num.setForeground(Color.WHITE);
+            num.setOpaque(false);
+            num.setBounds(0, 3, 26, 26);
             stepCol.add(num);
 
             JLabel stepTitle = new JLabel(steps[i][1]);
             stepTitle.setFont(new Font("Segoe UI", Font.BOLD, 13));
             stepTitle.setForeground(COLOR_TEXT_MAIN);
-            stepTitle.setBounds(34, 4, 180, 20);
+            javax.swing.ImageIcon stepIcon = loadIcon("/images/icons/" + steps[i][3], 15, 15);
+            if (stepIcon != null) {
+                stepTitle.setIcon(stepIcon);
+            }
+            stepTitle.setBounds(34, 4, 180, 22);
             stepCol.add(stepTitle);
 
             JLabel desc = new JLabel("<html><body style='color: #64748B; font-family: Segoe UI; font-size: 11px; line-height: 1.35;'>"
                 + steps[i][2] + "</body></html>");
             desc.setVerticalAlignment(SwingConstants.TOP);
-            desc.setBounds(34, 26, 240, 56);
+            desc.setBounds(34, 28, 240, 56);
             stepCol.add(desc);
 
             stepCols.add(stepCol);
@@ -453,17 +560,29 @@ public class CustomerDashboard extends Screen {
     }
 
     private void buildAccountBar() {
-        accountBar = new JPanel(null);
+        accountBar = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                int w = getWidth();
+                int h = getHeight();
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, w, h, 14, 14);
+                g2.setColor(new Color(226, 232, 240));
+                g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
         accountBar.setBackground(Color.WHITE);
-        accountBar.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
-            BorderFactory.createEmptyBorder(12, 16, 12, 16)
-        ));
+        accountBar.setOpaque(false);
+        accountBar.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
         profileBtn = createSecondaryButton(accountBar, "My Profile & Account Settings", 0, 0, 10, 10,
                 () -> navigateTo(new CustomerProfile()));
         profileBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        javax.swing.ImageIcon profileIcon = loadIcon("/images/icons/customers.png", 18, 18);
+        javax.swing.ImageIcon profileIcon = loadIcon("/images/icons/user.png", 18, 18);
         if (profileIcon != null) {
             profileBtn.setIcon(profileIcon);
         }
@@ -475,6 +594,10 @@ public class CustomerDashboard extends Screen {
             }
         });
         logoutBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        javax.swing.ImageIcon logoutIcon = loadIcon("/images/icons/logout.png", 18, 18);
+        if (logoutIcon != null) {
+            logoutBtn.setIcon(logoutIcon);
+        }
 
         container.add(accountBar);
     }

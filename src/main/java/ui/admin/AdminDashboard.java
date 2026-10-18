@@ -17,6 +17,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -29,6 +30,7 @@ public class AdminDashboard extends Screen {
         JLabel tagLbl;
         JLabel valLbl;
         JLabel subLbl;
+        JLabel iconBadge;
     }
 
     private static class ModuleCardHolder {
@@ -67,18 +69,27 @@ public class AdminDashboard extends Screen {
         // -------------------------------------------------------------
         // Header & Active Session Info
         // -------------------------------------------------------------
-        JLabel categoryTag = createLabel("ADMINISTRATION PORTAL  •  COMMAND CENTER", 45, 14, 550, 16);
+        ImageIcon logo = getLogoIcon(38, 38);
+        int textX = 45;
+        if (logo != null) {
+            JLabel logoLbl = new JLabel(logo);
+            logoLbl.setBounds(45, 18, 38, 38);
+            add(logoLbl);
+            textX = 95;
+        }
+
+        JLabel categoryTag = createLabel("ADMINISTRATION PORTAL  •  COMMAND CENTER", textX, 14, 550, 16);
         setFontStyle(categoryTag, Font.BOLD);
         setFontSize(categoryTag, 10);
         setTextColor(categoryTag, COLOR_PRIMARY);
 
-        JLabel title = createHeader("Administrator Dashboard", 45, 30, 600, 32);
+        JLabel title = createHeader("Administrator Dashboard", textX, 30, 600, 32);
         setFontSize(title, 24);
         setTextColor(title, COLOR_TEXT_MAIN);
 
         String username = Session.getUsername() != null ? Session.getUsername() : "Administrator";
         String role = Session.getUserRole() != null ? Session.getUserRole() : "Admin";
-        JLabel subtitle = createLabel("Active Session: " + username + "  (" + role + ")  •  System-wide operations and catalogs overview", 45, 64, 800, 18);
+        JLabel subtitle = createLabel("Active Session: " + username + "  (" + role + ")  •  System-wide operations and catalogs overview", textX, 64, 800, 18);
         setFontSize(subtitle, 12);
         setTextColor(subtitle, COLOR_TEXT_MUTED);
 
@@ -89,6 +100,7 @@ public class AdminDashboard extends Screen {
                 navigateTo(new Homepage());
             }
         });
+        logoutBtn.setIcon(loadIcon("/images/icons/logout.png", 16, 16));
 
         // -------------------------------------------------------------
         // Quick Stat Strip (4 Metric Indicator Pills with Live Counts)
@@ -119,10 +131,10 @@ public class AdminDashboard extends Screen {
             }
         } catch (Exception ignored) {}
 
-        statCards.add(createStatCard("DESTINATIONS", destStat, "Catalog Spots", new Color(14, 116, 144)));
-        statCards.add(createStatCard("TOUR PACKAGES", pkgStat, "Curated Itineraries", new Color(79, 70, 229)));
-        statCards.add(createStatCard("RESERVATIONS", resStat, "Client Bookings", COLOR_PRIMARY));
-        statCards.add(createStatCard("TOTAL REVENUE", revStat, "Audited Sales", COLOR_SUCCESS));
+        statCards.add(createStatCard("destinations.png", "DESTINATIONS", destStat, "Catalog Spots", new Color(14, 116, 144)));
+        statCards.add(createStatCard("packages.png", "TOUR PACKAGES", pkgStat, "Curated Itineraries", new Color(79, 70, 229)));
+        statCards.add(createStatCard("calendar.png", "RESERVATIONS", resStat, "Client Bookings", COLOR_PRIMARY));
+        statCards.add(createStatCard("wallet.png", "TOTAL REVENUE", revStat, "Audited Sales", COLOR_SUCCESS));
 
         // -------------------------------------------------------------
         // Module Launcher Grid (6 Executive Feature Cards with Icon Badges)
@@ -202,9 +214,14 @@ public class AdminDashboard extends Screen {
             StatCardHolder sc = statCards.get(i);
             int sx = pad + i * (statWidth + statGap);
             sc.panel.setBounds(sx, 92, statWidth, statHeight);
-            sc.tagLbl.setSize(statWidth - 28, 14);
-            sc.valLbl.setSize(statWidth - 28, 24);
-            sc.subLbl.setSize(statWidth - 28, 16);
+            int badgeSize = 34;
+            int textW = statWidth - 28 - badgeSize - 8;
+            sc.tagLbl.setSize(textW, 14);
+            sc.valLbl.setSize(textW, 24);
+            sc.subLbl.setSize(textW, 16);
+            if (sc.iconBadge != null) {
+                sc.iconBadge.setBounds(statWidth - 14 - badgeSize, (statHeight - badgeSize) / 2, badgeSize, badgeSize);
+            }
         }
 
         // 6 Module Cards (2 rows of 3 columns)
@@ -246,7 +263,7 @@ public class AdminDashboard extends Screen {
         repaint();
     }
 
-    private StatCardHolder createStatCard(String tag, String value, String subtitle, Color accentColor) {
+    private StatCardHolder createStatCard(String iconFileName, String tag, String value, String subtitle, Color accentColor) {
         StatCardHolder holder = new StatCardHolder();
         JPanel card = new JPanel(null);
         card.setBackground(COLOR_CARD_BG);
@@ -271,6 +288,22 @@ public class AdminDashboard extends Screen {
         holder.subLbl = createLabel(card, subtitle, 14, 48, 200, 16);
         setFontSize(holder.subLbl, 11);
         setTextColor(holder.subLbl, COLOR_TEXT_MUTED);
+
+        int badgeSize = 34;
+        JLabel iconBadge = new JLabel();
+        iconBadge.setOpaque(true);
+        iconBadge.setBackground(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 20));
+        iconBadge.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 60), 1, true),
+            BorderFactory.createEmptyBorder(2, 2, 2, 2)
+        ));
+        iconBadge.setHorizontalAlignment(JLabel.CENTER);
+        ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 18, 18);
+        if (icon != null) {
+            iconBadge.setIcon(icon);
+        }
+        card.add(iconBadge);
+        holder.iconBadge = iconBadge;
 
         holder.panel = card;
         add(card);

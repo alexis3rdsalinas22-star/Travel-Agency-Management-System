@@ -87,6 +87,7 @@ public class CustomerLogin extends Screen {
         JButton loginBtn = createPrimaryButton(card, "Sign In to Account", 28, 258, 394, 42, null);
         setFontStyle(loginBtn, Font.BOLD);
         setFontSize(loginBtn, 14);
+        loginBtn.setIcon(loadIcon("/images/icons/user.png", 18, 18));
 
         // Keyboard ergonomics
         username.addActionListener(e -> password.requestFocusInWindow());
@@ -119,6 +120,7 @@ public class CustomerLogin extends Screen {
         JButton registerBtn = createStyledButton(card, "Don't have an account? Register here", 28, 312, 394, 36,
             new Color(239, 246, 255), COLOR_PRIMARY, new Color(191, 219, 254), 12, () -> navigateTo(new CustomerRegister()));
         setFontStyle(registerBtn, Font.BOLD);
+        registerBtn.setIcon(loadIcon("/images/icons/add.png", 16, 16));
 
         // Back to home
         JButton backBtn = createSecondaryButton(card, "← Back to Home", 28, 360, 394, 36, () -> navigateTo(new Homepage()));

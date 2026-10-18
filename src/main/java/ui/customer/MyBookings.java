@@ -149,10 +149,11 @@ public class MyBookings extends Screen {
         ));
         searchField.addActionListener(e -> applyFilter());
 
-        searchBtn = createPrimaryButton(this, "Search", 720, 88, 85, 34, this::applyFilter);
+        searchBtn = createPrimaryButton(this, "Search", 720, 88, 95, 34, this::applyFilter);
+        searchBtn.setIcon(loadIcon("/images/icons/search.png", 14, 14));
         setFontSize(searchBtn, 12);
 
-        showAllBtn = createSecondaryButton(this, "Show All", 815, 88, 95, 34, () -> {
+        showAllBtn = createSecondaryButton(this, "Show All", 825, 88, 95, 34, () -> {
             searchField.setText("");
             applyFilter();
         });
@@ -184,18 +185,21 @@ public class MyBookings extends Screen {
         });
 
         // Bottom Action Buttons
-        viewVoucherBtn = createPrimaryButton(this, "View Voucher & Manifest →", 45, 580, 230, 38, this::handleViewVoucher);
+        viewVoucherBtn = createPrimaryButton(this, "View Voucher & Manifest →", 45, 580, 235, 38, this::handleViewVoucher);
         viewVoucherBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         viewVoucherBtn.setBackground(new Color(79, 70, 229)); // Indigo
+        viewVoucherBtn.setIcon(loadIcon("/images/icons/receipt.png", 16, 16));
         viewVoucherBtn.setEnabled(false);
 
         payNowBtn = createPrimaryButton(this, "Pay Now →", 750, 580, 140, 38, this::handlePayNow);
         payNowBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         payNowBtn.setBackground(new Color(5, 150, 105)); // Emerald
+        payNowBtn.setIcon(loadIcon("/images/icons/wallet.png", 16, 16));
         payNowBtn.setEnabled(false);
 
         cancelBtn = createDangerButton(this, "Cancel Booking", 900, 580, 155, 38, this::handleCancelBooking);
         cancelBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        cancelBtn.setIcon(loadIcon("/images/icons/delete.png", 16, 16));
         cancelBtn.setEnabled(false);
     }
 
@@ -667,6 +671,7 @@ public class MyBookings extends Screen {
                     showInfo("No payment records found for this reservation.");
                 }
             });
+            viewOrBtn.setIcon(loadIcon("/images/icons/receipt.png", 15, 15));
             viewOrBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
             viewOrBtn.setBackground(new Color(5, 150, 105));
 
@@ -732,7 +737,7 @@ public class MyBookings extends Screen {
         footerPanel.setBackground(Color.WHITE);
         footerPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, COLOR_BORDER));
 
-        JButton printBtn = createPrimaryButton(this, "🖨️ Print / Save Voucher", 0, 0, 200, 36, () -> {
+        JButton printBtn = createPrimaryButton(this, "Print / Save Voucher", 0, 0, 200, 36, () -> {
             try {
                 PrinterJob job = PrinterJob.getPrinterJob();
                 job.setJobName("GOD_Travel_Voucher_BK" + b.bookingID);
@@ -760,6 +765,7 @@ public class MyBookings extends Screen {
         });
         printBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         printBtn.setBackground(COLOR_PRIMARY);
+        printBtn.setIcon(loadIcon("/images/icons/print.png", 16, 16));
 
         JButton closeBtn = createSecondaryButton(this, "Close", 0, 0, 100, 36, dialog::dispose);
         closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
