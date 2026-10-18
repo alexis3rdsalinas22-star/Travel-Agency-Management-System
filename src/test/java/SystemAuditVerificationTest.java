@@ -36,6 +36,8 @@ public class SystemAuditVerificationTest {
         runTest("TC-06: Payment Processing & Group Undercharge Prevention", SystemAuditVerificationTest::testPaymentAndTotalDue);
         runTest("TC-07: Admin vs Manager Role Permission Boundaries", SystemAuditVerificationTest::testAdminManagerPermissions);
         runTest("TC-08: Sales Reporting KPI Aggregations", SystemAuditVerificationTest::testSalesReporting);
+        runTest("TC-09: Automated Trip Status Lifecycle (Priority 3)", SystemAuditVerificationTest::testTripStatusLifecycle);
+        runTest("TC-10: Passenger Manifest & Itinerary Voucher Integrity (Priority 1)", SystemAuditVerificationTest::testVoucherAndManifestIntegrity);
 
         System.out.println("======================================================================");
         System.out.printf("   Audit Test Summary: %d PASSED, %d FAILED\n", testsPassed, testsFailed);
@@ -363,6 +365,117 @@ public class SystemAuditVerificationTest {
 
             assertEquals(expectedCount, summary.totalPayments, "Summary transaction count must match actual DB payment records");
             assertEquals(0, expectedRevenue.compareTo(summary.totalRevenue), "Summary total revenue must match actual DB payment sum");
+        }
+    }
+
+    // TC-09: Automated Trip Status Lifecycle (Priority 3)
+    private static void testTripStatusLifecycle() throws Exception {
+        BookingDAO bookingDAO = new BookingDAO();
+        int customerAccId = 1;
+        int packageId = 1;
+
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            int pastConfirmedId = -1;
+            int futureConfirmedId = -1;
+            int pastPendingId = -1;
+            try {
+                // Past confirmed booking: travelDate = 2 days ago
+                Timestamp pastDate = new Timestamp(System.currentTimeMillis() - 2L * 86400000L);
+                pastConfirmedId = bookingDAO.createBooking(customerAccId, packageId, pastDate, "Confirmed");
+
+                // Future confirmed booking: travelDate = 10 days in future
+                Timestamp futureDate = new Timestamp(System.currentTimeMillis() + 10L * 86400000L);
+                futureConfirmedId = bookingDAO.createBooking(customerAccId, packageId, futureDate, "Confirmed");
+
+                // Past pending booking: travelDate = 2 days ago
+                pastPendingId = bookingDAO.createBooking(customerAccId, packageId, pastDate, "Pending");
+
+                // Run automated lifecycle transition
+                int updated = bookingDAO.autoCompletePastBookings();
+                assertTrue(updated >= 1, "At least 1 past confirmed booking should transition to Completed");
+
+                // Verify past confirmed booking is now Completed
+                BookingDAO.BookingRecord recPast = bookingDAO.getBookingById(pastConfirmedId);
+                assertNotNull(recPast, "Past booking record must exist");
+                assertEquals("Completed", recPast.status, "Past confirmed booking must automatically transition to Completed");
+
+                // Verify future confirmed booking is still Confirmed
+                BookingDAO.BookingRecord recFuture = bookingDAO.getBookingById(futureConfirmedId);
+                assertNotNull(recFuture, "Future booking record must exist");
+                assertEquals("Confirmed", recFuture.status, "Future booking must remain Confirmed");
+
+                // Verify past pending booking remains Pending
+                BookingDAO.BookingRecord recPending = bookingDAO.getBookingById(pastPendingId);
+                assertNotNull(recPending, "Pending booking record must exist");
+                assertEquals("Pending", recPending.status, "Pending booking without payment must remain Pending");
+
+                con.commit();
+            } finally {
+                // Clean up test bookings
+                try (Statement st = con.createStatement()) {
+                    if (pastConfirmedId != -1) st.executeUpdate("DELETE FROM booking WHERE bookingID = " + pastConfirmedId);
+                    if (futureConfirmedId != -1) st.executeUpdate("DELETE FROM booking WHERE bookingID = " + futureConfirmedId);
+                    if (pastPendingId != -1) st.executeUpdate("DELETE FROM booking WHERE bookingID = " + pastPendingId);
+                }
+                con.commit();
+            }
+        }
+    }
+
+    // TC-10: Passenger Manifest & Itinerary Voucher Data Integrity (Priority 1)
+    private static void testVoucherAndManifestIntegrity() throws Exception {
+        BookingDAO bookingDAO = new BookingDAO();
+        PaymentDAO paymentDAO = new PaymentDAO();
+        int customerAccId = 1;
+        int packageId = 1;
+
+        try (Connection con = DBConnection.getConnection()) {
+            con.setAutoCommit(false);
+            int bookingId = -1;
+            try {
+                Timestamp travelDate = new Timestamp(System.currentTimeMillis() + 30L * 86400000L);
+                String testRequests = "Strict vegetarian meal and wheelchair assistance";
+                bookingId = bookingDAO.createBooking(customerAccId, packageId, travelDate, "Pending", testRequests);
+
+                // Add 2 travelers to passenger manifest
+                bookingDAO.addTraveler(bookingId, "Maria", "Santos", java.sql.Date.valueOf("1995-04-12"), "09171234567");
+                bookingDAO.addTraveler(bookingId, "Juan", "Santos", java.sql.Date.valueOf("1992-08-20"), "09187654321");
+
+                // Retrieve manifest and verify
+                List<BookingDAO.TravelerRecord> travelers = bookingDAO.getTravelersByBooking(bookingId);
+                assertEquals(2, travelers.size(), "Manifest must return exactly 2 registered passengers");
+                assertEquals("Maria", travelers.get(0).firstName, "First passenger first name match");
+                assertEquals("Santos", travelers.get(0).lastName, "First passenger last name match");
+                assertEquals("09171234567", travelers.get(0).contactNumber, "First passenger contact match");
+                assertEquals("Juan", travelers.get(1).firstName, "Second passenger first name match");
+
+                // Verify BookingRecord traveler count subquery & special requests
+                BookingDAO.BookingRecord record = bookingDAO.getBookingById(bookingId);
+                assertNotNull(record, "Booking record must exist");
+                assertEquals(2, record.travelerCount, "Traveler count subquery must accurately reflect 2 manifest travelers");
+                assertEquals(testRequests, record.specialRequests, "Booking record must accurately retain persisted special requests");
+
+                // Record payment transaction
+                BigDecimal paidAmount = new BigDecimal("5000.00");
+                paymentDAO.recordPayment(bookingId, paidAmount, "GCash", "Customer Voucher Test");
+
+                List<PaymentDAO.PaymentRecord> payments = paymentDAO.getPaymentsByBooking(bookingId);
+                assertEquals(1, payments.size(), "Payment ledger must record 1 payment entry");
+                assertEquals(0, paidAmount.compareTo(payments.get(0).amount), "Payment amount match");
+                assertEquals("GCash", payments.get(0).method, "Payment method match");
+
+                con.commit();
+            } finally {
+                try (Statement st = con.createStatement()) {
+                    if (bookingId != -1) {
+                        st.executeUpdate("DELETE FROM payment WHERE bookingID = " + bookingId);
+                        st.executeUpdate("DELETE FROM traveler WHERE bookingID = " + bookingId);
+                        st.executeUpdate("DELETE FROM booking WHERE bookingID = " + bookingId);
+                    }
+                }
+                con.commit();
+            }
         }
     }
 

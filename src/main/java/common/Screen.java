@@ -88,6 +88,20 @@ public class Screen extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
         getContentPane().setBackground(COLOR_BG);
+        setAppIcon();
+    }
+
+    private void setAppIcon() {
+        try {
+            java.net.URL url = getClass().getResource("/images/icons/logo.png");
+            if (url != null) {
+                setIconImage(new ImageIcon(url).getImage());
+            }
+        } catch (Exception ignored) {}
+    }
+
+    public ImageIcon getLogoIcon(int width, int height) {
+        return loadIcon("/images/icons/logo.png", width, height);
     }
 
     public final void showScreen() {
@@ -134,16 +148,25 @@ public class Screen extends JFrame {
     // -------------------------------------------------------------
 
     public JButton createTopHeader(String categoryTag, String title, String subtitle, Runnable onBack) {
-        JLabel tag = createLabel(categoryTag, 45, 14, 550, 16);
+        ImageIcon logo = getLogoIcon(38, 38);
+        int textX = 45;
+        if (logo != null) {
+            JLabel logoLbl = new JLabel(logo);
+            logoLbl.setBounds(45, 18, 38, 38);
+            add(logoLbl);
+            textX = 95;
+        }
+
+        JLabel tag = createLabel(categoryTag, textX, 14, 550, 16);
         setFontStyle(tag, Font.BOLD);
         setFontSize(tag, 10);
         setTextColor(tag, COLOR_PRIMARY);
 
-        JLabel header = createHeader(title, 45, 30, 550, 30);
+        JLabel header = createHeader(title, textX, 30, 550, 30);
         setFontSize(header, 22);
         setTextColor(header, COLOR_TEXT_MAIN);
 
-        JLabel sub = createLabel(subtitle, 45, 60, 650, 18);
+        JLabel sub = createLabel(subtitle, textX, 60, 650, 18);
         setFontSize(sub, 12);
         setTextColor(sub, COLOR_TEXT_MUTED);
 
@@ -180,7 +203,18 @@ public class Screen extends JFrame {
     }
 
     public JLabel createCardTag(Container parent, String text) {
+        return createCardTag(parent, text, null);
+    }
+
+    public JLabel createCardTag(Container parent, String text, String iconFileName) {
         JLabel cardTag = new JLabel("  " + text + "  ");
+        if (iconFileName != null && !iconFileName.trim().isEmpty()) {
+            String path = iconFileName.startsWith("/") ? iconFileName : "/images/icons/" + iconFileName;
+            ImageIcon icon = loadIcon(path, 14, 14);
+            if (icon != null) {
+                cardTag.setIcon(icon);
+            }
+        }
         cardTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         cardTag.setForeground(COLOR_PRIMARY);
         cardTag.setOpaque(true);

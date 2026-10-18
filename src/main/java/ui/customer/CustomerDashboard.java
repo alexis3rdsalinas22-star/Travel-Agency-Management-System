@@ -53,7 +53,26 @@ public class CustomerDashboard extends Screen {
     private JButton heroBookBtn;
     private JPanel statsPill;
 
-    private final List<JPanel> actionTiles = new ArrayList<>();
+    private static class TileHolder {
+        JPanel panel;
+        JLabel iconBadge;
+        JLabel titleLbl;
+        JLabel hintLbl;
+        JLabel openLbl;
+        String hintText;
+    }
+
+    private final List<TileHolder> actionTileHolders = new ArrayList<>();
+
+    private static class RecentRowHolder {
+        JPanel row;
+        JLabel pName;
+        JLabel dName;
+        JLabel st;
+        JButton actBtn;
+    }
+
+    private final List<RecentRowHolder> recentRowHolders = new ArrayList<>();
     private JPanel recentSection;
     private JPanel howItWorks;
     private JPanel accountBar;
@@ -200,30 +219,33 @@ public class CustomerDashboard extends Screen {
     }
 
     private void buildActionTiles() {
-        actionTiles.clear();
+        actionTileHolders.clear();
 
-        actionTiles.add(createTile("My Bookings",
+        actionTileHolders.add(createTile("bookings.png", "My Bookings",
                 totalBookingsCount > 0 ? totalBookingsCount + " Active reservation(s) on file." : "View, track, and manage your trips.",
                 COLOR_PRIMARY, () -> navigateTo(new MyBookings())));
 
-        actionTiles.add(createTile("Book a Package",
+        actionTileHolders.add(createTile("packages.png", "Book a Package",
                 "Reserve a vacation package for your next trip.",
                 COLOR_SUCCESS, () -> navigateTo(new BookingScreen())));
 
-        actionTiles.add(createTile("Browse Destinations",
+        actionTileHolders.add(createTile("destinations.png", "Browse Destinations",
                 "Discover scenic places and tourist spots.",
                 new Color(2, 132, 199), () -> navigateTo(new BrowseDestinations())));
 
-        actionTiles.add(createTile("Browse Tour Packages",
+        actionTileHolders.add(createTile("packages.png", "Browse Tour Packages",
                 "Compare available packages, itineraries and pricing.",
                 new Color(79, 70, 229), () -> navigateTo(new BrowsePackages())));
 
-        for (JPanel tile : actionTiles) {
-            container.add(tile);
+        for (TileHolder th : actionTileHolders) {
+            container.add(th.panel);
         }
     }
 
-    private JPanel createTile(String title, String hint, Color accent, Runnable action) {
+    private TileHolder createTile(String iconFileName, String title, String hint, Color accent, Runnable action) {
+        TileHolder holder = new TileHolder();
+        holder.hintText = hint;
+
         JPanel tile = new JPanel(null);
         tile.setBackground(Color.WHITE);
         tile.setBorder(BorderFactory.createCompoundBorder(
@@ -233,23 +255,38 @@ public class CustomerDashboard extends Screen {
                 BorderFactory.createEmptyBorder(16, 20, 16, 20)
             )
         ));
+        holder.panel = tile;
+
+        int badgeSize = 36;
+        JLabel iconBadge = new JLabel();
+        iconBadge.setOpaque(true);
+        iconBadge.setBackground(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 20));
+        iconBadge.setBorder(BorderFactory.createLineBorder(new Color(accent.getRed(), accent.getGreen(), accent.getBlue(), 60), 1));
+        iconBadge.setHorizontalAlignment(JLabel.CENTER);
+
+        javax.swing.ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 20, 20);
+        if (icon != null) {
+            iconBadge.setIcon(icon);
+        }
+        tile.add(iconBadge);
+        holder.iconBadge = iconBadge;
 
         JLabel titleLbl = new JLabel(title);
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
         titleLbl.setForeground(COLOR_TEXT_MAIN);
-        titleLbl.setBounds(20, 20, 240, 22);
         tile.add(titleLbl);
+        holder.titleLbl = titleLbl;
 
         JLabel hintLbl = new JLabel("<html><body style='width: 200px; color: #64748B; font-family: Segoe UI; font-size: 11px;'>"
             + hint + "</body></html>");
-        hintLbl.setBounds(20, 48, 240, 36);
         tile.add(hintLbl);
+        holder.hintLbl = hintLbl;
 
         JLabel openLbl = new JLabel("Open Portal →");
         openLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         openLbl.setForeground(accent);
-        openLbl.setBounds(20, 96, 240, 18);
         tile.add(openLbl);
+        holder.openLbl = openLbl;
 
         tile.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         tile.addMouseListener(new MouseAdapter() {
@@ -280,7 +317,7 @@ public class CustomerDashboard extends Screen {
                 action.run();
             }
         });
-        return tile;
+        return holder;
     }
 
     private void buildRecentBookingsSection() {
@@ -293,6 +330,7 @@ public class CustomerDashboard extends Screen {
 
         createCardTag(recentSection, "RECENT RESERVATIONS");
 
+        recentRowHolders.clear();
         int ry = 44;
         for (BookingRecord b : recentBookings) {
             JPanel row = new JPanel(null);
@@ -303,10 +341,10 @@ public class CustomerDashboard extends Screen {
             ));
             row.setBounds(20, ry, 1000, 48);
 
-            JLabel pName = new JLabel("<html><b>" + b.packageName + "</b></html>");
+            JLabel pName = new JLabel("<html><b>" + (b.packageName != null ? b.packageName : "Tour Package") + "</b></html>");
             pName.setFont(new Font("Segoe UI", Font.BOLD, 12));
             pName.setForeground(COLOR_TEXT_MAIN);
-            pName.setBounds(12, 12, 380, 24);
+            pName.setBounds(14, 12, 380, 24);
             row.add(pName);
 
             String dest = b.destinationName != null ? b.destinationName : "General Destination";
@@ -316,19 +354,43 @@ public class CustomerDashboard extends Screen {
             dName.setBounds(400, 12, 220, 24);
             row.add(dName);
 
-            JLabel st = new JLabel(b.status != null ? b.status.toUpperCase() : "PENDING", SwingConstants.CENTER);
+            String status = b.status != null ? b.status.trim() : "Pending";
+            JLabel st = new JLabel(status.toUpperCase(), SwingConstants.CENTER);
             st.setFont(new Font("Segoe UI", Font.BOLD, 10));
-            boolean isPending = "Pending".equalsIgnoreCase(b.status);
-            st.setForeground(isPending ? new Color(217, 119, 6) : new Color(5, 150, 105));
             st.setOpaque(true);
-            st.setBackground(isPending ? new Color(254, 243, 199) : new Color(236, 253, 245));
-            st.setBounds(640, 13, 90, 22);
+
+            if ("Confirmed".equalsIgnoreCase(status)) {
+                st.setForeground(new Color(22, 101, 52));
+                st.setBackground(new Color(220, 252, 231));
+                st.setBorder(BorderFactory.createLineBorder(new Color(187, 247, 208), 1));
+            } else if ("Completed".equalsIgnoreCase(status)) {
+                st.setForeground(new Color(7, 89, 133));
+                st.setBackground(new Color(224, 242, 254));
+                st.setBorder(BorderFactory.createLineBorder(new Color(186, 230, 253), 1));
+            } else if ("Cancelled".equalsIgnoreCase(status)) {
+                st.setForeground(new Color(185, 28, 28));
+                st.setBackground(new Color(254, 226, 226));
+                st.setBorder(BorderFactory.createLineBorder(new Color(254, 202, 202), 1));
+            } else { // Pending
+                st.setForeground(new Color(180, 83, 9));
+                st.setBackground(new Color(254, 243, 199));
+                st.setBorder(BorderFactory.createLineBorder(new Color(253, 230, 138), 1));
+            }
+            st.setBounds(640, 13, 98, 22);
             row.add(st);
 
             JButton actBtn = createSecondaryButton(row, "View →", 750, 8, 80, 30, () -> {
                 navigateTo(new MyBookings());
             });
             setFontSize(actBtn, 11);
+
+            RecentRowHolder rholder = new RecentRowHolder();
+            rholder.row = row;
+            rholder.pName = pName;
+            rholder.dName = dName;
+            rholder.st = st;
+            rholder.actBtn = actBtn;
+            recentRowHolders.add(rholder);
 
             recentSection.add(row);
             ry += 54;
@@ -401,6 +463,10 @@ public class CustomerDashboard extends Screen {
         profileBtn = createSecondaryButton(accountBar, "My Profile & Account Settings", 0, 0, 10, 10,
                 () -> navigateTo(new CustomerProfile()));
         profileBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        javax.swing.ImageIcon profileIcon = loadIcon("/images/icons/customers.png", 18, 18);
+        if (profileIcon != null) {
+            profileBtn.setIcon(profileIcon);
+        }
 
         logoutBtn = createDangerButton(accountBar, "Log Out", 0, 0, 10, 10, () -> {
             if (confirm("Are you sure you want to log out?")) {
@@ -418,19 +484,19 @@ public class CustomerDashboard extends Screen {
         int h = getHeight();
         if (w <= 0 || h <= 0) return;
 
-        int pad = 45;
-        int scrollbarMargin = 20;
-        int contentWidth = Math.max(880, w - (2 * pad) - scrollbarMargin);
-
         int scrollY = 90;
-        int scrollHeight = Math.max(300, h - scrollY - 20);
-        scrollPane.setBounds(pad, scrollY, contentWidth, scrollHeight);
+        int scrollHeight = Math.max(300, h - scrollY);
+        scrollPane.setBounds(0, scrollY, w, scrollHeight);
+
+        int pad = 45;
+        int scrollbarW = 18;
+        int contentWidth = Math.max(880, w - (2 * pad) - scrollbarW);
 
         int currentY = 10;
 
         // 1. Hero
         int heroH = 115;
-        hero.setBounds(0, currentY, contentWidth, heroH);
+        hero.setBounds(pad, currentY, contentWidth, heroH);
 
         greeting.setBounds(24, 14, 400, 16);
         nameHeader.setBounds(24, 32, 500, 30);
@@ -449,9 +515,21 @@ public class CustomerDashboard extends Screen {
         int tileW = (contentWidth - ((numTiles - 1) * tileGap)) / numTiles;
         int tileH = 135;
 
-        for (int i = 0; i < actionTiles.size(); i++) {
-            JPanel tile = actionTiles.get(i);
-            tile.setBounds(i * (tileW + tileGap), currentY, tileW, tileH);
+        for (int i = 0; i < actionTileHolders.size(); i++) {
+            TileHolder th = actionTileHolders.get(i);
+            th.panel.setBounds(pad + i * (tileW + tileGap), currentY, tileW, tileH);
+
+            int badgeSize = 36;
+            th.iconBadge.setBounds(tileW - 16 - badgeSize, 14, badgeSize, badgeSize);
+
+            int textW = tileW - 32 - badgeSize - 4;
+            th.titleLbl.setBounds(16, 16, Math.max(100, textW), 22);
+
+            th.hintLbl.setBounds(16, 44, tileW - 32, 44);
+            th.hintLbl.setText("<html><body style='width: " + (tileW - 38) + "px; color: #64748B; font-family: Segoe UI; font-size: 11px;'>"
+                + th.hintText + "</body></html>");
+
+            th.openLbl.setBounds(16, 98, tileW - 32, 18);
         }
 
         currentY += tileH + 18;
@@ -459,13 +537,17 @@ public class CustomerDashboard extends Screen {
         // 3. Recent Bookings (if any)
         if (recentSection != null) {
             int recentH = 44 + recentBookings.size() * 54 + 14;
-            recentSection.setBounds(0, currentY, contentWidth, recentH);
+            recentSection.setBounds(pad, currentY, contentWidth, recentH);
+            int rowW = contentWidth - 40;
 
-            for (java.awt.Component c : recentSection.getComponents()) {
-                if (c instanceof JPanel && c != recentSection) {
-                    JPanel row = (JPanel) c;
-                    row.setBounds(20, row.getY(), contentWidth - 40, row.getHeight());
-                }
+            for (RecentRowHolder rh : recentRowHolders) {
+                rh.row.setBounds(20, rh.row.getY(), rowW, rh.row.getHeight());
+                rh.actBtn.setBounds(rowW - 92, 9, 80, 30);
+                rh.st.setBounds(rowW - 200, 13, 98, 22);
+
+                int nameW = Math.min(380, (rowW - 220) / 2);
+                rh.pName.setBounds(14, 12, nameW, 24);
+                rh.dName.setBounds(14 + nameW + 16, 12, Math.max(100, rowW - 220 - nameW - 20), 24);
             }
 
             currentY += recentH + 18;
@@ -473,7 +555,7 @@ public class CustomerDashboard extends Screen {
 
         // 4. How It Works
         int hiwH = 145;
-        howItWorks.setBounds(0, currentY, contentWidth, hiwH);
+        howItWorks.setBounds(pad, currentY, contentWidth, hiwH);
         int stepGap = 16;
         int stepW = (contentWidth - 48 - (3 * stepGap)) / 4;
         for (int i = 0; i < stepCols.size(); i++) {
@@ -491,14 +573,14 @@ public class CustomerDashboard extends Screen {
 
         // 5. Account Bar
         int accH = 64;
-        accountBar.setBounds(0, currentY, contentWidth, accH);
+        accountBar.setBounds(pad, currentY, contentWidth, accH);
         int btnW = (contentWidth - 48) / 2;
         profileBtn.setBounds(20, 14, btnW - 8, 38);
         logoutBtn.setBounds(20 + btnW + 8, 14, btnW - 8, 38);
 
         currentY += accH + 25;
 
-        container.setPreferredSize(new Dimension(contentWidth - 10, currentY));
+        container.setPreferredSize(new Dimension(w - scrollbarW, currentY));
         container.revalidate();
         container.repaint();
     }

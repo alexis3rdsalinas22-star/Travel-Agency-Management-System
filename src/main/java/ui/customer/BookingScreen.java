@@ -20,13 +20,13 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
@@ -40,28 +40,61 @@ public class BookingScreen extends Screen {
 
     private String preselectedPackageName;
 
+    // Header bar components
+    private JLabel logoLbl;
     private JLabel categoryTag;
     private JLabel header;
     private JLabel subheader;
     private JButton backBtn;
 
+    // Scrollable canvas
     private JScrollPane scrollPane;
     private JPanel container;
 
+    // 1. Trip & Package Specifications Card
     private JPanel formCard;
+    private JLabel pkgLbl;
     private JComboBox<String> packageCombo;
+    private JLabel dateLbl;
     private JTextField travelDateField;
+    private JLabel paxLbl;
     private JSpinner travelersSpinner;
-    private JTextField contactField;
-    private JTextArea notesArea;
+    private JLabel notesLbl;
+    private JTextField notesField;
 
+    // 2. Traveler Information Card (FR-09 Manifest)
+    public static class TravelerRow {
+        public JPanel panel;
+        public JLabel numLbl;
+        public JTextField firstNameField;
+        public JTextField lastNameField;
+        public JTextField dobField;
+        public JTextField contactField;
+    }
+
+    private JPanel travelersCard;
+    private JLabel travelersSubLbl;
+    private JPanel tableHeaderPanel;
+    private final List<TravelerRow> travelerRows = new ArrayList<>();
+
+    // 3. Reservation & Pricing Summary Card
     private JPanel summaryCard;
     private JLabel pkgNameLabel;
     private JLabel destLabel;
     private JLabel rateLabel;
     private JLabel capacityLabel;
+    private JPanel divider;
+    private JLabel totalTitle;
     private JLabel totalAmountLabel;
+    private JLabel paxBreakdownLabel;
+    private JLabel noteLbl;
     private JButton proceedBtn;
+
+    // Customer lead passenger cache
+    private String defaultLeadFirst = "";
+    private String defaultLeadLast = "";
+    private String defaultLeadDob = "2000-01-01";
+    private String defaultLeadContact = "+63 9";
 
     public BookingScreen() {
         this(null);
@@ -74,6 +107,7 @@ public class BookingScreen extends Screen {
         setFullscreen(true);
         getContentPane().setBackground(COLOR_BG);
 
+        loadCustomerLeadDefaults();
         loadPackages();
         initUI();
 
@@ -84,6 +118,29 @@ public class BookingScreen extends Screen {
             }
         });
         relayout();
+    }
+
+    private void loadCustomerLeadDefaults() {
+        int custId = Session.getCustomerId();
+        if (custId > 0) {
+            try {
+                CustomerDAO.CustomerRecord cr = customerDAO.getCustomerById(custId);
+                if (cr != null) {
+                    if (cr.firstName != null && !cr.firstName.trim().isEmpty()) {
+                        defaultLeadFirst = cr.firstName.trim();
+                    }
+                    if (cr.lastName != null && !cr.lastName.trim().isEmpty()) {
+                        defaultLeadLast = cr.lastName.trim();
+                    }
+                    if (cr.age > 0) {
+                        defaultLeadDob = LocalDate.now().minusYears(cr.age).withMonth(1).withDayOfMonth(1).toString();
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        if (defaultLeadFirst.isEmpty() && Session.getUsername() != null) {
+            defaultLeadFirst = Session.getUsername();
+        }
     }
 
     private void loadPackages() {
@@ -101,16 +158,22 @@ public class BookingScreen extends Screen {
     }
 
     private void initUI() {
-        categoryTag = createLabel("CUSTOMER PORTAL  •  RESERVATION CHECKOUT", 45, 14, 600, 16);
+        ImageIcon logo = getLogoIcon(38, 38);
+        if (logo != null) {
+            logoLbl = new JLabel(logo);
+            add(logoLbl);
+        }
+
+        categoryTag = createLabel("CUSTOMER PORTAL  •  RESERVATION CHECKOUT", 93, 14, 600, 16);
         setFontStyle(categoryTag, Font.BOLD);
         setFontSize(categoryTag, 10);
         setTextColor(categoryTag, COLOR_PRIMARY);
 
-        header = createHeader("Book a Tour Package", 45, 30, 600, 30);
+        header = createHeader("Book a Tour Package", 93, 30, 600, 30);
         setFontSize(header, 22);
         setTextColor(header, COLOR_TEXT_MAIN);
 
-        subheader = createLabel("Select your package, specify your preferred departure date, and review pricing.", 45, 60, 650, 18);
+        subheader = createLabel("Select your package, specify your preferred departure date, and enter passenger information.", 93, 60, 650, 18);
         setFontSize(subheader, 12);
         setTextColor(subheader, COLOR_TEXT_MUTED);
 
@@ -132,6 +195,7 @@ public class BookingScreen extends Screen {
         getContentPane().add(scrollPane);
 
         buildFormCard();
+        buildTravelersCard();
         buildSummaryCard();
 
         updatePricingSummary();
@@ -142,16 +206,15 @@ public class BookingScreen extends Screen {
         formCard.setBackground(Color.WHITE);
         formCard.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
-            BorderFactory.createEmptyBorder(20, 24, 20, 24)
+            BorderFactory.createEmptyBorder(18, 20, 18, 20)
         ));
 
-        createCardTag(formCard, "TRAVEL SPECIFICATIONS");
+        createCardTag(formCard, "TRAVEL SPECIFICATIONS", "packages.png");
 
         // 1. Tour Package Dropdown
-        JLabel pkgLbl = new JLabel("Select Tour Package *");
+        pkgLbl = new JLabel("Select Tour Package *");
         pkgLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         pkgLbl.setForeground(COLOR_TEXT_MAIN);
-        pkgLbl.setBounds(24, 46, 300, 16);
         formCard.add(pkgLbl);
 
         String[] pkgNames = new String[availablePackages.size()];
@@ -168,73 +231,145 @@ public class BookingScreen extends Screen {
         if (pkgNames.length > 0) {
             packageCombo.setSelectedIndex(selectIdx);
         }
-        packageCombo.addActionListener(e -> updatePricingSummary());
+        packageCombo.addActionListener(e -> onPackageChanged());
         formCard.add(packageCombo);
 
         // 2. Travel Date (Default 14 days from now)
-        JLabel dateLbl = new JLabel("Departure Date (YYYY-MM-DD) *");
+        dateLbl = new JLabel("Departure Date (YYYY-MM-DD) *");
         dateLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         dateLbl.setForeground(COLOR_TEXT_MAIN);
-        dateLbl.setBounds(24, 114, 300, 16);
         formCard.add(dateLbl);
 
-        travelDateField = createTextField(24, 134, 450, 34);
-        travelDateField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        travelDateField = createStyledTextField();
         travelDateField.setText(LocalDate.now().plusDays(14).toString());
-        travelDateField.setBackground(Color.WHITE);
-        travelDateField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
-            BorderFactory.createEmptyBorder(2, 10, 2, 10)
-        ));
         formCard.add(travelDateField);
 
         // 3. Number of Travelers (Pax Spinner)
-        JLabel paxLbl = new JLabel("Number of Travelers *");
+        paxLbl = new JLabel("Number of Travelers *");
         paxLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         paxLbl.setForeground(COLOR_TEXT_MAIN);
-        paxLbl.setBounds(24, 180, 300, 16);
         formCard.add(paxLbl);
 
-        travelersSpinner = new JSpinner(new SpinnerNumberModel(2, 1, 50, 1));
+        int initialMin = 1;
+        int initialMax = 10;
+        PackageRecord sel = getSelectedPackage();
+        if (sel != null) {
+            initialMin = sel.minTraveller;
+            initialMax = sel.maxTraveller;
+        }
+
+        travelersSpinner = new JSpinner(new SpinnerNumberModel(initialMin, initialMin, initialMax, 1));
         travelersSpinner.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        travelersSpinner.addChangeListener(e -> updatePricingSummary());
+        travelersSpinner.addChangeListener(e -> {
+            int pax = (Integer) travelersSpinner.getValue();
+            syncTravelerRows(pax);
+            updatePricingSummary();
+            relayout();
+        });
         formCard.add(travelersSpinner);
 
-        // 4. Contact Number
-        JLabel contactLbl = new JLabel("Primary Contact Number *");
-        contactLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        contactLbl.setForeground(COLOR_TEXT_MAIN);
-        contactLbl.setBounds(24, 246, 300, 16);
-        formCard.add(contactLbl);
-
-        contactField = createTextField(24, 266, 450, 34);
-        contactField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        contactField.setText("+63 9");
-        contactField.setBackground(Color.WHITE);
-        contactField.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
-            BorderFactory.createEmptyBorder(2, 10, 2, 10)
-        ));
-        formCard.add(contactField);
-
-        // 5. Special Requests / Notes
-        JLabel notesLbl = new JLabel("Special Requests or Dietary Requirements (Optional)");
+        // 4. Special Requests / Notes
+        notesLbl = new JLabel("Special Requests or Dietary Requirements (Optional)");
         notesLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         notesLbl.setForeground(COLOR_TEXT_MAIN);
-        notesLbl.setBounds(24, 312, 400, 16);
         formCard.add(notesLbl);
 
-        notesArea = new JTextArea();
-        notesArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        notesArea.setLineWrap(true);
-        notesArea.setWrapStyleWord(true);
-        notesArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
-            BorderFactory.createEmptyBorder(8, 10, 8, 10)
-        ));
-        formCard.add(notesArea);
+        notesField = createStyledTextField();
+        formCard.add(notesField);
 
         container.add(formCard);
+    }
+
+    private void buildTravelersCard() {
+        travelersCard = new JPanel(null);
+        travelersCard.setBackground(Color.WHITE);
+        travelersCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1, true),
+            BorderFactory.createEmptyBorder(18, 20, 18, 20)
+        ));
+
+        createCardTag(travelersCard, "TRAVELER INFORMATION (PASSENGER MANIFEST - FR-09)", "customers.png");
+
+        travelersSubLbl = new JLabel("Enter full names, birthdates, and contacts for every passenger in this reservation.");
+        travelersSubLbl.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        travelersSubLbl.setForeground(COLOR_TEXT_MUTED);
+        travelersCard.add(travelersSubLbl);
+
+        // Table column headers bar
+        tableHeaderPanel = new JPanel(null);
+        tableHeaderPanel.setBackground(new Color(241, 245, 249));
+        tableHeaderPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(203, 213, 225)));
+
+        JLabel h0 = new JLabel("PASSENGER");
+        JLabel h1 = new JLabel("FIRST NAME *");
+        JLabel h2 = new JLabel("LAST NAME *");
+        JLabel h3 = new JLabel("BIRTHDATE (YYYY-MM-DD) *");
+        JLabel h4 = new JLabel("CONTACT NUMBER *");
+
+        for (JLabel h : new JLabel[]{h0, h1, h2, h3, h4}) {
+            h.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            h.setForeground(new Color(71, 85, 105));
+            tableHeaderPanel.add(h);
+        }
+        travelersCard.add(tableHeaderPanel);
+
+        container.add(travelersCard);
+
+        int initPax = (Integer) travelersSpinner.getValue();
+        syncTravelerRows(initPax);
+    }
+
+    private void syncTravelerRows(int targetCount) {
+        if (targetCount < 1) targetCount = 1;
+
+        // If we need to add rows
+        while (travelerRows.size() < targetCount) {
+            int idx = travelerRows.size() + 1;
+            TravelerRow row = new TravelerRow();
+
+            JPanel rowPanel = new JPanel(null);
+            rowPanel.setBackground(Color.WHITE);
+            row.panel = rowPanel;
+
+            String labelText = (idx == 1) ? "Traveler #1 (Lead)" : ("Traveler #" + idx);
+            JLabel numLbl = new JLabel(labelText);
+            numLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
+            numLbl.setForeground(idx == 1 ? COLOR_PRIMARY : new Color(71, 85, 105));
+            row.numLbl = numLbl;
+            rowPanel.add(numLbl);
+
+            row.firstNameField = createStyledTextField();
+            row.lastNameField = createStyledTextField();
+            row.dobField = createStyledTextField();
+            row.contactField = createStyledTextField();
+
+            if (idx == 1) {
+                row.firstNameField.setText(defaultLeadFirst);
+                row.lastNameField.setText(defaultLeadLast);
+                row.dobField.setText(defaultLeadDob);
+                row.contactField.setText(defaultLeadContact);
+            } else {
+                row.dobField.setText("2000-01-01");
+                row.contactField.setText("+63 9");
+            }
+
+            rowPanel.add(row.firstNameField);
+            rowPanel.add(row.lastNameField);
+            rowPanel.add(row.dobField);
+            rowPanel.add(row.contactField);
+
+            travelersCard.add(rowPanel);
+            travelerRows.add(row);
+        }
+
+        // If we need to remove extra rows
+        while (travelerRows.size() > targetCount) {
+            TravelerRow last = travelerRows.remove(travelerRows.size() - 1);
+            travelersCard.remove(last.panel);
+        }
+
+        travelersCard.revalidate();
+        travelersCard.repaint();
     }
 
     private void buildSummaryCard() {
@@ -245,7 +380,7 @@ public class BookingScreen extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(summaryCard, "RESERVATION SUMMARY");
+        createCardTag(summaryCard, "RESERVATION SUMMARY", "sales.png");
 
         pkgNameLabel = new JLabel("Package Name");
         pkgNameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -267,27 +402,28 @@ public class BookingScreen extends Screen {
         capacityLabel.setForeground(COLOR_TEXT_MUTED);
         summaryCard.add(capacityLabel);
 
-        JPanel divider = new JPanel();
+        divider = new JPanel();
         divider.setBackground(new Color(241, 245, 249));
-        divider.setBounds(24, 180, 400, 1);
         summaryCard.add(divider);
 
-        JLabel totalTitle = new JLabel("ESTIMATED TOTAL AMOUNT DUE");
+        totalTitle = new JLabel("ESTIMATED TOTAL AMOUNT DUE");
         totalTitle.setFont(new Font("Segoe UI", Font.BOLD, 10));
         totalTitle.setForeground(new Color(100, 116, 139));
-        totalTitle.setBounds(24, 195, 300, 16);
         summaryCard.add(totalTitle);
 
         totalAmountLabel = new JLabel("PHP 0.00");
         totalAmountLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         totalAmountLabel.setForeground(new Color(5, 150, 105)); // Emerald 600
-        totalAmountLabel.setBounds(24, 215, 350, 36);
         summaryCard.add(totalAmountLabel);
 
-        JLabel noteLbl = new JLabel("<html><body style='color: #64748B; font-size: 11px;'>"
+        paxBreakdownLabel = new JLabel("1 Traveler × PHP 0.00");
+        paxBreakdownLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        paxBreakdownLabel.setForeground(COLOR_TEXT_MUTED);
+        summaryCard.add(paxBreakdownLabel);
+
+        noteLbl = new JLabel("<html><body style='color: #64748B; font-size: 11px;'>"
             + "Instant booking reservation with online checkout. Your booking status will be set to Pending until payment confirmation."
             + "</body></html>");
-        noteLbl.setBounds(24, 260, 380, 48);
         summaryCard.add(noteLbl);
 
         proceedBtn = createPrimaryButton(summaryCard, "Proceed to Payment →", 24, 325, 380, 44, this::handleProceedToPayment);
@@ -297,43 +433,126 @@ public class BookingScreen extends Screen {
         container.add(summaryCard);
     }
 
+    private JTextField createStyledTextField() {
+        JTextField tf = new JTextField();
+        tf.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        tf.setBackground(Color.WHITE);
+        tf.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
+        return tf;
+    }
+
+    private void onPackageChanged() {
+        PackageRecord p = getSelectedPackage();
+        if (p != null) {
+            int curVal = (Integer) travelersSpinner.getValue();
+            if (curVal < p.minTraveller) curVal = p.minTraveller;
+            if (curVal > p.maxTraveller) curVal = p.maxTraveller;
+            travelersSpinner.setModel(new SpinnerNumberModel(curVal, p.minTraveller, p.maxTraveller, 1));
+            syncTravelerRows(curVal);
+        }
+        updatePricingSummary();
+        relayout();
+    }
+
     private void relayout() {
         int w = getWidth();
         int h = getHeight();
         if (w <= 0 || h <= 0) return;
 
         int pad = 45;
-        int contentWidth = w - (2 * pad);
+        int textX = pad;
+        if (logoLbl != null) {
+            logoLbl.setBounds(pad, 18, 38, 38);
+            textX = pad + 48; // Clean spacing, 0 overlap!
+        }
 
-        categoryTag.setBounds(pad, 14, 600, 16);
-        header.setBounds(pad, 30, 600, 30);
-        subheader.setBounds(pad, 60, 650, 18);
+        categoryTag.setBounds(textX, 14, 600, 16);
+        header.setBounds(textX, 30, 600, 30);
+        subheader.setBounds(textX, 60, 650, 18);
         backBtn.setBounds(w - pad - 130, 20, 130, 36);
 
         int scrollY = 96;
-        int scrollHeight = Math.max(300, h - scrollY - 25);
-        scrollPane.setBounds(pad, scrollY, contentWidth, scrollHeight);
+        int scrollHeight = Math.max(300, h - scrollY);
+        scrollPane.setBounds(0, scrollY, w, scrollHeight);
 
-        int gap = 24;
-        int formW = (int) (contentWidth * 0.58);
-        int summaryW = contentWidth - formW - gap - 10;
-        int cardH = 430;
+        int scrollbarW = 18;
+        int contentWidth = Math.max(900, w - (2 * pad) - scrollbarW);
 
-        formCard.setBounds(0, 10, formW, cardH);
-        packageCombo.setBounds(24, 66, formW - 48, 34);
-        travelDateField.setBounds(24, 134, formW - 48, 34);
-        travelersSpinner.setBounds(24, 200, 140, 34);
-        contactField.setBounds(24, 266, formW - 48, 34);
-        notesArea.setBounds(24, 332, formW - 48, 70);
+        int gap = 20;
+        int leftW = (int) (contentWidth * 0.63);
+        int summaryW = contentWidth - leftW - gap;
 
-        summaryCard.setBounds(formW + gap, 10, summaryW, cardH);
+        // 1. formCard
+        int formH = 226;
+        formCard.setBounds(pad, 10, leftW, formH);
+
+        pkgLbl.setBounds(20, 44, leftW - 40, 16);
+        packageCombo.setBounds(20, 64, leftW - 40, 32);
+
+        int halfW = (leftW - 40 - 16) / 2;
+        dateLbl.setBounds(20, 104, halfW, 16);
+        travelDateField.setBounds(20, 122, halfW, 32);
+
+        paxLbl.setBounds(20 + halfW + 16, 104, halfW, 16);
+        travelersSpinner.setBounds(20 + halfW + 16, 122, halfW, 32);
+
+        notesLbl.setBounds(20, 162, leftW - 40, 16);
+        notesField.setBounds(20, 180, leftW - 40, 32);
+
+        // 2. travelersCard
+        int travelersY = 10 + formH + 16;
+        travelersSubLbl.setBounds(20, 40, leftW - 40, 16);
+
+        tableHeaderPanel.setBounds(20, 64, leftW - 40, 24);
+        int colBadgeW = 125;
+        int remainingW = (leftW - 40) - colBadgeW - (4 * 6);
+        int inputColW = remainingW / 4;
+
+        ((JLabel) tableHeaderPanel.getComponent(0)).setBounds(6, 3, colBadgeW, 18);
+        ((JLabel) tableHeaderPanel.getComponent(1)).setBounds(colBadgeW + 6, 3, inputColW, 18);
+        ((JLabel) tableHeaderPanel.getComponent(2)).setBounds(colBadgeW + 6 + (inputColW + 6), 3, inputColW, 18);
+        ((JLabel) tableHeaderPanel.getComponent(3)).setBounds(colBadgeW + 6 + 2 * (inputColW + 6), 3, inputColW, 18);
+        ((JLabel) tableHeaderPanel.getComponent(4)).setBounds(colBadgeW + 6 + 3 * (inputColW + 6), 3, inputColW, 18);
+
+        int rowY = 94;
+        int rowH = 34;
+        int rowGap = 6;
+        for (int i = 0; i < travelerRows.size(); i++) {
+            TravelerRow row = travelerRows.get(i);
+            row.panel.setBounds(20, rowY, leftW - 40, rowH);
+            row.numLbl.setBounds(6, 6, colBadgeW, 22);
+            row.firstNameField.setBounds(colBadgeW + 6, 2, inputColW, 30);
+            row.lastNameField.setBounds(colBadgeW + 6 + (inputColW + 6), 2, inputColW, 30);
+            row.dobField.setBounds(colBadgeW + 6 + 2 * (inputColW + 6), 2, inputColW, 30);
+            row.contactField.setBounds(colBadgeW + 6 + 3 * (inputColW + 6), 2, inputColW, 30);
+
+            rowY += rowH + rowGap;
+        }
+
+        int travelersH = rowY + 16;
+        travelersCard.setBounds(pad, travelersY, leftW, travelersH);
+
+        // 3. summaryCard
+        int summaryH = 380;
+        summaryCard.setBounds(pad + leftW + gap, 10, summaryW, summaryH);
+
         pkgNameLabel.setBounds(24, 48, summaryW - 48, 24);
         destLabel.setBounds(24, 76, summaryW - 48, 20);
         rateLabel.setBounds(24, 100, summaryW - 48, 20);
         capacityLabel.setBounds(24, 124, summaryW - 48, 20);
-        proceedBtn.setBounds(24, 345, summaryW - 48, 44);
 
-        container.setPreferredSize(new Dimension(contentWidth - 10, cardH + 30));
+        divider.setBounds(24, 154, summaryW - 48, 1);
+        totalTitle.setBounds(24, 168, summaryW - 48, 16);
+        totalAmountLabel.setBounds(24, 188, summaryW - 48, 36);
+        paxBreakdownLabel.setBounds(24, 226, summaryW - 48, 18);
+        noteLbl.setBounds(24, 252, summaryW - 48, 56);
+        proceedBtn.setBounds(24, 320, summaryW - 48, 44);
+
+        int totalH = Math.max(summaryH, travelersY + travelersH) + 30;
+        container.setPreferredSize(new Dimension(w - scrollbarW, totalH));
         container.revalidate();
         container.repaint();
     }
@@ -354,6 +573,7 @@ public class BookingScreen extends Screen {
             rateLabel.setText("Rate: PHP 0.00 / traveler");
             capacityLabel.setText("Capacity: —");
             totalAmountLabel.setText("PHP 0.00");
+            paxBreakdownLabel.setText("0 Travelers");
             return;
         }
 
@@ -367,8 +587,24 @@ public class BookingScreen extends Screen {
         if (p.pricePerTraveller != null) {
             BigDecimal total = p.pricePerTraveller.multiply(BigDecimal.valueOf(pax));
             totalAmountLabel.setText(String.format("PHP %,.2f", total));
+            paxBreakdownLabel.setText(pax + " Traveler" + (pax > 1 ? "s" : "") + " × " + rateStr);
         } else {
             totalAmountLabel.setText("PHP 0.00");
+            paxBreakdownLabel.setText(pax + " Traveler(s)");
+        }
+    }
+
+    private static class TravelerData {
+        final String firstName;
+        final String lastName;
+        final LocalDate dob;
+        final String contactNumber;
+
+        TravelerData(String firstName, String lastName, LocalDate dob, String contactNumber) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.dob = dob;
+            this.contactNumber = contactNumber;
         }
     }
 
@@ -384,11 +620,11 @@ public class BookingScreen extends Screen {
         try {
             travelDate = LocalDate.parse(dateStr);
             if (travelDate.isBefore(LocalDate.now())) {
-                showError("Travel date cannot be in the past.");
+                showError("Travel departure date cannot be in the past.");
                 return;
             }
         } catch (DateTimeParseException ex) {
-            showError("Invalid travel date format. Please use YYYY-MM-DD.");
+            showError("Invalid travel departure date format. Please use YYYY-MM-DD (e.g. " + LocalDate.now().plusDays(14) + ").");
             return;
         }
 
@@ -398,10 +634,52 @@ public class BookingScreen extends Screen {
             return;
         }
 
-        String contact = contactField.getText().trim();
-        if (contact.isEmpty() || contact.equals("+63 9")) {
-            showError("Please provide a valid contact number.");
-            return;
+        // Validate individual travelers in travelerRows (FR-09)
+        if (travelerRows.size() < pax) {
+            syncTravelerRows(pax);
+        }
+
+        List<TravelerData> validatedTravelers = new ArrayList<>();
+        for (int i = 0; i < pax; i++) {
+            TravelerRow row = travelerRows.get(i);
+            int passengerNum = i + 1;
+            String fName = row.firstNameField.getText().trim();
+            String lName = row.lastNameField.getText().trim();
+            String dobStr = row.dobField.getText().trim();
+            String contact = row.contactField.getText().trim();
+
+            if (fName.isEmpty()) {
+                showError("Traveler #" + passengerNum + ": Please enter a first name.");
+                row.firstNameField.requestFocusInWindow();
+                return;
+            }
+            if (lName.isEmpty()) {
+                showError("Traveler #" + passengerNum + ": Please enter a last name.");
+                row.lastNameField.requestFocusInWindow();
+                return;
+            }
+
+            LocalDate dob;
+            try {
+                dob = LocalDate.parse(dobStr);
+                if (dob.isAfter(LocalDate.now())) {
+                    showError("Traveler #" + passengerNum + ": Date of birth cannot be in the future.");
+                    row.dobField.requestFocusInWindow();
+                    return;
+                }
+            } catch (DateTimeParseException ex) {
+                showError("Traveler #" + passengerNum + ": Invalid date of birth format. Please use YYYY-MM-DD (e.g. 2000-01-15).");
+                row.dobField.requestFocusInWindow();
+                return;
+            }
+
+            if (contact.isEmpty() || contact.equals("+63 9")) {
+                showError("Traveler #" + passengerNum + ": Please enter a valid contact number.");
+                row.contactField.requestFocusInWindow();
+                return;
+            }
+
+            validatedTravelers.add(new TravelerData(fName, lName, dob, contact));
         }
 
         int custAccId = Session.getCustomerAccountId();
@@ -414,36 +692,26 @@ public class BookingScreen extends Screen {
             ? p.pricePerTraveller.multiply(BigDecimal.valueOf(pax))
             : BigDecimal.ZERO;
 
-        if (confirm("Confirm reservation for \"" + p.name + "\"?\nTotal Amount: " + String.format("PHP %,.2f", total))) {
+        String confirmMsg = "Confirm reservation for \"" + p.name + "\"?\n"
+                          + "Number of Travelers: " + pax + "\n"
+                          + "Total Amount: " + String.format("PHP %,.2f", total);
+
+        if (confirm(confirmMsg)) {
             try {
                 Timestamp ts = Timestamp.valueOf(travelDate.atStartOfDay());
-                int newBookingId = bookingDAO.createBooking(custAccId, p.packageID, ts);
+                String specialRequests = notesField != null ? notesField.getText().trim() : null;
+                if (specialRequests != null && specialRequests.isEmpty()) {
+                    specialRequests = null;
+                }
+                int newBookingId = bookingDAO.createBookingWithNotes(custAccId, p.packageID, ts, specialRequests);
                 if (newBookingId > 0) {
-                    // Record full passenger manifest in the database
-                    String leadFirst = Session.getUsername() != null ? Session.getUsername() : "Passenger";
-                    String leadLast = "Lead";
-                    int custId = Session.getCustomerId();
-                    if (custId > 0) {
-                        try {
-                            CustomerDAO.CustomerRecord cr = customerDAO.getCustomerById(custId);
-                            if (cr != null) {
-                                if (cr.firstName != null && !cr.firstName.trim().isEmpty()) leadFirst = cr.firstName.trim();
-                                if (cr.lastName != null && !cr.lastName.trim().isEmpty()) leadLast = cr.lastName.trim();
-                            }
-                        } catch (SQLException ignored) {}
+                    // Record full passenger manifest in the database traveler table (FR-09)
+                    for (TravelerData td : validatedTravelers) {
+                        bookingDAO.addTraveler(newBookingId, td.firstName, td.lastName,
+                            java.sql.Date.valueOf(td.dob), td.contactNumber);
                     }
 
-                    // Lead passenger
-                    bookingDAO.addTraveler(newBookingId, leadFirst, leadLast,
-                        java.sql.Date.valueOf(LocalDate.now().minusYears(25)), contact);
-
-                    // Additional companion passengers
-                    for (int i = 2; i <= pax; i++) {
-                        bookingDAO.addTraveler(newBookingId, leadFirst + " Guest " + i, leadLast,
-                            java.sql.Date.valueOf(LocalDate.now().minusYears(25)), contact);
-                    }
-
-                    showInfo("Reservation created successfully for " + pax + " traveler(s)! Proceeding to payment...");
+                    showInfo("Reservation successfully created with " + pax + " traveler(s) registered! Proceeding to payment...");
                     navigateTo(new PaymentScreen(newBookingId, total, p.name));
                 } else {
                     showError("Failed to record reservation. Please try again.");

@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -36,8 +37,19 @@ public class CustomerRegister extends Screen {
             )
         ));
 
-        // Brand Pill Tag
+        // Top Brand Logo & Pill Tag
+        ImageIcon logo = getLogoIcon(38, 38);
+        if (logo != null) {
+            JLabel logoLbl = new JLabel(logo);
+            logoLbl.setBounds(500 - 24 - 38, 14, 38, 38);
+            card.add(logoLbl);
+        }
+
         JLabel tag = new JLabel("  TRAVELER REGISTRATION  •  NEW ACCOUNT  ");
+        ImageIcon custIcon = loadIcon("/images/icons/customers.png", 14, 14);
+        if (custIcon != null) {
+            tag.setIcon(custIcon);
+        }
         tag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         tag.setForeground(COLOR_SUCCESS);
         tag.setOpaque(true);
@@ -46,11 +58,11 @@ public class CustomerRegister extends Screen {
             BorderFactory.createLineBorder(new Color(167, 243, 208), 1, true),
             BorderFactory.createEmptyBorder(2, 6, 2, 6)
         ));
-        tag.setBounds(24, 16, 452, 22);
+        tag.setBounds(24, 16, 390, 22);
         card.add(tag);
 
         // Header and subtitle
-        JLabel header = createHeader(card, "Create an Account", 24, 42, 452, 28);
+        JLabel header = createHeader(card, "Create an Account", 24, 42, 390, 28);
         setFontSize(header, 20);
         setTextColor(header, COLOR_TEXT_MAIN);
 

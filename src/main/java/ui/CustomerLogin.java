@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -35,12 +36,20 @@ public class CustomerLogin extends Screen {
             )
         ));
 
-        // Brand Pill Tag
-        createCardTag(card, "TRAVELER ACCESS  •  ACCOUNT LOGIN");
+        // Top Brand Logo & Pill Tag
+        ImageIcon logo = getLogoIcon(38, 38);
+        if (logo != null) {
+            JLabel logoLbl = new JLabel(logo);
+            logoLbl.setBounds(450 - 28 - 38, 16, 38, 38);
+            card.add(logoLbl);
+        }
+
+        JLabel tag = createCardTag(card, "TRAVELER ACCESS  •  ACCOUNT LOGIN", "customers.png");
+        tag.setBounds(28, 18, 335, 22);
 
         // Header and subtitle
-        JLabel header = createHeader(card, "Sign In to Account", 28, 46, 394, 30);
-        setFontSize(header, 22);
+        JLabel header = createHeader(card, "Sign In to Account", 28, 48, 340, 28);
+        setFontSize(header, 20);
         setTextColor(header, COLOR_TEXT_MAIN);
 
         JLabel subheader = createLabel(card, "Enter your credentials to manage trips and vouchers.", 28, 76, 394, 20);

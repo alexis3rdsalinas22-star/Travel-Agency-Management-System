@@ -74,6 +74,7 @@ CREATE TABLE booking (
   status VARCHAR(10) NOT NULL DEFAULT 'Pending',
   bookingDate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   travelDate  TIMESTAMP NOT NULL,
+  specialRequests VARCHAR(500),
   CONSTRAINT pk_booking PRIMARY KEY (bookingID),
   CONSTRAINT chk_booking_status CHECK (status IN ('Pending','Confirmed','Cancelled','Completed')),
   CONSTRAINT fk_booking_customerAccount
@@ -144,3 +145,7 @@ CREATE TRIGGER trg_package_lock_price
 -- SELECT destinationID, name, description, imagePath, 15000.00, 'Active', minTraveller, maxTraveller
 -- FROM package
 -- WHERE packageID = 1;
+
+-- ---------- MIGRATIONS & SCHEMA UPGRADES ----------
+-- If upgrading an existing database without re-creating all tables:
+-- ALTER TABLE booking ADD COLUMN specialRequests VARCHAR(500);

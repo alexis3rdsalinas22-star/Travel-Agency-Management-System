@@ -12,6 +12,7 @@ import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -40,8 +41,19 @@ public class AdminLogin extends Screen {
             )
         ));
 
-        // Brand Pill Tag
+        // Top Brand Logo & Pill Tag
+        ImageIcon logo = getLogoIcon(38, 38);
+        if (logo != null) {
+            JLabel logoLbl = new JLabel(logo);
+            logoLbl.setBounds(450 - 28 - 38, 16, 38, 38);
+            card.add(logoLbl);
+        }
+
         JLabel tag = new JLabel("  STAFF CHECKPOINT  •  RESTRICTED ACCESS  ");
+        ImageIcon secIcon = loadIcon("/images/icons/security.png", 14, 14);
+        if (secIcon != null) {
+            tag.setIcon(secIcon);
+        }
         tag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         tag.setForeground(adminAccent);
         tag.setOpaque(true);
@@ -50,12 +62,12 @@ public class AdminLogin extends Screen {
             BorderFactory.createLineBorder(new Color(203, 213, 225), 1, true),
             BorderFactory.createEmptyBorder(2, 6, 2, 6)
         ));
-        tag.setBounds(28, 20, 394, 22);
+        tag.setBounds(28, 18, 335, 22);
         card.add(tag);
 
         // Header and subtitle
-        JLabel header = createHeader(card, "Administrator Login", 28, 48, 394, 30);
-        setFontSize(header, 22);
+        JLabel header = createHeader(card, "Administrator Login", 28, 48, 340, 28);
+        setFontSize(header, 20);
         setTextColor(header, COLOR_TEXT_MAIN);
 
         JLabel subheader = createLabel(card, "Enter your administrator credentials to enter the console.", 28, 78, 394, 20);

@@ -15,6 +15,7 @@ import java.awt.event.ComponentEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -26,6 +27,7 @@ public class CustomerProfile extends Screen {
 
     private final CustomerDAO customerDAO = new CustomerDAO();
 
+    private JLabel logoLbl;
     private JLabel categoryTag;
     private JLabel header;
     private JLabel subheader;
@@ -70,16 +72,23 @@ public class CustomerProfile extends Screen {
     }
 
     private void initUI() {
-        categoryTag = createLabel("CUSTOMER PORTAL  •  ACCOUNT SETTINGS", 45, 14, 600, 16);
+        ImageIcon logo = getLogoIcon(38, 38);
+        if (logo != null) {
+            logoLbl = new JLabel(logo);
+            add(logoLbl);
+        }
+
+        int textX = 93;
+        categoryTag = createLabel("CUSTOMER PORTAL  •  ACCOUNT SETTINGS", textX, 14, 600, 16);
         setFontStyle(categoryTag, Font.BOLD);
         setFontSize(categoryTag, 10);
         setTextColor(categoryTag, COLOR_PRIMARY);
 
-        header = createHeader("My Customer Profile", 45, 30, 600, 30);
+        header = createHeader("My Customer Profile", textX, 30, 600, 30);
         setFontSize(header, 22);
         setTextColor(header, COLOR_TEXT_MAIN);
 
-        subheader = createLabel("Review and update your personal details, travel preferences, and contact information.", 45, 60, 650, 18);
+        subheader = createLabel("Review and update your personal details, travel preferences, and contact information.", textX, 60, 650, 18);
         setFontSize(subheader, 12);
         setTextColor(subheader, COLOR_TEXT_MUTED);
 
@@ -116,8 +125,13 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(16, 20, 16, 20)
         ));
 
-        avatarBadge = new JLabel("👤", JLabel.CENTER);
-        avatarBadge.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        ImageIcon userIcon = loadIcon("/images/icons/customers.png", 26, 26);
+        if (userIcon != null) {
+            avatarBadge = new JLabel(userIcon, JLabel.CENTER);
+        } else {
+            avatarBadge = new JLabel("👤", JLabel.CENTER);
+            avatarBadge.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        }
         avatarBadge.setOpaque(true);
         avatarBadge.setBackground(new Color(238, 242, 255));
         avatarBadge.setBorder(BorderFactory.createLineBorder(new Color(199, 210, 254), 1, true));
@@ -156,7 +170,7 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(personalCard, "PERSONAL INFORMATION");
+        createCardTag(personalCard, "PERSONAL INFORMATION", "customers.png");
 
         firstNameField  = addFormField(personalCard, "First Name *", 48,  true);
         middleNameField = addFormField(personalCard, "Middle Name",  102, true);
@@ -173,7 +187,7 @@ public class CustomerProfile extends Screen {
             BorderFactory.createEmptyBorder(20, 24, 20, 24)
         ));
 
-        createCardTag(contactCard, "CONTACT & DEMOGRAPHICS");
+        createCardTag(contactCard, "CONTACT & DEMOGRAPHICS", "destinations.png");
 
         emailField  = addFormField(contactCard, "Email Address *", 48, true);
         genderCombo = addComboRow(contactCard, "Sex / Gender *", new String[]{"Male", "Female"}, 102);
@@ -199,20 +213,27 @@ public class CustomerProfile extends Screen {
         if (w <= 0 || h <= 0) return;
 
         int pad = 45;
-        int contentWidth = w - (2 * pad);
+        int textX = pad;
+        if (logoLbl != null) {
+            logoLbl.setBounds(pad, 18, 38, 38);
+            textX = pad + 48;
+        }
 
-        categoryTag.setBounds(pad, 14, 600, 16);
-        header.setBounds(pad, 30, 600, 30);
-        subheader.setBounds(pad, 60, 650, 18);
+        categoryTag.setBounds(textX, 14, 600, 16);
+        header.setBounds(textX, 30, 600, 30);
+        subheader.setBounds(textX, 60, 650, 18);
         backBtn.setBounds(w - pad - 130, 20, 130, 36);
 
         int scrollY = 96;
-        int scrollHeight = Math.max(300, h - scrollY - 25);
-        scrollPane.setBounds(pad, scrollY, contentWidth, scrollHeight);
+        int scrollHeight = Math.max(300, h - scrollY);
+        scrollPane.setBounds(0, scrollY, w, scrollHeight);
+
+        int scrollbarW = 18;
+        int contentWidth = Math.max(700, w - (2 * pad) - scrollbarW);
 
         // Badge card
         int badgeH = 84;
-        accountBadgeCard.setBounds(0, 10, contentWidth, badgeH);
+        accountBadgeCard.setBounds(pad, 10, contentWidth, badgeH);
         accountStatusPill.setBounds(contentWidth - 100, 28, 75, 24);
 
         int gap = 20;
@@ -220,12 +241,12 @@ public class CustomerProfile extends Screen {
         int colH = 225;
         int formY = 10 + badgeH + 16;
 
-        personalCard.setBounds(0, formY, colW, colH);
-        contactCard.setBounds(colW + gap, formY, colW, colH);
+        personalCard.setBounds(pad, formY, colW, colH);
+        contactCard.setBounds(pad + colW + gap, formY, colW, colH);
 
-        saveBtn.setBounds(contentWidth - 230, formY + colH + 20, 230, 42);
+        saveBtn.setBounds(pad + contentWidth - 230, formY + colH + 20, 230, 42);
 
-        container.setPreferredSize(new Dimension(contentWidth - 10, formY + colH + 90));
+        container.setPreferredSize(new Dimension(w - scrollbarW, formY + colH + 90));
         container.revalidate();
         container.repaint();
     }

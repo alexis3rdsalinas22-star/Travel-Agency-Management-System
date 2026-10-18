@@ -27,6 +27,7 @@ public class BookingDAO {
         public String status;
         public Timestamp bookingDate;
         public Timestamp travelDate;
+        public String specialRequests;
 
         public java.math.BigDecimal getTotalAmount() {
             int count = travelerCount > 0 ? travelerCount : 1;
@@ -42,7 +43,7 @@ public class BookingDAO {
     // Shared SELECT used by getAllBookings() and searchBooking()
     private static final String BASE_SELECT =
             "SELECT b.bookingID, b.customerAccountID, b.packageID, b.status, "
-          + "b.bookingDate, b.travelDate, "
+          + "b.bookingDate, b.travelDate, b.specialRequests, "
           + "c.firstName, c.middleName, c.lastName, "
           + "p.name AS packageName, p.pricePerTraveller, d.name AS destinationName, "
           + "(SELECT COUNT(*) FROM traveler tr WHERE tr.bookingID = b.bookingID) AS travelerCount "
@@ -55,25 +56,29 @@ public class BookingDAO {
     // Creates a booking with status 'Pending' and returns the new bookingID
     public int createBooking(int customerAccountId, int packageId, Timestamp travelDate)
             throws SQLException {
-        String sql = "INSERT INTO booking (customerAccountID, packageID, status, bookingDate, travelDate) "
-                   + "VALUES (?,?,?,?,?)";
-        try (Connection con = DBConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setInt(1, customerAccountId);
-            ps.setInt(2, packageId);
-            ps.setString(3, "Pending");
-            ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
-            ps.setTimestamp(5, travelDate);
-            ps.executeUpdate();
+        return createBooking(customerAccountId, packageId, travelDate, "Pending", null);
+    }
 
-            try (ResultSet keys = ps.getGeneratedKeys()) {
-                return keys.next() ? keys.getInt(1) : -1;
-            }
+    public int createBookingWithNotes(int customerAccountId, int packageId, Timestamp travelDate, String specialRequests)
+            throws SQLException {
+        return createBooking(customerAccountId, packageId, travelDate, "Pending", specialRequests);
+    }
+
+    // Automatically marks Confirmed bookings as Completed if travelDate < CURRENT_TIMESTAMP
+    public int autoCompletePastBookings() {
+        String sql = "UPDATE booking SET status = 'Completed' "
+                   + "WHERE status = 'Confirmed' AND travelDate < CURRENT_TIMESTAMP";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            return ps.executeUpdate();
+        } catch (SQLException ignored) {
+            return 0;
         }
     }
 
     // Returns every booking with customer name and package name (JOIN)
     public List<BookingRecord> getAllBookings() throws SQLException {
+        autoCompletePastBookings();
         String sql = BASE_SELECT + "ORDER BY b.bookingDate DESC";
         List<BookingRecord> list = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -102,6 +107,7 @@ public class BookingDAO {
 
     // Searches by booking ID, customer name, package name or status
     public List<BookingRecord> searchBooking(String keyword) throws SQLException {
+        autoCompletePastBookings();
         String sql = BASE_SELECT
                    + "WHERE b.bookingID = ? "
                    + "OR LOWER(c.firstName) LIKE ? "
@@ -149,8 +155,13 @@ public class BookingDAO {
     // Creates a booking with custom status (e.g. for seeder)
     public int createBooking(int customerAccountId, int packageId, Timestamp travelDate, String status)
             throws SQLException {
-        String sql = "INSERT INTO booking (customerAccountID, packageID, status, bookingDate, travelDate) "
-                   + "VALUES (?,?,?,?,?)";
+        return createBooking(customerAccountId, packageId, travelDate, status, null);
+    }
+
+    public int createBooking(int customerAccountId, int packageId, Timestamp travelDate, String status, String specialRequests)
+            throws SQLException {
+        String sql = "INSERT INTO booking (customerAccountID, packageID, status, bookingDate, travelDate, specialRequests) "
+                   + "VALUES (?,?,?,?,?,?)";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, customerAccountId);
@@ -158,6 +169,7 @@ public class BookingDAO {
             ps.setString(3, status != null ? status : "Pending");
             ps.setTimestamp(4, new Timestamp(System.currentTimeMillis()));
             ps.setTimestamp(5, travelDate);
+            ps.setString(6, specialRequests);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -209,6 +221,7 @@ public class BookingDAO {
     }
 
     public List<BookingRecord> getBookingsByCustomer(int customerAccountId, int customerId) throws SQLException {
+        autoCompletePastBookings();
         String sql = BASE_SELECT + "WHERE b.customerAccountID = ? OR ca.customerID = ? ORDER BY b.bookingDate DESC";
         List<BookingRecord> list = new ArrayList<>();
         try (Connection con = DBConnection.getConnection();
@@ -225,6 +238,7 @@ public class BookingDAO {
     }
 
     public BookingRecord getBookingById(int bookingId) throws SQLException {
+        autoCompletePastBookings();
         String sql = BASE_SELECT + "WHERE b.bookingID = ?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -253,6 +267,9 @@ public class BookingDAO {
         } catch (SQLException ignored) {}
         try {
             r.travelerCount = rs.getInt("travelerCount");
+        } catch (SQLException ignored) {}
+        try {
+            r.specialRequests = rs.getString("specialRequests");
         } catch (SQLException ignored) {}
 
         String middle = rs.getString("middleName");

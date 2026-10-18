@@ -149,19 +149,24 @@ public class Homepage extends Screen {
         navbar.setBackground(Color.WHITE);
         navbar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, new Color(226, 232, 240)));
 
-        navBrandLogo = new JLabel("TAMS", SwingConstants.CENTER) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(new Color(79, 70, 229)); // Indigo 600
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
-                g2.dispose();
-                super.paintComponent(g);
-            }
-        };
-        navBrandLogo.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        navBrandLogo.setForeground(Color.WHITE);
+        ImageIcon navLogo = getLogoIcon(34, 34);
+        if (navLogo != null) {
+            navBrandLogo = new JLabel(navLogo, SwingConstants.CENTER);
+        } else {
+            navBrandLogo = new JLabel("TAMS", SwingConstants.CENTER) {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2.setColor(new Color(79, 70, 229)); // Indigo 600
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            navBrandLogo.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            navBrandLogo.setForeground(Color.WHITE);
+        }
         navBrandLogo.setOpaque(false);
         navbar.add(navBrandLogo);
 
@@ -502,6 +507,7 @@ public class Homepage extends Screen {
         // Card 1: Traveler Portal
         String custBtnText = Session.isCustomer() ? "Open Dashboard →" : "Sign In to Account →";
         cardTraveler = createPortalCard(
+            "bookings.png",
             "TRAVELER SERVICES",
             "Customer Portal",
             "Access your passenger bookings, view reservation vouchers, check itinerary departure dates, and manage your account profile.",
@@ -519,6 +525,7 @@ public class Homepage extends Screen {
 
         // Card 2: Trip Catalogs
         cardCatalogs = createPortalCard(
+            "destinations.png",
             "EXPLORE & DISCOVER",
             "Public Travel Catalogs",
             "Browse curated vacation destinations and tour packages with transparent pricing, traveler capacity limits, and trip descriptions.",
@@ -531,6 +538,7 @@ public class Homepage extends Screen {
         // Card 3: Administration
         String adminBtnText = Session.isAdmin() ? "Open Admin Panel →" : "Administrator Login →";
         cardAdmin = createPortalCard(
+            "security.png",
             "STAFF & SECURITY",
             "Administration Suite",
             "Access the administrative control center to configure trip catalogs, process customer bookings, audit sales reports, and manage access.",
@@ -551,7 +559,7 @@ public class Homepage extends Screen {
         pageContainer.add(cardAdmin);
     }
 
-    private JPanel createPortalCard(String tagText, String titleText, String descText, Color accentColor,
+    private JPanel createPortalCard(String iconFileName, String tagText, String titleText, String descText, Color accentColor,
                                     ActionButtonDef btn1, ActionButtonDef btn2) {
         JPanel card = new JPanel(null);
         card.setBackground(Color.WHITE);
@@ -563,8 +571,24 @@ public class Homepage extends Screen {
             )
         ));
 
+        // Top-right Icon Badge
+        int badgeSize = 38;
+        JLabel iconBadge = new JLabel();
+        iconBadge.setName("PORTAL_ICON_BADGE");
+        iconBadge.setOpaque(true);
+        iconBadge.setBackground(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 22));
+        iconBadge.setBorder(BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 70), 1));
+        iconBadge.setHorizontalAlignment(JLabel.CENTER);
+
+        ImageIcon icon = loadIcon("/images/icons/" + iconFileName, 22, 22);
+        if (icon != null) {
+            iconBadge.setIcon(icon);
+        }
+        card.add(iconBadge);
+
         // Pill Tag
         JLabel tag = new JLabel("  " + tagText + "  ");
+        tag.setName("PORTAL_TAG");
         tag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         tag.setForeground(accentColor);
         tag.setOpaque(true);
@@ -573,19 +597,21 @@ public class Homepage extends Screen {
             BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 70), 1, true),
             BorderFactory.createEmptyBorder(2, 6, 2, 6)
         ));
-        tag.setBounds(24, 20, 250, 22);
+        tag.setBounds(24, 20, 220, 22);
         card.add(tag);
 
         // Title
         JLabel cTitle = new JLabel(titleText);
+        cTitle.setName("PORTAL_TITLE");
         cTitle.setFont(new Font("Segoe UI", Font.BOLD, 17));
         cTitle.setForeground(COLOR_TEXT_MAIN);
-        cTitle.setBounds(24, 52, 280, 26);
+        cTitle.setBounds(24, 52, 220, 26);
         card.add(cTitle);
 
         // Description
         JLabel desc = new JLabel("<html><body style='width: 260px; line-height: 1.45; color: #64748B; font-family: Segoe UI; font-size: 11px;'>"
             + descText + "</body></html>");
+        desc.setName("PORTAL_DESC");
         desc.setBounds(24, 82, 280, 85);
         desc.setVerticalAlignment(SwingConstants.TOP);
         card.add(desc);
@@ -649,9 +675,9 @@ public class Homepage extends Screen {
         int navH = 58;
         navbar.setBounds(0, 0, w, navH);
 
-        navBrandLogo.setBounds(pad, 13, 50, 32);
-        navBrandTitle.setBounds(pad + 60, 12, 300, 20);
-        navBrandSubtitle.setBounds(pad + 60, 32, 300, 14);
+        navBrandLogo.setBounds(pad, 12, 34, 34);
+        navBrandTitle.setBounds(pad + 44, 12, 300, 20);
+        navBrandSubtitle.setBounds(pad + 44, 32, 300, 14);
 
         int rightX = w - pad - 120;
         navAdminBtn.setBounds(rightX, 13, 105, 32);
@@ -765,9 +791,20 @@ public class Homepage extends Screen {
         if (card == null) return;
         int innerPad = 24;
         int innerW = cardW - (2 * innerPad);
+        int badgeSize = 38;
 
         for (java.awt.Component c : card.getComponents()) {
-            if (c instanceof JButton) {
+            if ("PORTAL_ICON_BADGE".equals(c.getName())) {
+                c.setBounds(cardW - innerPad - badgeSize, 18, badgeSize, badgeSize);
+            } else if ("PORTAL_TAG".equals(c.getName())) {
+                int tagW = Math.min(220, cardW - (2 * innerPad) - badgeSize - 10);
+                c.setBounds(innerPad, 18, Math.max(120, tagW), 22);
+            } else if ("PORTAL_TITLE".equals(c.getName())) {
+                int titleW = Math.max(140, cardW - (2 * innerPad) - badgeSize - 10);
+                c.setBounds(innerPad, 50, titleW, 26);
+            } else if ("PORTAL_DESC".equals(c.getName())) {
+                c.setBounds(innerPad, 82, innerW, 85);
+            } else if (c instanceof JButton) {
                 java.awt.Rectangle b = c.getBounds();
                 c.setBounds(innerPad, b.y, innerW, b.height);
             } else if (c instanceof JLabel) {
