@@ -9,13 +9,14 @@ import dao.TravelPackageDAO.PackageRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -45,9 +46,18 @@ public class PackageManagement extends Screen {
 
         @Override
         public String toString() {
-            return name + " (ID: " + id + ")";
+            return name;
         }
     }
+
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel searchLabel;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JScrollPane tableScrollPane;
 
     // Form fields
     private JTextField idField;
@@ -63,8 +73,7 @@ public class PackageManagement extends Screen {
     private JLabel imagePreviewLabel;
     private String selectedImagePath = null;
 
-    // Search and Table
-    private JTextField searchField;
+    // Table
     private DefaultTableModel tableModel;
     private JTable packageTable;
 
@@ -75,15 +84,24 @@ public class PackageManagement extends Screen {
         super("Package Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadDestinations();
         loadPackages(null);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
         // Top Header Bar
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  TOUR PACKAGES",
             "Package Management",
             "Create, edit, and configure curated tour packages.",
@@ -91,7 +109,7 @@ public class PackageManagement extends Screen {
         );
 
         // Left Column: Form Card Container
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "PACKAGE DETAILS");
 
         // Hidden ID Field to preserve programmatic access
@@ -183,20 +201,84 @@ public class PackageManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Search Bar & Table
-        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadPackages(null));
+        searchLabel = createLabel("Search:", 410, 88, 55, 34);
+        setFontStyle(searchLabel, Font.BOLD);
+        setFontSize(searchLabel, 11);
+        setTextColor(searchLabel, new Color(71, 85, 105));
+
+        searchField = createTextField(470, 88, 480, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
         searchField.addActionListener(e -> handleSearch());
+
+        searchBtn = createPrimaryButton(this, "Search", 960, 88, 85, 34, this::handleSearch);
+        setFontSize(searchBtn, 12);
+
+        showAllBtn = createSecondaryButton(this, "Show All", 1055, 88, 95, 34, () -> {
+            searchField.setText("");
+            loadPackages(null);
+        });
+        setFontSize(showAllBtn, 12);
 
         String[] columns = {"Package Name", "Destination", "Price / Pax", "Min", "Max", "Status"};
         tableModel = createReadOnlyTableModel(columns);
         packageTable = createTable(tableModel, 410, 132, 745, 511);
+        packageTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(packageTable, 220, 155, 125, 75, 75, 95);
         setStatusBadgeRenderer(packageTable, 5);
+
+        if (packageTable.getParent() != null && packageTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) packageTable.getParent().getParent();
+        }
 
         packageTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 300) rightW = 300;
+
+        int searchBtnW = 85;
+        int showAllW = 95;
+        int gap = 8;
+        int buttonsTotal = searchBtnW + gap + showAllW;
+        int searchLblW = 55;
+
+        if (searchLabel != null) searchLabel.setBounds(rightX, 88, searchLblW, 34);
+        if (searchField != null) searchField.setBounds(rightX + searchLblW + 5, 88, rightW - searchLblW - 5 - buttonsTotal - gap, 34);
+        if (searchBtn != null) searchBtn.setBounds(rightX + rightW - buttonsTotal, 88, searchBtnW, 34);
+        if (showAllBtn != null) showAllBtn.setBounds(rightX + rightW - showAllW, 88, showAllW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadDestinations() {
@@ -226,7 +308,7 @@ public class PackageManagement extends Screen {
             for (PackageRecord p : list) {
                 tableModel.addRow(new Object[]{
                     p.name,
-                    p.destinationName != null ? p.destinationName : ("Dest ID: " + p.destinationID),
+                    p.destinationName != null ? p.destinationName : "Destination",
                     p.pricePerTraveller != null ? String.format("PHP %,.2f", p.pricePerTraveller) : "PHP 0.00",
                     p.minTraveller,
                     p.maxTraveller,
@@ -252,7 +334,7 @@ public class PackageManagement extends Screen {
 
             // Image Preview
             selectedImagePath = p.imagePath;
-            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
 
             // Select destination in combo
             for (int i = 0; i < destinationCombo.getItemCount(); i++) {
@@ -275,7 +357,7 @@ public class PackageManagement extends Screen {
             try {
                 String savedName = ImageUtil.saveUploadedImage(selectedFile, ImageUtil.DATA_PACKAGES_DIR, "pkg");
                 selectedImagePath = savedName;
-                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
                 showInfo("Image selected and staged for this package.");
             } catch (Exception ex) {
                 showError("Failed to save image file: " + ex.getMessage());
@@ -323,7 +405,7 @@ public class PackageManagement extends Screen {
             int newId = packageDAO.addPackage(selectedDest.id, name, desc.isEmpty() ? null : desc,
                     selectedImagePath, price, min, max);
             if (newId > 0) {
-                showInfo("Package '" + name + "' created successfully (ID: " + newId + ").");
+                showInfo("Package '" + name + "' created successfully.");
                 clearForm();
                 loadPackages(null);
             } else {
@@ -383,7 +465,7 @@ public class PackageManagement extends Screen {
             boolean updated = packageDAO.updatePackage(packageId, selectedDest.id, name,
                     desc.isEmpty() ? null : desc, selectedImagePath, price, status, min, max);
             if (updated) {
-                showInfo("Package ID " + packageId + " updated successfully.");
+                showInfo("Package '" + name + "' updated successfully.");
                 clearForm();
                 loadPackages(null);
             } else {
@@ -405,7 +487,7 @@ public class PackageManagement extends Screen {
 
         String name = getTrimmedText(nameField);
 
-        if (confirm("Are you sure you want to delete package '" + name + "' (ID: " + packageId + ")?")) {
+        if (confirm("Are you sure you want to delete package '" + name + "'?")) {
             try {
                 boolean deleted = packageDAO.deletePackage(packageId);
                 if (deleted) {
@@ -442,7 +524,7 @@ public class PackageManagement extends Screen {
         statusCombo.setSelectedIndex(0);
         descArea.setText("");
         selectedImagePath = null;
-        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 105, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
         packageTable.clearSelection();
     }
 }

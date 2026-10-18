@@ -8,6 +8,8 @@ import dao.CustomerDAO.CustomerRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -26,6 +29,15 @@ public class CustomerManagement extends Screen {
 
     private final CustomerDAO customerDAO = new CustomerDAO();
     private final CustomerAccountDAO accountDAO = new CustomerAccountDAO();
+
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel searchLabel;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JScrollPane tableScrollPane;
 
     // Form inputs
     private JTextField idField;
@@ -39,9 +51,6 @@ public class CustomerManagement extends Screen {
     private JComboBox<String> statusCombo;
     private JPasswordField passwordField;
 
-    // Search input
-    private JTextField searchField;
-
     // Table
     private DefaultTableModel tableModel;
     private JTable customerTable;
@@ -53,14 +62,23 @@ public class CustomerManagement extends Screen {
         super("Customer Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadCustomers(null);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
         // Top Header Bar
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  CUSTOMER DIRECTORY",
             "Customer Management",
             "Register, edit, search, and manage registered customer profiles.",
@@ -68,7 +86,7 @@ public class CustomerManagement extends Screen {
         );
 
         // Left Column: Modern Card Container for Customer Form
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "CUSTOMER PROFILE");
 
         // Hidden ID Field to preserve programmatic access without cluttering the UI
@@ -118,20 +136,84 @@ public class CustomerManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Search Bar & Table
-        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadCustomers(null));
+        searchLabel = createLabel("Search:", 410, 88, 55, 34);
+        setFontStyle(searchLabel, Font.BOLD);
+        setFontSize(searchLabel, 11);
+        setTextColor(searchLabel, new Color(71, 85, 105));
+
+        searchField = createTextField(470, 88, 480, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
         searchField.addActionListener(e -> handleSearch());
+
+        searchBtn = createPrimaryButton(this, "Search", 960, 88, 85, 34, this::handleSearch);
+        setFontSize(searchBtn, 12);
+
+        showAllBtn = createSecondaryButton(this, "Show All", 1055, 88, 95, 34, () -> {
+            searchField.setText("");
+            loadCustomers(null);
+        });
+        setFontSize(showAllBtn, 12);
 
         String[] columnNames = {"Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
         tableModel = createReadOnlyTableModel(columnNames);
         customerTable = createTable(tableModel, 410, 132, 745, 511);
+        customerTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(customerTable, 120, 110, 110, 195, 65, 55, 90);
         setStatusBadgeRenderer(customerTable, 6);
+
+        if (customerTable.getParent() != null && customerTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) customerTable.getParent().getParent();
+        }
 
         customerTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 300) rightW = 300;
+
+        int searchBtnW = 85;
+        int showAllW = 95;
+        int gap = 8;
+        int buttonsTotal = searchBtnW + gap + showAllW;
+        int searchLblW = 55;
+
+        if (searchLabel != null) searchLabel.setBounds(rightX, 88, searchLblW, 34);
+        if (searchField != null) searchField.setBounds(rightX + searchLblW + 5, 88, rightW - searchLblW - 5 - buttonsTotal - gap, 34);
+        if (searchBtn != null) searchBtn.setBounds(rightX + rightW - buttonsTotal, 88, searchBtnW, 34);
+        if (showAllBtn != null) showAllBtn.setBounds(rightX + rightW - showAllW, 88, showAllW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadCustomers(String keyword) {
@@ -145,10 +227,10 @@ public class CustomerManagement extends Screen {
 
             for (CustomerRecord c : currentRecords) {
                 tableModel.addRow(new Object[]{
-                    c.username != null ? c.username : "(None)",
-                    c.firstName,
-                    c.lastName,
-                    c.email,
+                    c.username != null ? c.username : "(no account)",
+                    c.firstName != null ? c.firstName : "",
+                    c.lastName != null ? c.lastName : "",
+                    c.email != null ? c.email : "",
                     c.sex != null ? c.sex : "",
                     c.age,
                     c.status != null ? c.status : "Active"
@@ -169,13 +251,9 @@ public class CustomerManagement extends Screen {
             middleNameField.setText(c.middleName != null ? c.middleName : "");
             lastNameField.setText(c.lastName != null ? c.lastName : "");
             emailField.setText(c.email != null ? c.email : "");
-            if (c.sex != null) {
-                genderCombo.setSelectedItem(c.sex);
-            }
+            genderCombo.setSelectedItem(c.sex != null ? c.sex : "Male");
             ageField.setText(String.valueOf(c.age));
-            if (c.status != null) {
-                statusCombo.setSelectedItem(c.status);
-            }
+            statusCombo.setSelectedItem(c.status != null ? c.status : "Active");
             passwordField.setText("");
         }
     }
@@ -192,7 +270,7 @@ public class CustomerManagement extends Screen {
         String password = new String(passwordField.getPassword());
 
         if (username.isEmpty() || first.isEmpty() || last.isEmpty() || email.isEmpty() || ageValue == null) {
-            showError("Please fill in all required fields (*).");
+            showError("Please fill in all required customer fields (*).");
             return;
         }
 
@@ -232,7 +310,7 @@ public class CustomerManagement extends Screen {
                 }
 
                 con.commit();
-                showInfo("Customer '" + first + " " + last + "' created successfully (ID: " + customerId + ").");
+                showInfo("Customer '" + first + " " + last + "' registered successfully.");
                 clearForm();
                 loadCustomers(null);
             } catch (SQLException ex) {
@@ -276,7 +354,7 @@ public class CustomerManagement extends Screen {
             try {
                 CustomerRecord existing = customerDAO.getCustomerById(con, customerId);
                 if (existing == null) {
-                    showError("Customer with ID " + customerId + " not found.");
+                    showError("Selected customer record not found.");
                     con.rollback();
                     return;
                 }
@@ -347,7 +425,7 @@ public class CustomerManagement extends Screen {
 
         String name = getTrimmedText(firstNameField) + " " + getTrimmedText(lastNameField);
 
-        if (confirm("Are you sure you want to permanently delete customer '" + name + "' (ID: " + customerId + ")?\nThis will also remove their login account and bookings.")) {
+        if (confirm("Are you sure you want to permanently delete customer '" + name + "'?\nThis will also remove their login account and bookings.")) {
             try (Connection con = DBConnection.getConnection()) {
                 boolean deleted = customerDAO.deleteCustomer(con, customerId);
                 if (deleted) {

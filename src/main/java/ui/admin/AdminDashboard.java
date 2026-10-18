@@ -9,10 +9,13 @@ import dao.PaymentDAO.SalesSummary;
 import dao.TravelPackageDAO;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -21,12 +24,43 @@ import ui.Homepage;
 
 public class AdminDashboard extends Screen {
 
+    private static class StatCardHolder {
+        JPanel panel;
+        JLabel tagLbl;
+        JLabel valLbl;
+        JLabel subLbl;
+    }
+
+    private static class ModuleCardHolder {
+        JPanel panel;
+        JLabel iconBadge;
+        JLabel tagLbl;
+        JLabel titleLbl;
+        JLabel descLbl;
+        JButton actionBtn;
+        String descText;
+    }
+
+    private JButton logoutBtn;
+    private JLabel footerLbl;
+    private final List<StatCardHolder> statCards = new ArrayList<>();
+    private final List<ModuleCardHolder> moduleCards = new ArrayList<>();
+
     public AdminDashboard() {
         super("Admin Dashboard - Executive Suite", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
@@ -49,7 +83,7 @@ public class AdminDashboard extends Screen {
         setTextColor(subtitle, COLOR_TEXT_MUTED);
 
         // Quick Logout Button in Header
-        createDangerButton("Log Out", 1015, 20, 135, 36, () -> {
+        logoutBtn = createDangerButton("Log Out", 1015, 20, 135, 36, () -> {
             if (confirm("Are you sure you want to log out of the administration portal?")) {
                 Session.clear();
                 navigateTo(new Homepage());
@@ -85,82 +119,136 @@ public class AdminDashboard extends Screen {
             }
         } catch (Exception ignored) {}
 
-        createStatCard("DESTINATIONS", destStat, "Catalog Spots", new Color(14, 116, 144), 45, 92, 265, 72);
-        createStatCard("TOUR PACKAGES", pkgStat, "Curated Itineraries", new Color(79, 70, 229), 325, 92, 265, 72);
-        createStatCard("RESERVATIONS", resStat, "Client Bookings", COLOR_PRIMARY, 605, 92, 265, 72);
-        createStatCard("TOTAL REVENUE", revStat, "Audited Sales", COLOR_SUCCESS, 885, 92, 265, 72);
+        statCards.add(createStatCard("DESTINATIONS", destStat, "Catalog Spots", new Color(14, 116, 144)));
+        statCards.add(createStatCard("TOUR PACKAGES", pkgStat, "Curated Itineraries", new Color(79, 70, 229)));
+        statCards.add(createStatCard("RESERVATIONS", resStat, "Client Bookings", COLOR_PRIMARY));
+        statCards.add(createStatCard("TOTAL REVENUE", revStat, "Audited Sales", COLOR_SUCCESS));
 
         // -------------------------------------------------------------
         // Module Launcher Grid (6 Executive Feature Cards with Icon Badges)
-        // Row 1: y = 178, Row 2: y = 380
-        // Col 1: x = 45, Col 2: x = 421, Col 3: x = 797 (width = 353 each)
         // -------------------------------------------------------------
 
         // 1. Destinations
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "destinations.png", "CATALOG", "Destinations",
             "Configure tourist spots, countries, regional descriptions, and operational statuses.",
             "Manage Destinations →", new Color(14, 116, 144),
-            45, 178, 353, 185,
             () -> navigateTo(new DestinationManagement())
-        );
+        ));
 
         // 2. Packages
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "packages.png", "ITINERARIES", "Travel Packages",
             "Set bundle pricing, group traveler capacities, and destination links.",
             "Manage Packages →", new Color(79, 70, 229),
-            421, 178, 353, 185,
             () -> navigateTo(new PackageManagement())
-        );
+        ));
 
         // 3. Bookings
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "bookings.png", "RESERVATIONS", "Booking Oversight",
             "Track customer reservations, review departure dates, and update statuses.",
             "Manage Bookings →", COLOR_PRIMARY,
-            797, 178, 353, 185,
             () -> navigateTo(new BookingManagement())
-        );
+        ));
 
         // 4. Customers
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "customers.png", "DIRECTORY", "Customer Accounts",
             "Inspect traveler records, manage login credentials, and update customer profiles.",
             "Manage Customers →", COLOR_SUCCESS,
-            45, 380, 353, 185,
             () -> navigateTo(new CustomerManagement())
-        );
+        ));
 
         // 5. Sales & Reports
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "sales.png", "AUDITING", "Sales & Revenue",
             "Audit payment transactions, revenue summaries, and financial payment methods.",
             "View Sales Reports →", new Color(217, 119, 6),
-            421, 380, 353, 185,
             () -> navigateTo(new SalesManagement())
-        );
+        ));
 
         // 6. Admin Management
-        createModuleCard(
+        moduleCards.add(createModuleCard(
             "security.png", "SECURITY", "Administrator Accounts",
             "Manage administrative credentials, assign roles (Admin / Manager), and access logs.",
             "Manage Admin Accounts →", new Color(51, 65, 85),
-            797, 380, 353, 185,
             () -> navigateTo(new AdminManagement())
-        );
+        ));
 
         // -------------------------------------------------------------
         // Footer Status Strip
         // -------------------------------------------------------------
-        JLabel footerLbl = createLabel("TAMS Enterprise • Offline Desktop Solution • Connected to Apache Derby RDBMS", 45, 595, 800, 20);
+        footerLbl = createLabel("TAMS Enterprise • Offline Desktop Solution • Connected to Apache Derby RDBMS", 45, 595, 800, 20);
         setFontSize(footerLbl, 11);
         setTextColor(footerLbl, COLOR_TEXT_MUTED);
     }
 
-    private void createStatCard(String tag, String value, String subtitle, Color accentColor, int x, int y, int w, int h) {
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (logoutBtn != null) {
+            logoutBtn.setBounds(w - pad - 135, 20, 135, 36);
+        }
+
+        // 4 Stat Cards
+        int statGap = 16;
+        int statWidth = (w - (2 * pad) - (3 * statGap)) / 4;
+        int statHeight = 74;
+        for (int i = 0; i < statCards.size(); i++) {
+            StatCardHolder sc = statCards.get(i);
+            int sx = pad + i * (statWidth + statGap);
+            sc.panel.setBounds(sx, 92, statWidth, statHeight);
+            sc.tagLbl.setSize(statWidth - 28, 14);
+            sc.valLbl.setSize(statWidth - 28, 24);
+            sc.subLbl.setSize(statWidth - 28, 16);
+        }
+
+        // 6 Module Cards (2 rows of 3 columns)
+        int modGap = 20;
+        int colWidth = (w - (2 * pad) - (2 * modGap)) / 3;
+        int startY = 92 + statHeight + 16;
+        int footerY = h - 35;
+        int availableH = footerY - startY - 10;
+        int rowHeight = (availableH - modGap) / 2;
+        if (rowHeight < 175) rowHeight = 175;
+
+        for (int i = 0; i < moduleCards.size(); i++) {
+            ModuleCardHolder mc = moduleCards.get(i);
+            int col = i % 3;
+            int row = i / 3;
+            int mx = pad + col * (colWidth + modGap);
+            int my = startY + row * (rowHeight + modGap);
+            mc.panel.setBounds(mx, my, colWidth, rowHeight);
+
+            int badgeSize = 38;
+            int badgeX = colWidth - 18 - badgeSize;
+            mc.iconBadge.setBounds(badgeX, 14, badgeSize, badgeSize);
+
+            int textWidth = badgeX - 18 - 8;
+            mc.tagLbl.setBounds(18, 14, textWidth, 16);
+            mc.titleLbl.setBounds(18, 34, textWidth, 24);
+
+            int descH = rowHeight - 64 - 52;
+            if (descH < 35) descH = 35;
+            mc.descLbl.setBounds(18, 64, colWidth - 36, descH);
+            mc.descLbl.setText("<html><body style='width: " + (colWidth - 45) + "px;'>" + mc.descText + "</body></html>");
+
+            mc.actionBtn.setBounds(18, rowHeight - 46, colWidth - 36, 36);
+        }
+
+        if (footerLbl != null) {
+            footerLbl.setBounds(pad, h - 30, w - 2 * pad, 20);
+        }
+        repaint();
+    }
+
+    private StatCardHolder createStatCard(String tag, String value, String subtitle, Color accentColor) {
+        StatCardHolder holder = new StatCardHolder();
         JPanel card = new JPanel(null);
-        card.setBounds(x, y, w, h);
         card.setBackground(COLOR_CARD_BG);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createMatteBorder(0, 4, 0, 0, accentColor),
@@ -170,34 +258,36 @@ public class AdminDashboard extends Screen {
             )
         ));
 
-        JLabel tagLbl = createLabel(card, tag, 14, 8, w - 28, 14);
-        setFontStyle(tagLbl, Font.BOLD);
-        setFontSize(tagLbl, 10);
-        setTextColor(tagLbl, accentColor);
+        holder.tagLbl = createLabel(card, tag, 14, 8, 200, 14);
+        setFontStyle(holder.tagLbl, Font.BOLD);
+        setFontSize(holder.tagLbl, 10);
+        setTextColor(holder.tagLbl, accentColor);
 
-        JLabel valLbl = createLabel(card, value, 14, 24, w - 28, 24);
-        setFontStyle(valLbl, Font.BOLD);
-        setFontSize(valLbl, 16);
-        setTextColor(valLbl, COLOR_TEXT_MAIN);
+        holder.valLbl = createLabel(card, value, 14, 24, 200, 24);
+        setFontStyle(holder.valLbl, Font.BOLD);
+        setFontSize(holder.valLbl, 16);
+        setTextColor(holder.valLbl, COLOR_TEXT_MAIN);
 
-        JLabel subLbl = createLabel(card, subtitle, 14, 48, w - 28, 16);
-        setFontSize(subLbl, 11);
-        setTextColor(subLbl, COLOR_TEXT_MUTED);
+        holder.subLbl = createLabel(card, subtitle, 14, 48, 200, 16);
+        setFontSize(holder.subLbl, 11);
+        setTextColor(holder.subLbl, COLOR_TEXT_MUTED);
 
+        holder.panel = card;
         add(card);
+        return holder;
     }
 
-    private void createModuleCard(String iconFileName, String tag, String title, String desc, String btnText,
-                                  Color accentColor, int x, int y, int w, int h, Runnable onAction) {
-        JPanel card = createCard(x, y, w, h);
+    private ModuleCardHolder createModuleCard(String iconFileName, String tag, String title, String desc, String btnText,
+                                              Color accentColor, Runnable onAction) {
+        ModuleCardHolder holder = new ModuleCardHolder();
+        holder.descText = desc;
+
+        JPanel card = createCard(0, 0, 300, 180);
+        holder.panel = card;
 
         // Top-right Icon Badge
         int badgeSize = 38;
-        int badgeX = w - 18 - badgeSize;
-        int badgeY = 14;
-
         JLabel iconBadge = new JLabel();
-        iconBadge.setBounds(badgeX, badgeY, badgeSize, badgeSize);
         iconBadge.setOpaque(true);
         iconBadge.setBackground(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 22));
         iconBadge.setBorder(BorderFactory.createLineBorder(new Color(accentColor.getRed(), accentColor.getGreen(), accentColor.getBlue(), 70), 1));
@@ -208,26 +298,29 @@ public class AdminDashboard extends Screen {
             iconBadge.setIcon(icon);
         }
         card.add(iconBadge);
+        holder.iconBadge = iconBadge;
 
-        // Tag & Title (accommodate badge on right)
-        int textWidth = badgeX - 18 - 8;
-        JLabel tagLbl = createLabel(card, tag, 18, 14, textWidth, 16);
+        // Tag & Title
+        JLabel tagLbl = createLabel(card, tag, 18, 14, 200, 16);
         setFontStyle(tagLbl, Font.BOLD);
         setFontSize(tagLbl, 10);
         setTextColor(tagLbl, accentColor);
+        holder.tagLbl = tagLbl;
 
-        JLabel titleLbl = createLabel(card, title, 18, 34, textWidth, 24);
+        JLabel titleLbl = createLabel(card, title, 18, 34, 200, 24);
         setFontStyle(titleLbl, Font.BOLD);
         setFontSize(titleLbl, 16);
         setTextColor(titleLbl, COLOR_TEXT_MAIN);
+        holder.titleLbl = titleLbl;
 
         // Body Description
-        JLabel descLbl = createLabel(card, "<html><body style='width: " + (w - 40) + "px;'>" + desc + "</body></html>", 18, 64, w - 36, 46);
+        JLabel descLbl = createLabel(card, "<html><body>" + desc + "</body></html>", 18, 64, 250, 46);
         setFontSize(descLbl, 12);
         setTextColor(descLbl, COLOR_TEXT_MUTED);
+        holder.descLbl = descLbl;
 
         // Bottom Action Button with interactive hover
-        JButton actionBtn = createStyledButton(card, btnText, 18, 126, w - 36, 38,
+        JButton actionBtn = createStyledButton(card, btnText, 18, 126, 250, 36,
             new Color(248, 250, 252), accentColor, new Color(226, 232, 240), 12, onAction);
         setFontStyle(actionBtn, Font.BOLD);
 
@@ -249,6 +342,8 @@ public class AdminDashboard extends Screen {
                 ));
             }
         });
+        holder.actionBtn = actionBtn;
+
+        return holder;
     }
 }
-

@@ -21,6 +21,8 @@ public class BookingDAO {
         public String customerName;
         public int packageID;
         public String packageName;
+        public String destinationName;
+        public java.math.BigDecimal pricePerTraveller;
         public String status;
         public Timestamp bookingDate;
         public Timestamp travelDate;
@@ -34,11 +36,12 @@ public class BookingDAO {
             "SELECT b.bookingID, b.customerAccountID, b.packageID, b.status, "
           + "b.bookingDate, b.travelDate, "
           + "c.firstName, c.middleName, c.lastName, "
-          + "p.name AS packageName "
+          + "p.name AS packageName, p.pricePerTraveller, d.name AS destinationName "
           + "FROM booking b "
           + "JOIN customeraccount ca ON b.customerAccountID = ca.customerAccountID "
           + "JOIN customer c ON ca.customerID = c.customerID "
-          + "JOIN package p ON b.packageID = p.packageID ";
+          + "JOIN package p ON b.packageID = p.packageID "
+          + "LEFT JOIN destination d ON p.destinationID = d.destinationID ";
 
     // Creates a booking with status 'Pending' and returns the new bookingID
     public int createBooking(int customerAccountId, int packageId, Timestamp travelDate)
@@ -196,6 +199,22 @@ public class BookingDAO {
         }
     }
 
+    public List<BookingRecord> getBookingsByCustomer(int customerAccountId, int customerId) throws SQLException {
+        String sql = BASE_SELECT + "WHERE b.customerAccountID = ? OR ca.customerID = ? ORDER BY b.bookingDate DESC";
+        List<BookingRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, customerAccountId);
+            ps.setInt(2, customerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     // Converts one result row into a BookingRecord
     private BookingRecord mapRow(ResultSet rs) throws SQLException {
         BookingRecord r = new BookingRecord();
@@ -206,6 +225,12 @@ public class BookingDAO {
         r.bookingDate = rs.getTimestamp("bookingDate");
         r.travelDate = rs.getTimestamp("travelDate");
         r.packageName = rs.getString("packageName");
+        try {
+            r.destinationName = rs.getString("destinationName");
+        } catch (SQLException ignored) {}
+        try {
+            r.pricePerTraveller = rs.getBigDecimal("pricePerTraveller");
+        } catch (SQLException ignored) {}
 
         String middle = rs.getString("middleName");
         r.customerName = rs.getString("firstName")

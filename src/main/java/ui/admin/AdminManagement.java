@@ -8,8 +8,11 @@ import model.AdminAccount;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -17,6 +20,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -25,32 +29,47 @@ public class AdminManagement extends Screen {
 
     private final AdminAccountDAO adminDAO = new AdminAccountDAO();
 
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel searchLabel;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JScrollPane tableScrollPane;
+
     // Form inputs
     private JTextField idField;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JComboBox<String> roleCombo;
 
-    // Search input
-    private JTextField searchField;
-
     // Table and Accounts Cache
     private DefaultTableModel tableModel;
     private JTable accountsTable;
-    private List<AdminAccount> currentAccounts = new java.util.ArrayList<>();
+    private List<AdminAccount> currentAccounts = new ArrayList<>();
 
     public AdminManagement() {
         super("Admin Account Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadAccounts(null);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
         // Top Header Bar
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  SECURITY & ACCESS",
             "Admin Account Management",
             "Manage administrator credentials, security accounts, and role privileges.",
@@ -58,7 +77,7 @@ public class AdminManagement extends Screen {
         );
 
         // Left Column: Modern Card Container for Account Form
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "ADMIN CREDENTIALS");
 
         // Hidden ID field to preserve programmatic access
@@ -97,19 +116,83 @@ public class AdminManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Search Bar & Table
-        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadAccounts(null));
+        searchLabel = createLabel("Search:", 410, 88, 55, 34);
+        setFontStyle(searchLabel, Font.BOLD);
+        setFontSize(searchLabel, 11);
+        setTextColor(searchLabel, new Color(71, 85, 105));
+
+        searchField = createTextField(470, 88, 480, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
         searchField.addActionListener(e -> handleSearch());
+
+        searchBtn = createPrimaryButton(this, "Search", 960, 88, 85, 34, this::handleSearch);
+        setFontSize(searchBtn, 12);
+
+        showAllBtn = createSecondaryButton(this, "Show All", 1055, 88, 95, 34, () -> {
+            searchField.setText("");
+            loadAccounts(null);
+        });
+        setFontSize(showAllBtn, 12);
 
         tableModel = createReadOnlyTableModel(new String[]{"Username", "Role"});
         accountsTable = createTable(tableModel, 410, 132, 745, 511);
+        accountsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(accountsTable, 495, 250);
         setStatusBadgeRenderer(accountsTable, 1);
+
+        if (accountsTable.getParent() != null && accountsTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) accountsTable.getParent().getParent();
+        }
 
         accountsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 300) rightW = 300;
+
+        int searchBtnW = 85;
+        int showAllW = 95;
+        int gap = 8;
+        int buttonsTotal = searchBtnW + gap + showAllW;
+        int searchLblW = 55;
+
+        if (searchLabel != null) searchLabel.setBounds(rightX, 88, searchLblW, 34);
+        if (searchField != null) searchField.setBounds(rightX + searchLblW + 5, 88, rightW - searchLblW - 5 - buttonsTotal - gap, 34);
+        if (searchBtn != null) searchBtn.setBounds(rightX + rightW - buttonsTotal, 88, searchBtnW, 34);
+        if (showAllBtn != null) showAllBtn.setBounds(rightX + rightW - showAllW, 88, showAllW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadAccounts(String keyword) {
@@ -171,7 +254,7 @@ public class AdminManagement extends Screen {
                 showError("Username '" + username + "' is already taken. Please choose another.");
                 return;
             }
-            showInfo("Admin account '" + username + "' created successfully (ID: " + newId + ").");
+            showInfo("Admin account '" + username + "' created successfully.");
             clearForm();
             loadAccounts(null);
         } catch (SQLException ex) {
@@ -197,8 +280,8 @@ public class AdminManagement extends Screen {
 
         if (!isSuperAdmin()) {
             int row = accountsTable.getSelectedRow();
-            String targetRole = (row >= 0 && row < tableModel.getRowCount())
-                    ? tableModel.getValueAt(row, 2).toString() : "";
+            String targetRole = (row >= 0 && row < currentAccounts.size())
+                    ? currentAccounts.get(row).getrole() : "";
             if ("Admin".equalsIgnoreCase(targetRole)) {
                 showError("Access Denied: Managers cannot modify Administrator accounts.");
                 return;
@@ -243,7 +326,7 @@ public class AdminManagement extends Screen {
             return;
         }
 
-        if (confirm("Are you sure you want to permanently delete admin account '" + username + "' (ID: " + adminId + ")?")) {
+        if (confirm("Are you sure you want to permanently delete admin account '" + username + "'?")) {
             try (Connection con = DBConnection.getConnection()) {
                 boolean deleted = adminDAO.deleteAccount(con, adminId);
                 if (deleted) {

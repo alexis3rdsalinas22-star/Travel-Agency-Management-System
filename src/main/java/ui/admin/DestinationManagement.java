@@ -7,12 +7,13 @@ import dao.DestinationDAO.DestinationRecord;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
@@ -29,6 +30,15 @@ public class DestinationManagement extends Screen {
 
     private final DestinationDAO destinationDAO = new DestinationDAO();
 
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel searchLabel;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JScrollPane tableScrollPane;
+
     // Form fields
     private JTextField idField;
     private JTextField nameField;
@@ -40,8 +50,7 @@ public class DestinationManagement extends Screen {
     private JLabel imagePreviewLabel;
     private String selectedImagePath = null;
 
-    // Search and Table
-    private JTextField searchField;
+    // Table
     private DefaultTableModel tableModel;
     private JTable destTable;
 
@@ -52,14 +61,23 @@ public class DestinationManagement extends Screen {
         super("Destination Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadDestinations(null);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
         // Top Header Bar
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  TRAVEL CATALOG",
             "Destination Management",
             "Catalog tourist spots, countries, regional descriptions, and statuses.",
@@ -67,7 +85,7 @@ public class DestinationManagement extends Screen {
         );
 
         // Left Column: Form Card Container
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "DESTINATION DETAILS");
 
         // Hidden ID Field to preserve programmatic access
@@ -120,20 +138,84 @@ public class DestinationManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Search Bar & Table
-        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadDestinations(null));
+        searchLabel = createLabel("Search:", 410, 88, 55, 34);
+        setFontStyle(searchLabel, Font.BOLD);
+        setFontSize(searchLabel, 11);
+        setTextColor(searchLabel, new Color(71, 85, 105));
+
+        searchField = createTextField(470, 88, 480, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
         searchField.addActionListener(e -> handleSearch());
+
+        searchBtn = createPrimaryButton(this, "Search", 960, 88, 85, 34, this::handleSearch);
+        setFontSize(searchBtn, 12);
+
+        showAllBtn = createSecondaryButton(this, "Show All", 1055, 88, 95, 34, () -> {
+            searchField.setText("");
+            loadDestinations(null);
+        });
+        setFontSize(showAllBtn, 12);
 
         String[] columns = {"Destination Name", "Country", "Description", "Status"};
         tableModel = createReadOnlyTableModel(columns);
         destTable = createTable(tableModel, 410, 132, 745, 511);
+        destTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(destTable, 160, 120, 380, 85);
         setStatusBadgeRenderer(destTable, 3);
+
+        if (destTable.getParent() != null && destTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) destTable.getParent().getParent();
+        }
 
         destTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 300) rightW = 300;
+
+        int searchBtnW = 85;
+        int showAllW = 95;
+        int gap = 8;
+        int buttonsTotal = searchBtnW + gap + showAllW;
+        int searchLblW = 55;
+
+        if (searchLabel != null) searchLabel.setBounds(rightX, 88, searchLblW, 34);
+        if (searchField != null) searchField.setBounds(rightX + searchLblW + 5, 88, rightW - searchLblW - 5 - buttonsTotal - gap, 34);
+        if (searchBtn != null) searchBtn.setBounds(rightX + rightW - buttonsTotal, 88, searchBtnW, 34);
+        if (showAllBtn != null) showAllBtn.setBounds(rightX + rightW - showAllW, 88, showAllW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadDestinations(String keyword) {
@@ -172,7 +254,7 @@ public class DestinationManagement extends Screen {
             statusCombo.setSelectedItem(d.status != null ? d.status : "Active");
 
             selectedImagePath = d.imagePath;
-            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
         }
     }
 
@@ -186,7 +268,7 @@ public class DestinationManagement extends Screen {
             try {
                 String savedName = ImageUtil.saveUploadedImage(selectedFile, ImageUtil.DATA_DESTINATIONS_DIR, "dest");
                 selectedImagePath = savedName;
-                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
                 showInfo("Destination image staged successfully.");
             } catch (Exception ex) {
                 showError("Failed to save image file: " + ex.getMessage());
@@ -205,8 +287,8 @@ public class DestinationManagement extends Screen {
         }
 
         try {
-            int newId = destinationDAO.addDestination(name, country, desc.isEmpty() ? null : desc, selectedImagePath);
-            showInfo("Destination '" + name + "' added successfully (ID: " + newId + ").");
+            destinationDAO.addDestination(name, country, desc.isEmpty() ? null : desc, selectedImagePath);
+            showInfo("Destination '" + name + "' added successfully.");
             clearForm();
             loadDestinations(null);
         } catch (SQLException ex) {
@@ -235,7 +317,7 @@ public class DestinationManagement extends Screen {
             boolean updated = destinationDAO.editDestination(destId, name, country,
                     desc.isEmpty() ? null : desc, selectedImagePath, status);
             if (updated) {
-                showInfo("Destination ID " + destId + " updated successfully.");
+                showInfo("Destination '" + name + "' updated successfully.");
                 clearForm();
                 loadDestinations(null);
             } else {
@@ -255,7 +337,7 @@ public class DestinationManagement extends Screen {
 
         String name = getTrimmedText(nameField);
 
-        if (confirm("Are you sure you want to delete destination '" + name + "' (ID: " + destId + ")?")) {
+        if (confirm("Are you sure you want to delete destination '" + name + "'?")) {
             try {
                 boolean deleted = destinationDAO.deleteDestination(destId);
                 if (deleted) {
@@ -287,7 +369,7 @@ public class DestinationManagement extends Screen {
         descArea.setText("");
         statusCombo.setSelectedIndex(0);
         selectedImagePath = null;
-        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 118, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
         destTable.clearSelection();
     }
 }

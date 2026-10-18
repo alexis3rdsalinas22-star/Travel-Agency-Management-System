@@ -43,6 +43,14 @@ public class Screen extends JFrame {
     public static final Color COLOR_TEXT_MAIN       = new Color(15, 23, 42);    // Dark Slate
     public static final Color COLOR_TEXT_MUTED      = new Color(100, 116, 139); // Muted Slate
 
+    static {
+        try {
+            javax.swing.UIManager.put("OptionPane.messageFont", new Font("Segoe UI", Font.PLAIN, 13));
+            javax.swing.UIManager.put("OptionPane.buttonFont", new Font("Segoe UI", Font.BOLD, 12));
+            javax.swing.UIManager.put("OptionPane.messageForeground", COLOR_TEXT_MAIN);
+        } catch (Exception ignored) {}
+    }
+
     public static final int STD_WIDTH  = 1200;
     public static final int STD_HEIGHT = 700;
 
@@ -125,7 +133,7 @@ public class Screen extends JFrame {
     // Header Bar Generator
     // -------------------------------------------------------------
 
-    public void createTopHeader(String categoryTag, String title, String subtitle, Runnable onBack) {
+    public JButton createTopHeader(String categoryTag, String title, String subtitle, Runnable onBack) {
         JLabel tag = createLabel(categoryTag, 45, 14, 550, 16);
         setFontStyle(tag, Font.BOLD);
         setFontSize(tag, 10);
@@ -140,12 +148,15 @@ public class Screen extends JFrame {
         setTextColor(sub, COLOR_TEXT_MUTED);
 
         if (onBack != null) {
-            JButton backBtn = createSecondaryButton(this, "← Dashboard", 1020, 18, 135, 36, onBack);
+            int backX = getWidth() > 45 + 135 ? getWidth() - 45 - 135 : 1020;
+            JButton backBtn = createSecondaryButton(this, "← Dashboard", backX, 18, 135, 36, onBack);
             setFontStyle(backBtn, Font.BOLD);
             setFontSize(backBtn, 12);
             setBackground(backBtn, Color.WHITE);
             setTextColor(backBtn, new Color(51, 65, 85));
+            return backBtn;
         }
+        return null;
     }
 
     // -------------------------------------------------------------

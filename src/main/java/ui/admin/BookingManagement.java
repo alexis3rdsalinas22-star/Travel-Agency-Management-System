@@ -12,6 +12,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,6 +36,15 @@ public class BookingManagement extends Screen {
     private final BookingDAO bookingDAO = new BookingDAO();
     private final PaymentDAO paymentDAO = new PaymentDAO();
 
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel searchLabel;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JScrollPane tableScrollPane;
+
     // Form fields
     private JTextField idField;
     private JTextField customerField;
@@ -43,8 +54,7 @@ public class BookingManagement extends Screen {
     private JComboBox<String> statusCombo;
     private JLabel paymentStatusLbl;
 
-    // Search and Table
-    private JTextField searchField;
+    // Table
     private DefaultTableModel tableModel;
     private JTable bookingTable;
 
@@ -55,14 +65,23 @@ public class BookingManagement extends Screen {
         super("Booking Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadBookings(null);
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
         // Top Header Bar
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  RESERVATIONS",
             "Booking Management",
             "Review passenger reservations, schedule departure dates, and update statuses.",
@@ -70,7 +89,7 @@ public class BookingManagement extends Screen {
         );
 
         // Left Column: Form Card Container
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "RESERVATION DETAILS");
 
         // Hidden ID Field to preserve programmatic access
@@ -124,20 +143,84 @@ public class BookingManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Search Bar & Table
-        searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadBookings(null));
+        searchLabel = createLabel("Search:", 410, 88, 55, 34);
+        setFontStyle(searchLabel, Font.BOLD);
+        setFontSize(searchLabel, 11);
+        setTextColor(searchLabel, new Color(71, 85, 105));
+
+        searchField = createTextField(470, 88, 480, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
         searchField.addActionListener(e -> handleSearch());
+
+        searchBtn = createPrimaryButton(this, "Search", 960, 88, 85, 34, this::handleSearch);
+        setFontSize(searchBtn, 12);
+
+        showAllBtn = createSecondaryButton(this, "Show All", 1055, 88, 95, 34, () -> {
+            searchField.setText("");
+            loadBookings(null);
+        });
+        setFontSize(showAllBtn, 12);
 
         String[] columns = {"Customer", "Package", "Status", "Travel Date", "Booking Date"};
         tableModel = createReadOnlyTableModel(columns);
         bookingTable = createTable(tableModel, 410, 132, 745, 511);
+        bookingTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(bookingTable, 175, 195, 105, 135, 135);
         setStatusBadgeRenderer(bookingTable, 2);
+
+        if (bookingTable.getParent() != null && bookingTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) bookingTable.getParent().getParent();
+        }
 
         bookingTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 300) rightW = 300;
+
+        int searchBtnW = 85;
+        int showAllW = 95;
+        int gap = 8;
+        int buttonsTotal = searchBtnW + gap + showAllW;
+        int searchLblW = 55;
+
+        if (searchLabel != null) searchLabel.setBounds(rightX, 88, searchLblW, 34);
+        if (searchField != null) searchField.setBounds(rightX + searchLblW + 5, 88, rightW - searchLblW - 5 - buttonsTotal - gap, 34);
+        if (searchBtn != null) searchBtn.setBounds(rightX + rightW - buttonsTotal, 88, searchBtnW, 34);
+        if (showAllBtn != null) showAllBtn.setBounds(rightX + rightW - showAllW, 88, showAllW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadBookings(String keyword) {
@@ -154,15 +237,15 @@ public class BookingManagement extends Screen {
 
             for (BookingRecord b : list) {
                 tableModel.addRow(new Object[]{
-                    b.customerName,
-                    b.packageName,
-                    b.status,
-                    b.travelDate != null ? b.travelDate.toString() : "",
-                    b.bookingDate != null ? b.bookingDate.toString() : ""
+                    b.customerName != null ? b.customerName : "Customer",
+                    b.packageName != null ? b.packageName : "Package",
+                    b.status != null ? b.status : "Pending",
+                    b.travelDate != null ? b.travelDate.toString() : "TBD",
+                    b.bookingDate != null ? b.bookingDate.toString() : "N/A"
                 });
             }
         } catch (SQLException ex) {
-            showError("Database error loading bookings: " + ex.getMessage());
+            showError("Database error loading reservations: " + ex.getMessage());
         }
     }
 
@@ -171,25 +254,25 @@ public class BookingManagement extends Screen {
         if (selectedRow >= 0 && selectedRow < currentRecords.size()) {
             BookingRecord b = currentRecords.get(selectedRow);
             idField.setText(String.valueOf(b.bookingID));
-            customerField.setText(b.customerName != null ? b.customerName : "");
-            packageField.setText(b.packageName != null ? b.packageName : "");
-            statusCombo.setSelectedItem(b.status != null ? b.status : "Pending");
+            customerField.setText(b.customerName != null ? b.customerName : "Customer");
+            packageField.setText(b.packageName != null ? b.packageName : "Package");
             travelDateField.setText(b.travelDate != null ? b.travelDate.toString() : "");
             bookingDateField.setText(b.bookingDate != null ? b.bookingDate.toString() : "");
+            statusCombo.setSelectedItem(b.status != null ? b.status : "Pending");
 
-            // Query total payments for this booking
+            // Look up payments for this booking
             try {
-                BigDecimal totalPaid = paymentDAO.getTotalPaidForBooking(b.bookingID);
-                if (totalPaid != null && totalPaid.compareTo(BigDecimal.ZERO) > 0) {
-                    paymentStatusLbl.setText("Total Paid: PHP " + String.format("%,.2f", totalPaid));
+                BigDecimal paid = paymentDAO.getTotalPaidForBooking(b.bookingID);
+                if (paid != null && paid.compareTo(BigDecimal.ZERO) > 0) {
+                    paymentStatusLbl.setText("Paid: PHP " + String.format("%,.2f", paid));
                     setTextColor(paymentStatusLbl, COLOR_SUCCESS);
                 } else {
-                    paymentStatusLbl.setText("Total Paid: PHP 0.00 (Unpaid)");
-                    setTextColor(paymentStatusLbl, new Color(185, 28, 28));
+                    paymentStatusLbl.setText("Unpaid (0.00 collected)");
+                    setTextColor(paymentStatusLbl, COLOR_DANGER);
                 }
             } catch (SQLException ex) {
-                paymentStatusLbl.setText("Error fetching payments");
-                setTextColor(paymentStatusLbl, COLOR_DANGER);
+                paymentStatusLbl.setText("Payment info unavailable");
+                setTextColor(paymentStatusLbl, COLOR_TEXT_MUTED);
             }
         }
     }
@@ -208,7 +291,7 @@ public class BookingManagement extends Screen {
     }
 
     private void showManifestDialog(int bookingId, String customerName, String packageName) {
-        JDialog dialog = new JDialog(this, "Passenger Manifest - Booking #" + bookingId, true);
+        JDialog dialog = new JDialog(this, "Passenger Manifest - " + customerName, true);
         dialog.setSize(720, 440);
         dialog.setLocationRelativeTo(this);
         dialog.setLayout(new BorderLayout(10, 10));
@@ -221,7 +304,7 @@ public class BookingManagement extends Screen {
             BorderFactory.createEmptyBorder(12, 16, 12, 16)
         ));
 
-        JLabel titleLbl = new JLabel("Passenger Manifest for Booking #" + bookingId);
+        JLabel titleLbl = new JLabel("Passenger Manifest");
         titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 15));
         titleLbl.setForeground(new Color(15, 23, 42));
 
@@ -244,7 +327,7 @@ public class BookingManagement extends Screen {
         manifestTable.setGridColor(new Color(241, 245, 249));
         manifestTable.setSelectionBackground(new Color(219, 234, 254));
 
-        manifestTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+        manifestTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable tbl, Object value,
                     boolean isSelected, boolean hasFocus, int row, int column) {
@@ -314,7 +397,7 @@ public class BookingManagement extends Screen {
         try {
             boolean updated = bookingDAO.updateBookingStatus(id, newStatus);
             if (updated) {
-                showInfo("Booking ID " + id + " updated to '" + newStatus + "'.");
+                showInfo("Reservation status updated to '" + newStatus + "'.");
                 clearForm();
                 loadBookings(null);
             } else {

@@ -408,23 +408,31 @@ public class BrowseDestinations extends Screen {
         public void updateDimensions(int cardW, int cardH) {
             int pad = 14;
             int innerW = cardW - (2 * pad);
-            int bannerH = 165;
+            int bannerH = 155;
 
             banner.setBounds(0, 0, cardW, bannerH);
             banner.layoutBadge(cardW);
 
             countryTag.setBounds(pad, bannerH + 10, innerW, 16);
-            titleLabel.setBounds(pad, bannerH + 28, innerW, 22);
-            descLabel.setBounds(pad, bannerH + 52, innerW, 46);
+            titleLabel.setBounds(pad, bannerH + 28, innerW, 38);
+            titleLabel.setVerticalAlignment(SwingConstants.TOP);
 
-            divider.setBounds(pad, bannerH + 104, innerW, 1);
+            descLabel.setBounds(pad, bannerH + 68, innerW, 42);
+            descLabel.setVerticalAlignment(SwingConstants.TOP);
+            String rawDesc = dest.description != null && !dest.description.trim().isEmpty()
+                ? dest.description.trim()
+                : "Scenic tourist destination offering unforgettable travel experiences and natural wonders.";
+            descLabel.setText("<html><body style='width: " + (innerW - 8) + "px; color: #64748B; font-family: Segoe UI; font-size: 11px; line-height: 1.3; margin: 0; padding: 0;'>"
+                + escapeHtml(truncate(rawDesc, 85)) + "</body></html>");
+
+            divider.setBounds(pad, bannerH + 114, innerW, 1);
 
             int gapBtn = 8;
             int detailsW = (int) (innerW * 0.45);
             int exploreW = innerW - detailsW - gapBtn;
 
-            detailsBtn.setBounds(pad, bannerH + 115, detailsW, 35);
-            exploreBtn.setBounds(pad + detailsW + gapBtn, bannerH + 115, exploreW, 35);
+            detailsBtn.setBounds(pad, bannerH + 124, detailsW, 35);
+            exploreBtn.setBounds(pad + detailsW + gapBtn, bannerH + 124, exploreW, 35);
         }
     }
 

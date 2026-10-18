@@ -450,29 +450,40 @@ public class BrowsePackages extends Screen {
         public void updateDimensions(int cardW, int cardH) {
             int pad = 14;
             int innerW = cardW - (2 * pad);
-            int bannerH = 160;
+            int bannerH = 155;
 
             banner.setBounds(0, 0, cardW, bannerH);
             banner.layoutBadge(cardW);
 
             destTag.setBounds(pad, bannerH + 10, innerW, 16);
-            titleLabel.setBounds(pad, bannerH + 28, innerW, 22);
-            descLabel.setBounds(pad, bannerH + 52, innerW, 36);
 
-            divider.setBounds(pad, bannerH + 94, innerW, 1);
+            // Title: allocate 38px for clean 2-line wrap without collision
+            titleLabel.setBounds(pad, bannerH + 28, innerW, 38);
+            titleLabel.setVerticalAlignment(SwingConstants.TOP);
 
-            capacityLabel.setBounds(pad, bannerH + 102, innerW, 18);
+            // Description: starts cleanly below the 2-line title zone
+            descLabel.setBounds(pad, bannerH + 68, innerW, 40);
+            descLabel.setVerticalAlignment(SwingConstants.TOP);
+            String rawDesc = pkg.description != null && !pkg.description.trim().isEmpty()
+                ? pkg.description.trim()
+                : "Curated vacation package with exclusive tour activities, lodging, and transfers.";
+            descLabel.setText("<html><body style='width: " + (innerW - 8) + "px; color: #64748B; font-family: Segoe UI; font-size: 11px; line-height: 1.3; margin: 0; padding: 0;'>"
+                + escapeHtml(truncate(rawDesc, 80)) + "</body></html>");
 
-            priceLabel.setBounds(pad, bannerH + 126, innerW - 65, 24);
-            perPersonLabel.setBounds(pad + innerW - 65, bannerH + 131, 65, 16);
+            divider.setBounds(pad, bannerH + 112, innerW, 1);
+
+            capacityLabel.setBounds(pad, bannerH + 118, innerW, 18);
+
+            priceLabel.setBounds(pad, bannerH + 140, innerW - 65, 24);
+            perPersonLabel.setBounds(pad + innerW - 65, bannerH + 145, 65, 16);
 
             // 2 Action Buttons
             int gapBtn = 8;
-            int detailsW = (int) (innerW * 0.40);
+            int detailsW = (int) (innerW * 0.38);
             int bookW = innerW - detailsW - gapBtn;
 
-            detailsBtn.setBounds(pad, bannerH + 158, detailsW, 34);
-            bookBtn.setBounds(pad + detailsW + gapBtn, bannerH + 158, bookW, 34);
+            detailsBtn.setBounds(pad, bannerH + 170, detailsW, 35);
+            bookBtn.setBounds(pad + detailsW + gapBtn, bannerH + 170, bookW, 35);
         }
     }
 

@@ -7,6 +7,8 @@ import dao.PaymentDAO.SalesSummary;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
@@ -24,6 +26,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -33,6 +36,18 @@ public class SalesManagement extends Screen {
 
     private final PaymentDAO paymentDAO = new PaymentDAO();
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+
+    // UI Structure
+    private JButton headerBackBtn;
+    private JPanel formCard;
+    private JLabel methodLbl;
+    private JComboBox<String> methodFilterCombo;
+    private JLabel searchLbl;
+    private JTextField searchField;
+    private JButton searchBtn;
+    private JButton showAllBtn;
+    private JButton exportBtn;
+    private JScrollPane tableScrollPane;
 
     // Form / Detail fields
     private JTextField paymentIdField;
@@ -47,9 +62,7 @@ public class SalesManagement extends Screen {
     private JLabel totalPaymentsLbl;
     private JLabel avgPaymentLbl;
 
-    // Filters and Table
-    private JComboBox<String> methodFilterCombo;
-    private JTextField searchField;
+    // Table
     private DefaultTableModel tableModel;
     private JTable salesTable;
 
@@ -61,13 +74,22 @@ public class SalesManagement extends Screen {
         super("Sales & Revenue Management - Admin Console", STD_WIDTH, STD_HEIGHT);
 
         getContentPane().setBackground(COLOR_BG);
+        setFullscreen(true);
 
         initUI();
         loadPayments();
+
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                relayout();
+            }
+        });
+        relayout();
     }
 
     private void initUI() {
-        createTopHeader(
+        headerBackBtn = createTopHeader(
             "ADMIN CONSOLE  •  REVENUE & TRANSACTIONS",
             "Sales & Revenue Management",
             "View payment records, booking transactions, and revenue reports.",
@@ -75,7 +97,7 @@ public class SalesManagement extends Screen {
         );
 
         // Left Column: Modern Card Container for Transaction Details
-        JPanel formCard = createCard(45, 88, 345, 555);
+        formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "TRANSACTION DETAILS");
 
         // Hidden ID fields to preserve programmatic access
@@ -143,7 +165,7 @@ public class SalesManagement extends Screen {
         setTextColor(helperHint, COLOR_TEXT_MUTED);
 
         // Right Column: Advanced Filter & Search Bar
-        JLabel methodLbl = createLabel("Method:", 410, 88, 55, 34);
+        methodLbl = createLabel("Method:", 410, 88, 55, 34);
         setFontStyle(methodLbl, Font.BOLD);
         setFontSize(methodLbl, 11);
 
@@ -154,7 +176,7 @@ public class SalesManagement extends Screen {
         methodFilterCombo.addActionListener(e -> applyFilters());
         add(methodFilterCombo);
 
-        JLabel searchLbl = createLabel("Search:", 596, 88, 48, 34);
+        searchLbl = createLabel("Search:", 596, 88, 48, 34);
         setFontStyle(searchLbl, Font.BOLD);
         setFontSize(searchLbl, 11);
 
@@ -167,29 +189,88 @@ public class SalesManagement extends Screen {
         ));
         searchField.addActionListener(e -> applyFilters());
 
-        JButton searchBtn = createPrimaryButton(this, "Search", 824, 88, 74, 34, this::applyFilters);
+        searchBtn = createPrimaryButton(this, "Search", 824, 88, 74, 34, this::applyFilters);
         setFontSize(searchBtn, 12);
 
-        JButton showAllBtn = createSecondaryButton(this, "Show All", 904, 88, 82, 34, () -> {
+        showAllBtn = createSecondaryButton(this, "Show All", 904, 88, 82, 34, () -> {
             methodFilterCombo.setSelectedIndex(0);
             searchField.setText("");
             applyFilters();
         });
         setFontSize(showAllBtn, 12);
 
-        JButton exportBtn = createSuccessButton(this, "⬇ Export CSV", 992, 88, 163, 34, this::handleExportCSV);
+        exportBtn = createSuccessButton(this, "⬇ Export CSV", 992, 88, 135, 34, this::handleExportCSV);
         setFontSize(exportBtn, 12);
 
         String[] columns = {"Date", "Amount", "Method", "Source"};
         tableModel = createReadOnlyTableModel(columns);
         salesTable = createTable(tableModel, 410, 132, 745, 511);
+        salesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         setColumnWidths(salesTable, 175, 180, 195, 195);
+
+        if (salesTable.getParent() != null && salesTable.getParent().getParent() instanceof JScrollPane) {
+            tableScrollPane = (JScrollPane) salesTable.getParent().getParent();
+        }
 
         salesTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
                 populateFormFromSelectedRow();
             }
         });
+    }
+
+    private void relayout() {
+        int w = getContentPane().getWidth();
+        int h = getContentPane().getHeight();
+        if (w <= 0 || h <= 0) return;
+
+        int pad = 45;
+        if (headerBackBtn != null) {
+            headerBackBtn.setBounds(w - pad - 135, 18, 135, 36);
+        }
+
+        int formW = 345;
+        int formH = Math.max(555, h - 88 - 35);
+        if (formCard != null) {
+            formCard.setBounds(pad, 88, formW, formH);
+        }
+
+        int rightX = pad + formW + 20;
+        int rightW = w - pad - rightX;
+        if (rightW < 350) rightW = 350;
+
+        int exportBtnW = 125;
+        int showAllW = 82;
+        int searchBtnW = 74;
+        int gap = 8;
+        int methodComboW = 120;
+        int methodLblW = 55;
+        int searchLblW = 50;
+
+        if (methodLbl != null) methodLbl.setBounds(rightX, 88, methodLblW, 34);
+        if (methodFilterCombo != null) methodFilterCombo.setBounds(rightX + methodLblW, 88, methodComboW, 34);
+
+        int searchStartX = rightX + methodLblW + methodComboW + 12;
+        if (searchLbl != null) searchLbl.setBounds(searchStartX, 88, searchLblW, 34);
+
+        int rightActionsW = searchBtnW + gap + showAllW + gap + exportBtnW;
+        int searchFieldW = (rightX + rightW) - (searchStartX + searchLblW) - rightActionsW - gap;
+        if (searchFieldW < 90) searchFieldW = 90;
+
+        if (searchField != null) searchField.setBounds(searchStartX + searchLblW, 88, searchFieldW, 34);
+        int curX = searchStartX + searchLblW + searchFieldW + gap;
+        if (searchBtn != null) searchBtn.setBounds(curX, 88, searchBtnW, 34);
+        curX += searchBtnW + gap;
+        if (showAllBtn != null) showAllBtn.setBounds(curX, 88, showAllW, 34);
+        curX += showAllW + gap;
+        if (exportBtn != null) exportBtn.setBounds(curX, 88, exportBtnW, 34);
+
+        int tableH = h - 132 - 35;
+        if (tableH < 300) tableH = 300;
+        if (tableScrollPane != null) {
+            tableScrollPane.setBounds(rightX, 132, rightW, tableH);
+        }
+        repaint();
     }
 
     private void loadPayments() {
@@ -269,13 +350,13 @@ public class SalesManagement extends Screen {
             }
 
             try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
-                pw.println("Payment ID,Booking ID,Date,Amount (PHP),Method,Source");
+                pw.println("Date,Amount (PHP),Method,Source");
                 for (PaymentRecord p : displayedPayments) {
                     String d = p.paymentDate != null ? dateFormat.format(p.paymentDate) : "";
                     String amt = p.amount != null ? p.amount.toPlainString() : "0.00";
                     String meth = p.method != null ? "\"" + p.method.replace("\"", "\"\"") + "\"" : "";
                     String src = p.source != null ? "\"" + p.source.replace("\"", "\"\"") + "\"" : "";
-                    pw.println(p.paymentID + "," + p.bookingID + ",\"" + d + "\"," + amt + "," + meth + "," + src);
+                    pw.println("\"" + d + "\"," + amt + "," + meth + "," + src);
                 }
                 showInfo("Successfully exported " + displayedPayments.size() + " transactions to " + file.getName());
             } catch (Exception ex) {
