@@ -2,10 +2,13 @@ package ui;
 
 import common.ImageUtil;
 import common.Screen;
+import common.Session;
 import dao.DestinationDAO;
 import dao.DestinationDAO.DestinationRecord;
 import dao.TravelPackageDAO;
 import dao.TravelPackageDAO.PackageRecord;
+import ui.admin.AdminDashboard;
+import ui.customer.CustomerDashboard;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -183,10 +186,24 @@ public class Homepage extends Screen {
         navPkgBtn = createSecondaryButton(navbar, "Tour Packages", 0, 0, 115, 32, () -> navigateTo(new BrowsePackages()));
         setFontSize(navPkgBtn, 11);
 
-        navLoginBtn = createPrimaryButton(navbar, "Customer Sign In", 0, 0, 135, 32, () -> navigateTo(new CustomerLogin()));
+        String custNavText = Session.isCustomer() ? "My Dashboard" : "Customer Sign In";
+        navLoginBtn = createPrimaryButton(navbar, custNavText, 0, 0, 135, 32, () -> {
+            if (Session.isCustomer()) {
+                navigateTo(new CustomerDashboard());
+            } else {
+                navigateTo(new CustomerLogin());
+            }
+        });
         setFontSize(navLoginBtn, 11);
 
-        navAdminBtn = createSecondaryButton(navbar, "Admin Portal", 0, 0, 105, 32, () -> navigateTo(new AdminLogin()));
+        String adminNavText = Session.isAdmin() ? "Admin Panel" : "Admin Portal";
+        navAdminBtn = createSecondaryButton(navbar, adminNavText, 0, 0, 105, 32, () -> {
+            if (Session.isAdmin()) {
+                navigateTo(new AdminDashboard());
+            } else {
+                navigateTo(new AdminLogin());
+            }
+        });
         setFontSize(navAdminBtn, 11);
 
         pageContainer.add(navbar);
@@ -483,12 +500,19 @@ public class Homepage extends Screen {
         pageContainer.add(portalsSectionTitle);
 
         // Card 1: Traveler Portal
+        String custBtnText = Session.isCustomer() ? "Open Dashboard →" : "Sign In to Account →";
         cardTraveler = createPortalCard(
             "TRAVELER SERVICES",
             "Customer Portal",
             "Access your passenger bookings, view reservation vouchers, check itinerary departure dates, and manage your account profile.",
             COLOR_PRIMARY,
-            new ActionButtonDef("Sign In to Account →", COLOR_PRIMARY, Color.WHITE, () -> navigateTo(new CustomerLogin())),
+            new ActionButtonDef(custBtnText, COLOR_PRIMARY, Color.WHITE, () -> {
+                if (Session.isCustomer()) {
+                    navigateTo(new CustomerDashboard());
+                } else {
+                    navigateTo(new CustomerLogin());
+                }
+            }),
             new ActionButtonDef("Create New Account", COLOR_SUCCESS, Color.WHITE, () -> navigateTo(new CustomerRegister()))
         );
         pageContainer.add(cardTraveler);
@@ -505,12 +529,19 @@ public class Homepage extends Screen {
         pageContainer.add(cardCatalogs);
 
         // Card 3: Administration
+        String adminBtnText = Session.isAdmin() ? "Open Admin Panel →" : "Administrator Login →";
         cardAdmin = createPortalCard(
             "STAFF & SECURITY",
             "Administration Suite",
             "Access the administrative control center to configure trip catalogs, process customer bookings, audit sales reports, and manage access.",
             new Color(51, 65, 85), // Slate
-            new ActionButtonDef("Administrator Login →", new Color(51, 65, 85), Color.WHITE, () -> navigateTo(new AdminLogin())),
+            new ActionButtonDef(adminBtnText, new Color(51, 65, 85), Color.WHITE, () -> {
+                if (Session.isAdmin()) {
+                    navigateTo(new AdminDashboard());
+                } else {
+                    navigateTo(new AdminLogin());
+                }
+            }),
             new ActionButtonDef("Exit Application", COLOR_SECONDARY, new Color(71, 85, 105), () -> {
                 if (confirm("Are you sure you want to exit the application?")) {
                     System.exit(0);

@@ -220,12 +220,15 @@ public class AdminManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = accountsTable.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < currentAccounts.size()) {
-            AdminAccount a = currentAccounts.get(selectedRow);
-            idField.setText(String.valueOf(a.getadminAccountId()));
-            usernameField.setText(a.getusername());
-            passwordField.setText("");
-            roleCombo.setSelectedItem(a.getrole());
+        if (selectedRow >= 0) {
+            int modelRow = accountsTable.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < currentAccounts.size()) {
+                AdminAccount a = currentAccounts.get(modelRow);
+                idField.setText(String.valueOf(a.getadminAccountId()));
+                usernameField.setText(a.getusername());
+                passwordField.setText("");
+                roleCombo.setSelectedItem(a.getrole());
+            }
         }
     }
 
@@ -279,7 +282,8 @@ public class AdminManagement extends Screen {
         }
 
         if (!isSuperAdmin()) {
-            int row = accountsTable.getSelectedRow();
+            int viewRow = accountsTable.getSelectedRow();
+            int row = viewRow >= 0 ? accountsTable.convertRowIndexToModel(viewRow) : -1;
             String targetRole = (row >= 0 && row < currentAccounts.size())
                     ? currentAccounts.get(row).getrole() : "";
             if ("Admin".equalsIgnoreCase(targetRole)) {

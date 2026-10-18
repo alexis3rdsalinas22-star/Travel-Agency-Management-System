@@ -3,6 +3,7 @@ package ui.customer;
 import common.Screen;
 import common.Session;
 import dao.BookingDAO;
+import dao.CustomerDAO;
 import dao.TravelPackageDAO;
 import dao.TravelPackageDAO.PackageRecord;
 
@@ -34,6 +35,7 @@ public class BookingScreen extends Screen {
 
     private final TravelPackageDAO packageDAO = new TravelPackageDAO();
     private final BookingDAO bookingDAO = new BookingDAO();
+    private final CustomerDAO customerDAO = new CustomerDAO();
     private final List<PackageRecord> availablePackages = new ArrayList<>();
 
     private String preselectedPackageName;
@@ -417,11 +419,31 @@ public class BookingScreen extends Screen {
                 Timestamp ts = Timestamp.valueOf(travelDate.atStartOfDay());
                 int newBookingId = bookingDAO.createBooking(custAccId, p.packageID, ts);
                 if (newBookingId > 0) {
-                    // Record primary traveler
-                    String username = Session.getUsername() != null ? Session.getUsername() : "Passenger";
-                    bookingDAO.addTraveler(newBookingId, username, "Traveler", java.sql.Date.valueOf(LocalDate.now().minusYears(25)), contact);
+                    // Record full passenger manifest in the database
+                    String leadFirst = Session.getUsername() != null ? Session.getUsername() : "Passenger";
+                    String leadLast = "Lead";
+                    int custId = Session.getCustomerId();
+                    if (custId > 0) {
+                        try {
+                            CustomerDAO.CustomerRecord cr = customerDAO.getCustomerById(custId);
+                            if (cr != null) {
+                                if (cr.firstName != null && !cr.firstName.trim().isEmpty()) leadFirst = cr.firstName.trim();
+                                if (cr.lastName != null && !cr.lastName.trim().isEmpty()) leadLast = cr.lastName.trim();
+                            }
+                        } catch (SQLException ignored) {}
+                    }
 
-                    showInfo("Reservation created successfully! Proceeding to payment...");
+                    // Lead passenger
+                    bookingDAO.addTraveler(newBookingId, leadFirst, leadLast,
+                        java.sql.Date.valueOf(LocalDate.now().minusYears(25)), contact);
+
+                    // Additional companion passengers
+                    for (int i = 2; i <= pax; i++) {
+                        bookingDAO.addTraveler(newBookingId, leadFirst + " Guest " + i, leadLast,
+                            java.sql.Date.valueOf(LocalDate.now().minusYears(25)), contact);
+                    }
+
+                    showInfo("Reservation created successfully for " + pax + " traveler(s)! Proceeding to payment...");
                     navigateTo(new PaymentScreen(newBookingId, total, p.name));
                 } else {
                     showError("Failed to record reservation. Please try again.");

@@ -321,27 +321,30 @@ public class PackageManagement extends Screen {
     }
 
     private void populateFormFromSelectedRow() {
-        int row = packageTable.getSelectedRow();
-        if (row >= 0 && row < currentRecords.size()) {
-            PackageRecord p = currentRecords.get(row);
-            idField.setText(String.valueOf(p.packageID));
-            nameField.setText(p.name);
-            priceField.setText(p.pricePerTraveller != null ? p.pricePerTraveller.toPlainString() : "");
-            minTravelersField.setText(String.valueOf(p.minTraveller));
-            maxTravelersField.setText(String.valueOf(p.maxTraveller));
-            statusCombo.setSelectedItem(p.status != null ? p.status : "Active");
-            descArea.setText(p.description != null ? p.description : "");
+        int viewRow = packageTable.getSelectedRow();
+        if (viewRow >= 0) {
+            int row = packageTable.convertRowIndexToModel(viewRow);
+            if (row >= 0 && row < currentRecords.size()) {
+                PackageRecord p = currentRecords.get(row);
+                idField.setText(String.valueOf(p.packageID));
+                nameField.setText(p.name);
+                priceField.setText(p.pricePerTraveller != null ? p.pricePerTraveller.toPlainString() : "");
+                minTravelersField.setText(String.valueOf(p.minTraveller));
+                maxTravelersField.setText(String.valueOf(p.maxTraveller));
+                statusCombo.setSelectedItem(p.status != null ? p.status : "Active");
+                descArea.setText(p.description != null ? p.description : "");
 
-            // Image Preview
-            selectedImagePath = p.imagePath;
-            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+                // Image Preview
+                selectedImagePath = p.imagePath;
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
 
-            // Select destination in combo
-            for (int i = 0; i < destinationCombo.getItemCount(); i++) {
-                DestinationItem item = destinationCombo.getItemAt(i);
-                if (item.id == p.destinationID) {
-                    destinationCombo.setSelectedIndex(i);
-                    break;
+                // Select destination in combo
+                for (int i = 0; i < destinationCombo.getItemCount(); i++) {
+                    DestinationItem item = destinationCombo.getItemAt(i);
+                    if (item.id == p.destinationID) {
+                        destinationCombo.setSelectedIndex(i);
+                        break;
+                    }
                 }
             }
         }

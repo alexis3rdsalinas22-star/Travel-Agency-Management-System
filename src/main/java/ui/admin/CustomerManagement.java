@@ -243,18 +243,21 @@ public class CustomerManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = customerTable.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < currentRecords.size()) {
-            CustomerRecord c = currentRecords.get(selectedRow);
-            idField.setText(String.valueOf(c.customerID));
-            usernameField.setText(c.username != null ? c.username : "");
-            firstNameField.setText(c.firstName != null ? c.firstName : "");
-            middleNameField.setText(c.middleName != null ? c.middleName : "");
-            lastNameField.setText(c.lastName != null ? c.lastName : "");
-            emailField.setText(c.email != null ? c.email : "");
-            genderCombo.setSelectedItem(c.sex != null ? c.sex : "Male");
-            ageField.setText(String.valueOf(c.age));
-            statusCombo.setSelectedItem(c.status != null ? c.status : "Active");
-            passwordField.setText("");
+        if (selectedRow >= 0) {
+            int modelRow = customerTable.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < currentRecords.size()) {
+                CustomerRecord c = currentRecords.get(modelRow);
+                idField.setText(String.valueOf(c.customerID));
+                usernameField.setText(c.username != null ? c.username : "");
+                firstNameField.setText(c.firstName != null ? c.firstName : "");
+                middleNameField.setText(c.middleName != null ? c.middleName : "");
+                lastNameField.setText(c.lastName != null ? c.lastName : "");
+                emailField.setText(c.email != null ? c.email : "");
+                genderCombo.setSelectedItem(c.sex != null ? c.sex : "Male");
+                ageField.setText(String.valueOf(c.age));
+                statusCombo.setSelectedItem(c.status != null ? c.status : "Active");
+                passwordField.setText("");
+            }
         }
     }
 

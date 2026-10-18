@@ -171,8 +171,48 @@ public class TravelPackageDAO {
             throw new IllegalArgumentException("Status must be Active or Inactive.");
         }
 
+        PackageRecord existing = getPackageById(packageId);
+        if (existing == null) {
+            return false;
+        }
+
+        // If price changed, Derby's trg_package_lock_price trigger locks direct update on pricePerTraveller.
+        // We follow the design specification: deactivate the old record and create the new pricing version atomically.
+        if (existing.pricePerTraveller != null && existing.pricePerTraveller.compareTo(pricePerTraveller) != 0) {
+            try (Connection con = DBConnection.getConnection()) {
+                con.setAutoCommit(false);
+                try {
+                    String deactivate = "UPDATE package SET status = 'Inactive' WHERE packageID = ?";
+                    try (PreparedStatement ps = con.prepareStatement(deactivate)) {
+                        ps.setInt(1, packageId);
+                        ps.executeUpdate();
+                    }
+
+                    String insert = "INSERT INTO package (destinationID, name, description, imagePath, "
+                                  + "pricePerTraveller, status, minTraveller, maxTraveller) "
+                                  + "VALUES (?,?,?,?,?,'Active',?,?)";
+                    try (PreparedStatement ps = con.prepareStatement(insert)) {
+                        ps.setInt(1, destinationId);
+                        ps.setString(2, name);
+                        ps.setString(3, description);
+                        ps.setString(4, imagePath);
+                        ps.setBigDecimal(5, pricePerTraveller);
+                        ps.setInt(6, minTraveller);
+                        ps.setInt(7, maxTraveller);
+                        ps.executeUpdate();
+                    }
+                    con.commit();
+                    return true;
+                } catch (SQLException e) {
+                    con.rollback();
+                    throw e;
+                }
+            }
+        }
+
+        // Price did not change: update package attributes without touching pricePerTraveller
         String sql = "UPDATE package SET destinationID = ?, name = ?, description = ?, imagePath = ?, "
-                   + "pricePerTraveller = ?, status = ?, minTraveller = ?, maxTraveller = ? "
+                   + "status = ?, minTraveller = ?, maxTraveller = ? "
                    + "WHERE packageID = ?";
         try (Connection con = DBConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
@@ -180,11 +220,10 @@ public class TravelPackageDAO {
             ps.setString(2, name);
             ps.setString(3, description);
             ps.setString(4, imagePath);
-            ps.setBigDecimal(5, pricePerTraveller);
-            ps.setString(6, status);
-            ps.setInt(7, minTraveller);
-            ps.setInt(8, maxTraveller);
-            ps.setInt(9, packageId);
+            ps.setString(5, status);
+            ps.setInt(6, minTraveller);
+            ps.setInt(7, maxTraveller);
+            ps.setInt(8, packageId);
             return ps.executeUpdate() > 0;
         }
     }

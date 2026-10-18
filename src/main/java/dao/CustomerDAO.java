@@ -99,6 +99,12 @@ public class CustomerDAO {
         }
     }
 
+    public CustomerRecord getCustomerById(int customerId) throws SQLException {
+        try (Connection con = DBConnection.getConnection()) {
+            return getCustomerById(con, customerId);
+        }
+    }
+
    
     public List<CustomerRecord> getAllCustomers(Connection con) throws SQLException {
         String sql = BASE_SELECT + "ORDER BY c.customerID";

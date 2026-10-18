@@ -10,7 +10,7 @@ public class ValidationUtil {
      * Checks if a text component is empty or contains only whitespace.
      */
     public static boolean isEmpty(JTextComponent field) {
-        return field == null || field.getText().trim().isEmpty();
+        return field == null || field.getText() == null || field.getText().trim().isEmpty();
     }
 
     /**

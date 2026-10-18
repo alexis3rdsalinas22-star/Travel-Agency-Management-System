@@ -280,6 +280,49 @@ public class PaymentScreen extends Screen {
             return;
         }
 
+        // Verify booking existence and business status
+        BookingDAO.BookingRecord b;
+        try {
+            b = bookingDAO.getBookingById(bookingId);
+        } catch (SQLException ex) {
+            showError("Database error checking reservation: " + ex.getMessage());
+            return;
+        }
+
+        if (b == null) {
+            showError("Reservation #" + bookingId + " does not exist in the system.");
+            return;
+        }
+
+        if ("Cancelled".equalsIgnoreCase(b.status)) {
+            showError("Reservation #" + bookingId + " has been cancelled. Payments cannot be accepted.");
+            return;
+        }
+
+        if ("Completed".equalsIgnoreCase(b.status)) {
+            showError("Reservation #" + bookingId + " is already completed.");
+            return;
+        }
+
+        if (common.Session.isCustomer()) {
+            int custAccId = common.Session.getCustomerAccountId();
+            if (custAccId > 0 && b.customerAccountID != custAccId) {
+                showError("Unauthorized: You may only make payments for your own reservations.");
+                return;
+            }
+        }
+
+        try {
+            BigDecimal totalPaid = paymentDAO.getTotalPaidForBooking(bookingId);
+            BigDecimal totalDue = b.getTotalAmount();
+            if (totalPaid != null && totalDue != null && totalDue.compareTo(BigDecimal.ZERO) > 0 && totalPaid.compareTo(totalDue) >= 0) {
+                showInfo(String.format("Reservation #%d is already fully paid (Total paid: PHP %,.2f).", bookingId, totalPaid));
+                return;
+            }
+        } catch (SQLException ignored) {
+            // Non-fatal check
+        }
+
         String method = (String) methodCombo.getSelectedItem();
         String reference = getTrimmedText(referenceField);
         boolean needsReference = "GCash".equals(method) || "Bank Transfer".equals(method);
@@ -292,7 +335,11 @@ public class PaymentScreen extends Screen {
             return;
         }
 
-        if (confirm(String.format("Confirm payment of PHP %,.2f via %s for Reservation #%d?", amount, method, bookingId))) {
+        String targetPkg = (b.packageName != null && !b.packageName.isEmpty())
+            ? b.packageName
+            : (packageName != null ? packageName : "Reservation #" + bookingId);
+
+        if (confirm(String.format("Confirm payment of PHP %,.2f via %s for \"%s\"?", amount, method, targetPkg))) {
             try {
                 String source = reference != null && !reference.isEmpty() ? reference : "Customer Checkout";
                 int payId = paymentDAO.recordPayment(bookingId, amount, method, source);

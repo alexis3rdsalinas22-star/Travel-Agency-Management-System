@@ -169,7 +169,7 @@ public class SalesManagement extends Screen {
         setFontStyle(methodLbl, Font.BOLD);
         setFontSize(methodLbl, 11);
 
-        methodFilterCombo = new JComboBox<>(new String[]{"All Methods", "Cash", "Credit Card", "GCash", "Bank Transfer", "PayPal"});
+        methodFilterCombo = new JComboBox<>(new String[]{"All Methods", "Cash", "Credit Card", "Debit Card", "GCash", "Bank Transfer"});
         methodFilterCombo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         methodFilterCombo.setBackground(Color.WHITE);
         methodFilterCombo.setBounds(468, 88, 120, 34);

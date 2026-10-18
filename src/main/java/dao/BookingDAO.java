@@ -23,9 +23,17 @@ public class BookingDAO {
         public String packageName;
         public String destinationName;
         public java.math.BigDecimal pricePerTraveller;
+        public int travelerCount;
         public String status;
         public Timestamp bookingDate;
         public Timestamp travelDate;
+
+        public java.math.BigDecimal getTotalAmount() {
+            int count = travelerCount > 0 ? travelerCount : 1;
+            return pricePerTraveller != null
+                ? pricePerTraveller.multiply(java.math.BigDecimal.valueOf(count))
+                : java.math.BigDecimal.ZERO;
+        }
     }
 
     private static final List<String> VALID_STATUSES =
@@ -36,7 +44,8 @@ public class BookingDAO {
             "SELECT b.bookingID, b.customerAccountID, b.packageID, b.status, "
           + "b.bookingDate, b.travelDate, "
           + "c.firstName, c.middleName, c.lastName, "
-          + "p.name AS packageName, p.pricePerTraveller, d.name AS destinationName "
+          + "p.name AS packageName, p.pricePerTraveller, d.name AS destinationName, "
+          + "(SELECT COUNT(*) FROM traveler tr WHERE tr.bookingID = b.bookingID) AS travelerCount "
           + "FROM booking b "
           + "JOIN customeraccount ca ON b.customerAccountID = ca.customerAccountID "
           + "JOIN customer c ON ca.customerID = c.customerID "
@@ -215,6 +224,17 @@ public class BookingDAO {
         return list;
     }
 
+    public BookingRecord getBookingById(int bookingId) throws SQLException {
+        String sql = BASE_SELECT + "WHERE b.bookingID = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, bookingId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        }
+    }
+
     // Converts one result row into a BookingRecord
     private BookingRecord mapRow(ResultSet rs) throws SQLException {
         BookingRecord r = new BookingRecord();
@@ -230,6 +250,9 @@ public class BookingDAO {
         } catch (SQLException ignored) {}
         try {
             r.pricePerTraveller = rs.getBigDecimal("pricePerTraveller");
+        } catch (SQLException ignored) {}
+        try {
+            r.travelerCount = rs.getInt("travelerCount");
         } catch (SQLException ignored) {}
 
         String middle = rs.getString("middleName");

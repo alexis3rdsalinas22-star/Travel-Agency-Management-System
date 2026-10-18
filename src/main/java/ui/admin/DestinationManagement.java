@@ -245,16 +245,19 @@ public class DestinationManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = destTable.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < currentRecords.size()) {
-            DestinationRecord d = currentRecords.get(selectedRow);
-            idField.setText(String.valueOf(d.destinationID));
-            nameField.setText(d.name);
-            countryField.setText(d.country);
-            descArea.setText(d.description != null ? d.description : "");
-            statusCombo.setSelectedItem(d.status != null ? d.status : "Active");
+        if (selectedRow >= 0) {
+            int modelRow = destTable.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < currentRecords.size()) {
+                DestinationRecord d = currentRecords.get(modelRow);
+                idField.setText(String.valueOf(d.destinationID));
+                nameField.setText(d.name);
+                countryField.setText(d.country);
+                descArea.setText(d.description != null ? d.description : "");
+                statusCombo.setSelectedItem(d.status != null ? d.status : "Active");
 
-            selectedImagePath = d.imagePath;
-            imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+                selectedImagePath = d.imagePath;
+                imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(selectedImagePath, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+            }
         }
     }
 

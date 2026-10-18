@@ -251,28 +251,31 @@ public class BookingManagement extends Screen {
 
     private void populateFormFromSelectedRow() {
         int selectedRow = bookingTable.getSelectedRow();
-        if (selectedRow >= 0 && selectedRow < currentRecords.size()) {
-            BookingRecord b = currentRecords.get(selectedRow);
-            idField.setText(String.valueOf(b.bookingID));
-            customerField.setText(b.customerName != null ? b.customerName : "Customer");
-            packageField.setText(b.packageName != null ? b.packageName : "Package");
-            travelDateField.setText(b.travelDate != null ? b.travelDate.toString() : "");
-            bookingDateField.setText(b.bookingDate != null ? b.bookingDate.toString() : "");
-            statusCombo.setSelectedItem(b.status != null ? b.status : "Pending");
+        if (selectedRow >= 0) {
+            int modelRow = bookingTable.convertRowIndexToModel(selectedRow);
+            if (modelRow >= 0 && modelRow < currentRecords.size()) {
+                BookingRecord b = currentRecords.get(modelRow);
+                idField.setText(String.valueOf(b.bookingID));
+                customerField.setText(b.customerName != null ? b.customerName : "Customer");
+                packageField.setText(b.packageName != null ? b.packageName : "Package");
+                travelDateField.setText(b.travelDate != null ? b.travelDate.toString() : "");
+                bookingDateField.setText(b.bookingDate != null ? b.bookingDate.toString() : "");
+                statusCombo.setSelectedItem(b.status != null ? b.status : "Pending");
 
-            // Look up payments for this booking
-            try {
-                BigDecimal paid = paymentDAO.getTotalPaidForBooking(b.bookingID);
-                if (paid != null && paid.compareTo(BigDecimal.ZERO) > 0) {
-                    paymentStatusLbl.setText("Paid: PHP " + String.format("%,.2f", paid));
-                    setTextColor(paymentStatusLbl, COLOR_SUCCESS);
-                } else {
-                    paymentStatusLbl.setText("Unpaid (0.00 collected)");
-                    setTextColor(paymentStatusLbl, COLOR_DANGER);
+                // Look up payments for this booking
+                try {
+                    BigDecimal paid = paymentDAO.getTotalPaidForBooking(b.bookingID);
+                    if (paid != null && paid.compareTo(BigDecimal.ZERO) > 0) {
+                        paymentStatusLbl.setText("Paid: PHP " + String.format("%,.2f", paid));
+                        setTextColor(paymentStatusLbl, COLOR_SUCCESS);
+                    } else {
+                        paymentStatusLbl.setText("Unpaid (0.00 collected)");
+                        setTextColor(paymentStatusLbl, COLOR_DANGER);
+                    }
+                } catch (SQLException ex) {
+                    paymentStatusLbl.setText("Payment info unavailable");
+                    setTextColor(paymentStatusLbl, COLOR_TEXT_MUTED);
                 }
-            } catch (SQLException ex) {
-                paymentStatusLbl.setText("Payment info unavailable");
-                setTextColor(paymentStatusLbl, COLOR_TEXT_MUTED);
             }
         }
     }

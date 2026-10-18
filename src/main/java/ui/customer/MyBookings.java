@@ -225,9 +225,17 @@ public class MyBookings extends Screen {
             for (BookingRecord b : list) {
                 String travelDateStr = b.travelDate != null ? dateFormat.format(b.travelDate) : "TBD";
                 String bookDateStr = b.bookingDate != null ? dateFormat.format(b.bookingDate) : "—";
-                String priceStr = b.pricePerTraveller != null
-                    ? String.format("PHP %,.2f", b.pricePerTraveller)
-                    : "PHP 0.00";
+                BigDecimal totalDue = b.getTotalAmount();
+                String priceStr;
+                if (totalDue != null && totalDue.compareTo(BigDecimal.ZERO) > 0) {
+                    if (b.travelerCount > 1) {
+                        priceStr = String.format("PHP %,.2f (%d pax)", totalDue, b.travelerCount);
+                    } else {
+                        priceStr = String.format("PHP %,.2f", totalDue);
+                    }
+                } else {
+                    priceStr = "PHP 0.00";
+                }
 
                 tableModel.addRow(new Object[]{
                     b.packageName != null ? b.packageName : ("Package #" + b.packageID),
@@ -314,7 +322,7 @@ public class MyBookings extends Screen {
         int modelRow = bookingsTable.convertRowIndexToModel(viewRow);
         BookingRecord b = customerBookings.get(modelRow);
 
-        BigDecimal amount = b.pricePerTraveller != null ? b.pricePerTraveller : BigDecimal.ZERO;
+        BigDecimal amount = b.getTotalAmount() != null ? b.getTotalAmount() : BigDecimal.ZERO;
         navigateTo(new PaymentScreen(b.bookingID, amount, b.packageName));
     }
 }
