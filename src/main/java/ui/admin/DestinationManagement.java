@@ -74,44 +74,47 @@ public class DestinationManagement extends Screen {
         idField = new JTextField();
 
         // Fields inside Card
-        nameField = addFormField(formCard, "Name *:", 36, true);
-        countryField = addFormField(formCard, "Country *:", 68, true);
+        nameField = addFormField(formCard, "Name *:", 40, true);
+        countryField = addFormField(formCard, "Country *:", 74, true);
 
         // Status Combo
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 100, 95, 24);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 108, 95, 28);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 100, 214, 24);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 108, 214, 28);
 
         // Description - Full Width and Taller
-        JLabel descLbl = createLabel(formCard, "Description:", 16, 130, 150, 18);
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 142, 150, 18);
         setFontStyle(descLbl, Font.BOLD);
         setFontSize(descLbl, 11);
-        descArea = createTextArea(formCard, 16, 150, 313, 90);
+        descArea = createTextArea(formCard, 16, 164, 313, 90);
 
         // Image Preview & Browse
-        JLabel imgHeader = createLabel(formCard, "Destination Photo:", 16, 248, 130, 20);
+        JLabel imgHeader = createLabel(formCard, "Destination Photo:", 16, 264, 130, 22);
         setFontStyle(imgHeader, Font.BOLD);
         setFontSize(imgHeader, 11);
 
-        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 246, 99, 22,
+        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 262, 99, 24,
                 Color.WHITE, new Color(51, 65, 85), new Color(203, 213, 225), 11, this::handleBrowseImage);
 
         imagePreviewLabel = new JLabel("", JLabel.CENTER);
-        imagePreviewLabel.setBounds(16, 270, 313, 105);
+        imagePreviewLabel.setBounds(16, 292, 313, 95);
         imagePreviewLabel.setOpaque(true);
         imagePreviewLabel.setBackground(new Color(248, 250, 252));
-        imagePreviewLabel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
-        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 105, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
+        imagePreviewLabel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER, 1, true),
+            BorderFactory.createEmptyBorder(2, 2, 2, 2)
+        ));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 95, ImageUtil.DEFAULT_DESTINATION_PLACEHOLDER));
         formCard.add(imagePreviewLabel);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 385, 98, 30, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 385, 98, 30, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 385, 101, 30, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 421, 313, 28, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 398, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 398, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 398, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 438, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select a destination row to edit or delete", 16, 455, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select a destination row to edit or delete", 16, 478, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -124,6 +127,7 @@ public class DestinationManagement extends Screen {
         tableModel = createReadOnlyTableModel(columns);
         destTable = createTable(tableModel, 410, 132, 745, 511);
         setColumnWidths(destTable, 160, 120, 380, 85);
+        setStatusBadgeRenderer(destTable, 3);
 
         destTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {

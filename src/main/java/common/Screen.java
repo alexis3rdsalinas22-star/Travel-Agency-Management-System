@@ -28,15 +28,20 @@ public class Screen extends JFrame {
     // -------------------------------------------------------------
     // Design System Tokens (Standard Colors & Dimensions)
     // -------------------------------------------------------------
-    public static final Color COLOR_BG         = new Color(248, 250, 252);
-    public static final Color COLOR_CARD_BG    = Color.WHITE;
-    public static final Color COLOR_BORDER     = new Color(226, 232, 240);
-    public static final Color COLOR_PRIMARY    = new Color(37, 99, 235);   // Vibrant Blue
-    public static final Color COLOR_SUCCESS    = new Color(16, 149, 93);   // Emerald Green
-    public static final Color COLOR_DANGER     = new Color(220, 53, 69);   // Crimson Red
-    public static final Color COLOR_SECONDARY  = new Color(241, 245, 249); // Light Slate
-    public static final Color COLOR_TEXT_MAIN  = new Color(15, 23, 42);    // Dark Slate
-    public static final Color COLOR_TEXT_MUTED = new Color(100, 116, 139); // Muted Slate
+    public static final Color COLOR_BG              = new Color(248, 250, 252);
+    public static final Color COLOR_CARD_BG         = Color.WHITE;
+    public static final Color COLOR_BORDER          = new Color(226, 232, 240);
+    public static final Color COLOR_BORDER_INPUT    = new Color(203, 213, 225);
+    public static final Color COLOR_PRIMARY         = new Color(37, 99, 235);   // Royal Blue
+    public static final Color COLOR_PRIMARY_HOVER   = new Color(29, 78, 216);   // Darker Royal Blue
+    public static final Color COLOR_SUCCESS         = new Color(16, 185, 129);  // Emerald Green
+    public static final Color COLOR_SUCCESS_HOVER   = new Color(5, 150, 105);   // Darker Emerald
+    public static final Color COLOR_DANGER          = new Color(239, 68, 68);   // Crimson Red
+    public static final Color COLOR_DANGER_HOVER    = new Color(220, 38, 38);   // Darker Crimson
+    public static final Color COLOR_SECONDARY       = new Color(241, 245, 249); // Light Slate
+    public static final Color COLOR_SECONDARY_HOVER = new Color(226, 232, 240); // Slightly darker slate
+    public static final Color COLOR_TEXT_MAIN       = new Color(15, 23, 42);    // Dark Slate
+    public static final Color COLOR_TEXT_MUTED      = new Color(100, 116, 139); // Muted Slate
 
     public static final int STD_WIDTH  = 1200;
     public static final int STD_HEIGHT = 700;
@@ -95,6 +100,7 @@ public class Screen extends JFrame {
     
     public final void setFullscreen(boolean choice) {
         if (choice) {
+            setResizable(true);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
         } else {
             setExtendedState(JFrame.NORMAL);
@@ -105,6 +111,7 @@ public class Screen extends JFrame {
         if (getExtendedState() == JFrame.MAXIMIZED_BOTH) {
             setExtendedState(JFrame.NORMAL);
         } else {
+            setResizable(true);
             setExtendedState(JFrame.MAXIMIZED_BOTH);
         }
     }
@@ -119,28 +126,25 @@ public class Screen extends JFrame {
     // -------------------------------------------------------------
 
     public void createTopHeader(String categoryTag, String title, String subtitle, Runnable onBack) {
-        JLabel tag = createLabel(categoryTag, 45, 14, 500, 16);
+        JLabel tag = createLabel(categoryTag, 45, 14, 550, 16);
         setFontStyle(tag, Font.BOLD);
-        setFontSize(tag, 11);
+        setFontSize(tag, 10);
         setTextColor(tag, COLOR_PRIMARY);
 
-        JLabel header = createHeader(title, 45, 30, 500, 30);
+        JLabel header = createHeader(title, 45, 30, 550, 30);
         setFontSize(header, 22);
         setTextColor(header, COLOR_TEXT_MAIN);
 
-        JLabel sub = createLabel(subtitle, 45, 60, 600, 18);
+        JLabel sub = createLabel(subtitle, 45, 60, 650, 18);
         setFontSize(sub, 12);
         setTextColor(sub, COLOR_TEXT_MUTED);
 
         if (onBack != null) {
-            JButton backBtn = createButton("← Dashboard", 1020, 18, 135, 36);
+            JButton backBtn = createSecondaryButton(this, "← Dashboard", 1020, 18, 135, 36, onBack);
             setFontStyle(backBtn, Font.BOLD);
             setFontSize(backBtn, 12);
             setBackground(backBtn, Color.WHITE);
             setTextColor(backBtn, new Color(51, 65, 85));
-            backBtn.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 1));
-            backBtn.setFocusPainted(false);
-            backBtn.addActionListener(e -> onBack.run());
         }
     }
 
@@ -156,16 +160,25 @@ public class Screen extends JFrame {
         JPanel card = new JPanel(null);
         card.setBounds(x, y, width, height);
         card.setBackground(COLOR_CARD_BG);
-        card.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER, 1),
+            BorderFactory.createEmptyBorder(0, 0, 0, 0)
+        ));
         parent.add(card);
         return card;
     }
 
     public JLabel createCardTag(Container parent, String text) {
-        JLabel cardTag = new JLabel(text);
-        cardTag.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        JLabel cardTag = new JLabel("  " + text + "  ");
+        cardTag.setFont(new Font("Segoe UI", Font.BOLD, 10));
         cardTag.setForeground(COLOR_PRIMARY);
-        cardTag.setBounds(16, 12, parent.getWidth() > 32 ? parent.getWidth() - 32 : 280, 16);
+        cardTag.setOpaque(true);
+        cardTag.setBackground(new Color(239, 246, 255));
+        cardTag.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(191, 219, 254), 1, true),
+            BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        cardTag.setBounds(16, 12, parent.getWidth() > 32 ? parent.getWidth() - 32 : 280, 22);
         parent.add(cardTag);
         return cardTag;
     }
@@ -181,15 +194,26 @@ public class Screen extends JFrame {
     public JTextField addFormField(Container parent, String labelText, JTextField field, int y, boolean editable) {
         JLabel lbl = new JLabel(labelText);
         lbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
-        lbl.setForeground(new Color(51, 65, 85));
-        lbl.setBounds(16, y, 95, 26);
+        lbl.setForeground(new Color(71, 85, 105));
+        lbl.setBounds(16, y, 95, 28);
         parent.add(lbl);
 
         field.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        field.setBounds(115, y, 214, 26);
+        field.setBounds(115, y, 214, 28);
         field.setEditable(editable);
-        if (!editable) {
-            field.setBackground(COLOR_SECONDARY);
+        if (editable) {
+            field.setBackground(Color.WHITE);
+            field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
+        } else {
+            field.setBackground(new Color(241, 245, 249));
+            field.setForeground(new Color(100, 116, 139));
+            field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER, 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
         }
         parent.add(field);
         return field;
@@ -206,6 +230,7 @@ public class Screen extends JFrame {
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setFocusPainted(false);
+        btn.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btn.setBounds(x, y, w, h);
         if (action != null) {
             btn.addActionListener(e -> action.run());
@@ -218,7 +243,10 @@ public class Screen extends JFrame {
                                       Color bg, Color fg, Color border, int fontSize, Runnable action) {
         JButton btn = createStyledButton(parent, text, x, y, w, h, bg, fg, action);
         if (border != null) {
-            btn.setBorder(BorderFactory.createLineBorder(border, 1));
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(border, 1, true),
+                BorderFactory.createEmptyBorder(2, 8, 2, 8)
+            ));
         }
         if (fontSize > 0) {
             setFontSize(btn, fontSize);
@@ -227,7 +255,19 @@ public class Screen extends JFrame {
     }
 
     public JButton createSuccessButton(Container parent, String text, int x, int y, int w, int h, Runnable action) {
-        return createStyledButton(parent, text, x, y, w, h, COLOR_SUCCESS, Color.WHITE, action);
+        JButton btn = createStyledButton(parent, text, x, y, w, h, COLOR_SUCCESS, Color.WHITE, action);
+        btn.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_SUCCESS_HOVER);
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_SUCCESS);
+            }
+        });
+        return btn;
     }
 
     public JButton createSuccessButton(String text, int x, int y, int w, int h, Runnable action) {
@@ -235,7 +275,19 @@ public class Screen extends JFrame {
     }
 
     public JButton createPrimaryButton(Container parent, String text, int x, int y, int w, int h, Runnable action) {
-        return createStyledButton(parent, text, x, y, w, h, COLOR_PRIMARY, Color.WHITE, action);
+        JButton btn = createStyledButton(parent, text, x, y, w, h, COLOR_PRIMARY, Color.WHITE, action);
+        btn.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_PRIMARY_HOVER);
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_PRIMARY);
+            }
+        });
+        return btn;
     }
 
     public JButton createPrimaryButton(String text, int x, int y, int w, int h, Runnable action) {
@@ -243,7 +295,19 @@ public class Screen extends JFrame {
     }
 
     public JButton createDangerButton(Container parent, String text, int x, int y, int w, int h, Runnable action) {
-        return createStyledButton(parent, text, x, y, w, h, COLOR_DANGER, Color.WHITE, action);
+        JButton btn = createStyledButton(parent, text, x, y, w, h, COLOR_DANGER, Color.WHITE, action);
+        btn.setBorder(BorderFactory.createEmptyBorder(2, 8, 2, 8));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_DANGER_HOVER);
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_DANGER);
+            }
+        });
+        return btn;
     }
 
     public JButton createDangerButton(String text, int x, int y, int w, int h, Runnable action) {
@@ -253,7 +317,20 @@ public class Screen extends JFrame {
     public JButton createSecondaryButton(Container parent, String text, int x, int y, int w, int h, Runnable action) {
         JButton btn = createStyledButton(parent, text, x, y, w, h, COLOR_SECONDARY, new Color(71, 85, 105), action);
         btn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        btn.setBorder(BorderFactory.createLineBorder(new Color(203, 213, 225), 1));
+        btn.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_SECONDARY_HOVER);
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                btn.setBackground(COLOR_SECONDARY);
+            }
+        });
         return btn;
     }
 
@@ -332,8 +409,13 @@ public class Screen extends JFrame {
 
     public JPasswordField createPasswordField(Container parent, int x, int y, int width, int height) {
         JPasswordField passwordField = new JPasswordField();
-        passwordField.setFont(defaultFont);
+        passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         passwordField.setBounds(x, y, width, height);
+        passwordField.setBackground(Color.WHITE);
+        passwordField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
         parent.add(passwordField);
         return passwordField;
     }
@@ -348,7 +430,8 @@ public class Screen extends JFrame {
 
     public <T> JComboBox<T> createComboBox(Container parent, T[] items, int x, int y, int width, int height) {
         JComboBox<T> comboBox = new JComboBox<>(items);
-        comboBox.setFont(defaultFont);
+        comboBox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        comboBox.setBackground(Color.WHITE);
         comboBox.setBounds(x, y, width, height);
         parent.add(comboBox);
         return comboBox;
@@ -364,11 +447,13 @@ public class Screen extends JFrame {
 
     public JTextArea createTextArea(Container parent, int x, int y, int width, int height) {
         JTextArea textArea = new JTextArea();
-        textArea.setFont(defaultFont);
+        textArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         textArea.setLineWrap(true);
         textArea.setWrapStyleWord(true);
+        textArea.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setBounds(x, y, width, height);
+        scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1));
         parent.add(scrollPane);
         return textArea;
     }
@@ -446,20 +531,88 @@ public class Screen extends JFrame {
         JTable table = new JTable(model);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        table.setRowHeight(26);
-        table.setGridColor(COLOR_SECONDARY);
+        table.setRowHeight(32);
+        table.setShowVerticalLines(false);
+        table.setShowHorizontalLines(true);
+        table.setGridColor(new Color(241, 245, 249));
         table.setSelectionBackground(new Color(219, 234, 254));
         table.setSelectionForeground(COLOR_TEXT_MAIN);
 
+        // Custom default cell renderer with padding and zebra striping
+        javax.swing.table.DefaultTableCellRenderer defaultRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable tbl, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, value, isSelected, hasFocus, row, column);
+                lbl.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                if (!isSelected) {
+                    lbl.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
+                    lbl.setForeground(COLOR_TEXT_MAIN);
+                }
+                return lbl;
+            }
+        };
+        table.setDefaultRenderer(Object.class, defaultRenderer);
+
         if (table.getTableHeader() != null) {
+            table.getTableHeader().setPreferredSize(new java.awt.Dimension(width, 36));
             table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-            table.getTableHeader().setBackground(COLOR_SECONDARY);
-            table.getTableHeader().setForeground(new Color(51, 65, 85));
+            table.getTableHeader().setBackground(new Color(241, 245, 249));
+            table.getTableHeader().setForeground(new Color(71, 85, 105));
+            table.getTableHeader().setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
+            table.getTableHeader().setReorderingAllowed(false);
         }
 
         JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
+        scrollPane.getViewport().setBackground(Color.WHITE);
         addComponent(scrollPane, x, y, width, height);
         return table;
+    }
+
+    public void setStatusBadgeRenderer(JTable table, int statusCol) {
+        if (table == null || statusCol < 0 || statusCol >= table.getColumnModel().getColumnCount()) return;
+        table.getColumnModel().getColumn(statusCol).setCellRenderer(new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(JTable tbl, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel c = (JLabel) super.getTableCellRendererComponent(tbl, value, isSelected, hasFocus, row, column);
+                c.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+                c.setFont(new Font("Segoe UI", Font.BOLD, 11));
+                String text = value != null ? value.toString() : "";
+                c.setText(text);
+
+                if (!isSelected) {
+                    if ("Active".equalsIgnoreCase(text) || "Confirmed".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(220, 252, 231));
+                        c.setForeground(new Color(22, 101, 52));
+                    } else if ("Pending".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(254, 243, 199));
+                        c.setForeground(new Color(146, 64, 14));
+                    } else if ("Completed".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(224, 242, 254));
+                        c.setForeground(new Color(7, 89, 133));
+                    } else if ("Inactive".equalsIgnoreCase(text) || "Cancelled".equalsIgnoreCase(text) || "Suspended".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(254, 226, 226));
+                        c.setForeground(new Color(153, 27, 27));
+                    } else if ("Admin".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(243, 232, 255));
+                        c.setForeground(new Color(107, 33, 168));
+                    } else if ("Manager".equalsIgnoreCase(text)) {
+                        c.setBackground(new Color(224, 231, 255));
+                        c.setForeground(new Color(49, 46, 129));
+                    } else {
+                        c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
+                        c.setForeground(COLOR_TEXT_MAIN);
+                    }
+                } else {
+                    c.setBackground(tbl.getSelectionBackground());
+                    c.setForeground(tbl.getSelectionForeground());
+                }
+                c.setOpaque(true);
+                return c;
+            }
+        });
     }
 
     public void setColumnWidths(JTable table, int... widths) {
@@ -472,32 +625,35 @@ public class Screen extends JFrame {
     public JTextField createSearchBar(int x, int y, int width, int height,
                                       Runnable onSearch, Runnable onShowAll) {
         int labelWidth = 55;
-        int showAllWidth = 90;
+        int showAllWidth = 95;
         int searchBtnWidth = 85;
         int gap = 8;
         int buttonsTotal = searchBtnWidth + gap + showAllWidth;
 
-        createLabel("Search:", x, y, labelWidth, height);
+        JLabel sLbl = createLabel("Search:", x, y, labelWidth, height);
+        setFontStyle(sLbl, Font.BOLD);
+        setFontSize(sLbl, 11);
+        setTextColor(sLbl, new Color(71, 85, 105));
+
         JTextField searchField = createTextField(x + labelWidth + 5, y, width - labelWidth - 5 - buttonsTotal - gap, height);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
 
-        JButton searchBtn = createButton("Search", x + width - buttonsTotal, y, searchBtnWidth, height);
-        searchBtn.setMargin(new Insets(2, 4, 2, 4));
-        searchBtn.setFocusPainted(false);
-        searchBtn.addActionListener(e -> {
-            if (onSearch != null) {
-                onSearch.run();
-            }
-        });
+        JButton searchBtn = createPrimaryButton(this, "Search", x + width - buttonsTotal, y, searchBtnWidth, height, onSearch);
+        setFontSize(searchBtn, 12);
 
-        JButton showAllBtn = createButton("Show All", x + width - showAllWidth, y, showAllWidth, height);
-        showAllBtn.setMargin(new Insets(2, 4, 2, 4));
-        showAllBtn.setFocusPainted(false);
-        showAllBtn.addActionListener(e -> {
+        JButton showAllBtn = createSecondaryButton(this, "Show All", x + width - showAllWidth, y, showAllWidth, height, () -> {
             searchField.setText("");
             if (onShowAll != null) {
                 onShowAll.run();
             }
         });
+        setFontSize(showAllBtn, 12);
+
         return searchField;
     }
 

@@ -71,46 +71,48 @@ public class CustomerManagement extends Screen {
         JPanel formCard = createCard(45, 88, 345, 555);
         createCardTag(formCard, "CUSTOMER PROFILE");
 
+        // Hidden ID Field to preserve programmatic access without cluttering the UI
+        idField = new JTextField();
+
         // Fields inside Card
-        idField = addFormField(formCard, "Customer ID:", 36, false);
-        usernameField = addFormField(formCard, "Username *:", 70, true);
-        firstNameField = addFormField(formCard, "First Name *:", 104, true);
-        middleNameField = addFormField(formCard, "Middle Name:", 138, true);
-        lastNameField = addFormField(formCard, "Last Name *:", 172, true);
-        emailField = addFormField(formCard, "Email *:", 206, true);
+        usernameField = addFormField(formCard, "Username *:", 38, true);
+        firstNameField = addFormField(formCard, "First Name *:", 72, true);
+        middleNameField = addFormField(formCard, "Middle Name:", 106, true);
+        lastNameField = addFormField(formCard, "Last Name *:", 140, true);
+        emailField = addFormField(formCard, "Email *:", 174, true);
 
         // Gender Combo
-        JLabel genderLbl = createLabel(formCard, "Gender *:", 16, 240, 95, 26);
+        JLabel genderLbl = createLabel(formCard, "Gender *:", 16, 208, 95, 28);
         setFontStyle(genderLbl, Font.BOLD);
         setFontSize(genderLbl, 11);
-        genderCombo = createComboBox(formCard, new String[]{"Male", "Female"}, 115, 240, 214, 26);
+        genderCombo = createComboBox(formCard, new String[]{"Male", "Female"}, 115, 208, 214, 28);
 
-        ageField = addFormField(formCard, "Age *:", 274, true);
+        ageField = addFormField(formCard, "Age *:", 242, true);
 
         // Status Combo
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 308, 95, 26);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 276, 95, 28);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive", "Suspended"}, 115, 308, 214, 26);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive", "Suspended"}, 115, 276, 214, 28);
 
         // Password Field
-        JLabel passLbl = createLabel(formCard, "Password:", 16, 342, 95, 26);
+        JLabel passLbl = createLabel(formCard, "Password:", 16, 310, 95, 28);
         setFontStyle(passLbl, Font.BOLD);
         setFontSize(passLbl, 11);
 
-        passwordField = createPasswordField(formCard, 115, 342, 214, 26);
+        passwordField = createPasswordField(formCard, 115, 310, 214, 28);
 
-        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 369, 214, 14);
+        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 338, 214, 14);
         setFontSize(passNote, 10);
         setTextColor(passNote, COLOR_TEXT_MUTED);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 400, 98, 32, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 400, 98, 32, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 400, 101, 32, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 442, 313, 30, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 380, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 380, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 380, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 422, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select a row in the table to edit or delete", 16, 520, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select a customer in the table to edit or delete", 16, 470, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -119,10 +121,11 @@ public class CustomerManagement extends Screen {
         searchField = createSearchBar(410, 88, 745, 34, this::handleSearch, () -> loadCustomers(null));
         searchField.addActionListener(e -> handleSearch());
 
-        String[] columnNames = {"ID", "Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
+        String[] columnNames = {"Username", "First Name", "Last Name", "Email", "Gender", "Age", "Status"};
         tableModel = createReadOnlyTableModel(columnNames);
         customerTable = createTable(tableModel, 410, 132, 745, 511);
-        setColumnWidths(customerTable, 50, 105, 95, 95, 180, 70, 55, 85);
+        setColumnWidths(customerTable, 120, 110, 110, 195, 65, 55, 90);
+        setStatusBadgeRenderer(customerTable, 6);
 
         customerTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -142,7 +145,6 @@ public class CustomerManagement extends Screen {
 
             for (CustomerRecord c : currentRecords) {
                 tableModel.addRow(new Object[]{
-                    c.customerID,
                     c.username != null ? c.username : "(None)",
                     c.firstName,
                     c.lastName,

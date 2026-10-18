@@ -92,6 +92,21 @@ public class TravelPackageDAO {
         }
     }
 
+    public List<PackageRecord> getPackagesByDestination(int destinationId) throws SQLException {
+        String sql = BASE_SELECT + "WHERE p.destinationID = ? ORDER BY p.name";
+        List<PackageRecord> list = new ArrayList<>();
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, destinationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
+            }
+        }
+        return list;
+    }
+
     
     public List<PackageRecord> searchPackage(String keyword) throws SQLException {
         String sql = BASE_SELECT

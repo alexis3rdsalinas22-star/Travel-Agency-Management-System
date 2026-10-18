@@ -1,36 +1,29 @@
 package common;
 
 import dao.AdminAccountDAO;
-import dao.BookingDAO;
-import dao.BookingDAO.BookingRecord;
 import dao.CustomerAccountDAO;
 import dao.CustomerDAO;
 import dao.CustomerDAO.CustomerRecord;
 import dao.DestinationDAO;
 import dao.DestinationDAO.DestinationRecord;
-import dao.PaymentDAO;
 import dao.TravelPackageDAO;
 import dao.TravelPackageDAO.PackageRecord;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Fills the database with comprehensive starting data:
+ * Seeds the database with essential foundational data:
  * - Admin and Manager accounts
- * - Registered customer accounts
- * - Tourist destinations (with image paths)
- * - Tour packages (with pricing, capacities, and image paths)
- * - Sample reservations and manifest travelers
- * - Financial transaction records and revenue entries
+ * - Sample customer accounts
+ * - Curated tourist destinations
+ * - Tour packages with pricing and capacities
  *
  * Safe to run more than once: records that already exist are automatically skipped.
  */
@@ -46,11 +39,10 @@ public class DatabaseSeeder {
                 con.commit(); // commit accounts first
 
                 Map<String, Integer> destMap = seedDestinations();
-                Map<String, Integer> pkgMap = seedPackages(destMap);
-                seedBookingsAndPayments(pkgMap);
+                seedPackages(destMap);
 
                 System.out.println("=================================================");
-                System.out.println("Database seeding completed successfully!");
+                System.out.println("Essential database seeding completed successfully!");
                 System.out.println("=================================================");
             } catch (Exception e) {
                 con.rollback();
@@ -97,22 +89,33 @@ public class DatabaseSeeder {
         CustomerDAO customerDAO = new CustomerDAO();
         CustomerAccountDAO accountDAO = new CustomerAccountDAO();
 
-        // { first, middle, last, email, sex, age, username, password }
-        String[][] customers = {
-            {"Juan",  "Santos", "Dela Cruz", "juan@example.com",  "Male",   "25", "juan",  "juan123"},
-            {"Maria", "Reyes",  "Clara",     "maria@example.com", "Female", "30", "maria", "maria123"},
+        List<CustomerRecord> existing = customerDAO.getAllCustomers(con);
+        Map<String, Integer> existingUsernames = new HashMap<>();
+        for (CustomerRecord c : existing) {
+            if (c.username != null) {
+                existingUsernames.put(c.username.toLowerCase(), c.customerID);
+            }
+        }
+
+        // { username, password, firstName, middleName, lastName, email, sex, age }
+        Object[][] customers = {
+            {"juan",  "juan123",  "Juan",  "Santos", "Dela Cruz", "juan@example.com",  "Male",   28},
+            {"maria", "maria123", "Maria", "Reyes",  "Clara",     "maria@example.com", "Female", 25},
         };
 
-        for (String[] c : customers) {
-            String username = c[6];
-            if (accountDAO.usernameExists(con, username)) {
+        for (Object[] c : customers) {
+            String username = (String) c[0];
+            if (existingUsernames.containsKey(username.toLowerCase())) {
                 System.out.println("Customer account '" + username + "' already exists, skipped.");
                 continue;
             }
-            int customerId = customerDAO.insertCustomer(
-                    con, c[0], c[1], c[2], c[3], c[4], Integer.parseInt(c[5]));
-            accountDAO.insertAccount(con, customerId, username, c[7]);
-            System.out.println("Customer '" + username + "' created (ID " + customerId + ").");
+
+            int custId = customerDAO.insertCustomer(con, (String) c[2], (String) c[3], (String) c[4],
+                    (String) c[5], (String) c[6], (Integer) c[7]);
+            if (custId > 0) {
+                accountDAO.insertAccount(con, custId, username, (String) c[1]);
+                System.out.println("Customer account '" + username + "' created (Customer ID " + custId + ").");
+            }
         }
     }
 
@@ -127,10 +130,10 @@ public class DatabaseSeeder {
 
         // { name, country, description, imagePath }
         String[][] destinations = {
-            {"Boracay Island", "Philippines", "World-famous white sand beaches, turquoise waters, vibrant nightlife, and exciting water sports.", "dest_boracay.jpg"},
-            {"El Nido, Palawan", "Philippines", "Limestone cliffs, crystal-clear hidden lagoons, and UNESCO-recognized marine sanctuaries.", "dest_palawan.jpg"},
-            {"Banaue Rice Terraces", "Philippines", "Hand-carved mountain terraces built 2,000 years ago by ancestors of the indigenous people.", "dest_banaue.jpg"},
-            {"Tokyo", "Japan", "Dynamic metropolis blending futuristic skyscrapers, neon-lit streets, and tranquil historic shrines.", "dest_tokyo.jpg"},
+            {"Boracay Island", "Philippines", "World-famous white sand beaches, turquoise waters, vibrant nightlife, and water sports.", "dest_boracay.jpg"},
+            {"El Nido, Palawan", "Philippines", "Limestone cliffs, crystal-clear hidden lagoons, and UNESCO-recognized marine ecosystems.", "dest_palawan.jpg"},
+            {"Banaue Rice Terraces", "Philippines", "Hand-carved mountain terraces built 2,000 years ago by ancestral Ifugao tribes.", "dest_banaue.jpg"},
+            {"Tokyo", "Japan", "Dynamic metropolis blending futuristic skyscrapers, neon-lit districts, historic shrines, and world-class culinary scenes.", "dest_tokyo.jpg"},
             {"Kyoto", "Japan", "The cultural heart of Japan with peaceful bamboo groves, zen rock gardens, and traditional tea houses.", "dest_kyoto.jpg"},
         };
 
@@ -149,7 +152,7 @@ public class DatabaseSeeder {
         return destMap;
     }
 
-    private static Map<String, Integer> seedPackages(Map<String, Integer> destMap) throws Exception {
+    private static void seedPackages(Map<String, Integer> destMap) throws Exception {
         TravelPackageDAO packageDAO = new TravelPackageDAO();
         List<PackageRecord> existing = packageDAO.getAllPackages();
         Map<String, Integer> pkgMap = new HashMap<>();
@@ -188,84 +191,6 @@ public class DatabaseSeeder {
                     pkgMap.put(pkgName, id);
                     System.out.println("Package '" + pkgName + "' created (ID " + id + ").");
                 }
-            }
-        }
-        return pkgMap;
-    }
-
-    private static void seedBookingsAndPayments(Map<String, Integer> pkgMap) throws Exception {
-        BookingDAO bookingDAO = new BookingDAO();
-        PaymentDAO paymentDAO = new PaymentDAO();
-        CustomerDAO customerDAO = new CustomerDAO();
-
-        // Get customerAccount IDs for juan and maria
-        int juanAccId = -1;
-        int mariaAccId = -1;
-
-        try (Connection con = DBConnection.getConnection()) {
-            List<CustomerRecord> customers = customerDAO.getAllCustomers(con);
-            for (CustomerRecord c : customers) {
-                if ("juan".equalsIgnoreCase(c.username)) {
-                    juanAccId = c.customerAccountID;
-                } else if ("maria".equalsIgnoreCase(c.username)) {
-                    mariaAccId = c.customerAccountID;
-                }
-            }
-        }
-
-        if (juanAccId == -1 && mariaAccId == -1) {
-            System.out.println("No customer accounts available to link sample bookings.");
-            return;
-        }
-
-        List<BookingRecord> existingBookings = bookingDAO.getAllBookings();
-        if (!existingBookings.isEmpty()) {
-            System.out.println("Sample bookings already present (" + existingBookings.size() + " records), skipped.");
-            return;
-        }
-
-        long now = System.currentTimeMillis();
-        long day = 24L * 60 * 60 * 1000;
-
-        // 1. Juan's Booking for Boracay (Confirmed)
-        Integer boracayPkgId = pkgMap.get("Boracay 4D3N Sun & Sand Getaway");
-        if (juanAccId > 0 && boracayPkgId != null) {
-            Timestamp travelDate = new Timestamp(now + (14 * day));
-            int bId = bookingDAO.createBooking(juanAccId, boracayPkgId, travelDate, "Confirmed");
-            if (bId > 0) {
-                System.out.println("Booking # " + bId + " (Boracay) created for Juan.");
-                // Add Travelers
-                bookingDAO.addTraveler(bId, "Juan", "Dela Cruz", Date.valueOf("1999-05-12"), "09171234567");
-                bookingDAO.addTraveler(bId, "Ana", "Dela Cruz", Date.valueOf("2001-08-23"), "09187654321");
-                // Add Payment
-                paymentDAO.recordPayment(bId, new BigDecimal("25000.00"), "GCash", "GCASH-REF-894120");
-                System.out.println("Recorded GCash payment PHP 25,000.00 for Booking # " + bId);
-            }
-        }
-
-        // 2. Maria's Booking for Palawan (Confirmed)
-        Integer palawanPkgId = pkgMap.get("El Nido Lagoons & Coral Reef Explorer");
-        if (mariaAccId > 0 && palawanPkgId != null) {
-            Timestamp travelDate = new Timestamp(now + (30 * day));
-            int bId = bookingDAO.createBooking(mariaAccId, palawanPkgId, travelDate, "Confirmed");
-            if (bId > 0) {
-                System.out.println("Booking # " + bId + " (Palawan) created for Maria.");
-                // Add Traveler
-                bookingDAO.addTraveler(bId, "Maria", "Clara", Date.valueOf("1996-11-04"), "09209876543");
-                // Add Payment
-                paymentDAO.recordPayment(bId, new BigDecimal("16800.00"), "Credit Card", "VISA-AUTH-441290");
-                System.out.println("Recorded Credit Card payment PHP 16,800.00 for Booking # " + bId);
-            }
-        }
-
-        // 3. Juan's Booking for Tokyo (Pending)
-        Integer tokyoPkgId = pkgMap.get("Tokyo Neon Highlights & Modern Culture");
-        if (juanAccId > 0 && tokyoPkgId != null) {
-            Timestamp travelDate = new Timestamp(now + (60 * day));
-            int bId = bookingDAO.createBooking(juanAccId, tokyoPkgId, travelDate, "Pending");
-            if (bId > 0) {
-                System.out.println("Booking # " + bId + " (Tokyo) created for Juan.");
-                bookingDAO.addTraveler(bId, "Juan", "Dela Cruz", Date.valueOf("1999-05-12"), "09171234567");
             }
         }
     }

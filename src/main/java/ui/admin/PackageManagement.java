@@ -98,72 +98,86 @@ public class PackageManagement extends Screen {
         idField = new JTextField();
 
         // Fields inside Card
-        nameField = addFormField(formCard, "Name *:", 34, true);
+        nameField = addFormField(formCard, "Name *:", 36, true);
 
         // Destination Dropdown
-        JLabel destLbl = createLabel(formCard, "Destination *:", 16, 60, 95, 24);
+        JLabel destLbl = createLabel(formCard, "Destination *:", 16, 68, 95, 28);
         setFontStyle(destLbl, Font.BOLD);
         setFontSize(destLbl, 11);
 
         destinationCombo = new JComboBox<>();
         destinationCombo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        destinationCombo.setBounds(115, 60, 214, 24);
+        destinationCombo.setBackground(Color.WHITE);
+        destinationCombo.setBounds(115, 68, 214, 28);
         formCard.add(destinationCombo);
 
-        priceField = addFormField(formCard, "Price/Pax *:", 86, true);
+        priceField = addFormField(formCard, "Price/Pax *:", 100, true);
 
         // Min & Max Pax side-by-side
-        JLabel minLbl = createLabel(formCard, "Min Pax *:", 16, 112, 60, 24);
+        JLabel minLbl = createLabel(formCard, "Min Pax *:", 16, 132, 60, 28);
         setFontStyle(minLbl, Font.BOLD);
         setFontSize(minLbl, 11);
         minTravelersField = new JTextField();
         minTravelersField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        minTravelersField.setBounds(78, 112, 76, 24);
+        minTravelersField.setBackground(Color.WHITE);
+        minTravelersField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        minTravelersField.setBounds(78, 132, 76, 28);
         formCard.add(minTravelersField);
 
-        JLabel maxLbl = createLabel(formCard, "Max Pax *:", 168, 112, 65, 24);
+        JLabel maxLbl = createLabel(formCard, "Max Pax *:", 168, 132, 65, 28);
         setFontStyle(maxLbl, Font.BOLD);
         setFontSize(maxLbl, 11);
         maxTravelersField = new JTextField();
         maxTravelersField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        maxTravelersField.setBounds(238, 112, 91, 24);
+        maxTravelersField.setBackground(Color.WHITE);
+        maxTravelersField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 6, 2, 6)
+        ));
+        maxTravelersField.setBounds(238, 132, 91, 28);
         formCard.add(maxTravelersField);
 
         // Status Combo
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 138, 95, 24);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 164, 95, 28);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 138, 214, 24);
+        statusCombo = createComboBox(formCard, new String[]{"Active", "Inactive"}, 115, 164, 214, 28);
 
-        // Description - Full Width and Taller
-        JLabel descLbl = createLabel(formCard, "Description:", 16, 166, 150, 18);
+        // Description - Full Width
+        JLabel descLbl = createLabel(formCard, "Description:", 16, 196, 150, 18);
         setFontStyle(descLbl, Font.BOLD);
         setFontSize(descLbl, 11);
-        descArea = createTextArea(formCard, 16, 186, 313, 72);
+        descArea = createTextArea(formCard, 16, 216, 313, 66);
 
         // Image Preview & Browse
-        JLabel imgHeader = createLabel(formCard, "Package Photo:", 16, 266, 110, 20);
+        JLabel imgHeader = createLabel(formCard, "Package Photo:", 16, 288, 110, 22);
         setFontStyle(imgHeader, Font.BOLD);
         setFontSize(imgHeader, 11);
 
-        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 264, 99, 22,
+        JButton browseBtn = createStyledButton(formCard, "Browse...", 230, 286, 99, 24,
                 Color.WHITE, new Color(51, 65, 85), new Color(203, 213, 225), 11, this::handleBrowseImage);
 
         imagePreviewLabel = new JLabel("", JLabel.CENTER);
-        imagePreviewLabel.setBounds(16, 288, 313, 90);
+        imagePreviewLabel.setBounds(16, 312, 313, 76);
         imagePreviewLabel.setOpaque(true);
         imagePreviewLabel.setBackground(new Color(248, 250, 252));
-        imagePreviewLabel.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
-        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 90, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
+        imagePreviewLabel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER, 1, true),
+            BorderFactory.createEmptyBorder(2, 2, 2, 2)
+        ));
+        imagePreviewLabel.setIcon(ImageUtil.loadScaledImage(null, 313, 76, ImageUtil.DEFAULT_PACKAGE_PLACEHOLDER));
         formCard.add(imagePreviewLabel);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 386, 98, 30, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 386, 98, 30, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 386, 101, 30, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 422, 313, 28, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 398, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 398, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 398, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 438, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select a package from the table to view or edit", 16, 456, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select a package from the table to view or edit", 16, 478, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -176,6 +190,7 @@ public class PackageManagement extends Screen {
         tableModel = createReadOnlyTableModel(columns);
         packageTable = createTable(tableModel, 410, 132, 745, 511);
         setColumnWidths(packageTable, 220, 155, 125, 75, 75, 95);
+        setStatusBadgeRenderer(packageTable, 5);
 
         packageTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {

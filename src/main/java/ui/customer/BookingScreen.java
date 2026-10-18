@@ -15,8 +15,15 @@ public class BookingScreen extends Screen {
     private JTextArea notesArea;
 
     public BookingScreen() {
+        this(null);
+    }
+
+    public BookingScreen(String packageName) {
         super("Book a Package"); // uses STD_WIDTH x STD_HEIGHT so the header's back button fits
         initUI();
+        if (packageName != null && packageField != null) {
+            packageField.setText(packageName);
+        }
     }
 
     private void initUI() {

@@ -65,33 +65,33 @@ public class AdminManagement extends Screen {
         idField = new JTextField();
 
         // Fields inside Card
-        usernameField = addFormField(formCard, "Username *:", 45, true);
+        usernameField = addFormField(formCard, "Username *:", 42, true);
 
         // Password Field
-        JLabel passLbl = createLabel(formCard, "Password:", 16, 90, 95, 26);
+        JLabel passLbl = createLabel(formCard, "Password:", 16, 80, 95, 28);
         setFontStyle(passLbl, Font.BOLD);
         setFontSize(passLbl, 11);
 
-        passwordField = createPasswordField(formCard, 115, 90, 214, 26);
+        passwordField = createPasswordField(formCard, 115, 80, 214, 28);
 
-        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 118, 214, 14);
+        JLabel passNote = createLabel(formCard, "(leave blank to keep unchanged)", 115, 110, 214, 14);
         setFontSize(passNote, 10);
         setTextColor(passNote, COLOR_TEXT_MUTED);
 
         // Role Combo
-        JLabel roleLbl = createLabel(formCard, "Role *:", 16, 145, 95, 26);
+        JLabel roleLbl = createLabel(formCard, "Role *:", 16, 138, 95, 28);
         setFontStyle(roleLbl, Font.BOLD);
         setFontSize(roleLbl, 11);
 
-        roleCombo = createComboBox(formCard, new String[]{"Admin", "Manager"}, 115, 145, 214, 26);
+        roleCombo = createComboBox(formCard, new String[]{"Admin", "Manager"}, 115, 138, 214, 28);
 
         // Action Buttons inside Card
-        createSuccessButton(formCard, "Save", 16, 205, 98, 32, this::handleSave);
-        createPrimaryButton(formCard, "Update", 122, 205, 98, 32, this::handleUpdate);
-        createDangerButton(formCard, "Delete", 228, 205, 101, 32, this::handleDelete);
-        createSecondaryButton(formCard, "Clear Form", 16, 247, 313, 30, this::clearForm);
+        createSuccessButton(formCard, "Save", 16, 196, 98, 32, this::handleSave);
+        createPrimaryButton(formCard, "Update", 122, 196, 98, 32, this::handleUpdate);
+        createDangerButton(formCard, "Delete", 228, 196, 101, 32, this::handleDelete);
+        createSecondaryButton(formCard, "Clear Form", 16, 238, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Select an admin from the table to modify credentials", 16, 290, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Select an admin from the table to modify credentials", 16, 282, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -103,6 +103,7 @@ public class AdminManagement extends Screen {
         tableModel = createReadOnlyTableModel(new String[]{"Username", "Role"});
         accountsTable = createTable(tableModel, 410, 132, 745, 511);
         setColumnWidths(accountsTable, 495, 250);
+        setStatusBadgeRenderer(accountsTable, 1);
 
         accountsTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {

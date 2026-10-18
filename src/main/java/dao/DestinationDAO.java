@@ -62,6 +62,19 @@ public class DestinationDAO {
         return list;
     }
 
+    // Returns a single destination by its ID
+    public DestinationRecord getDestinationById(int destinationId) throws SQLException {
+        String sql = "SELECT destinationID, name, country, description, imagePath, status "
+                   + "FROM destination WHERE destinationID = ?";
+        try (Connection con = DBConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, destinationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        }
+    }
+
     // Searches by destination ID, name, country, description or status
     public List<DestinationRecord> search(String keyword) throws SQLException {
         String sql = "SELECT destinationID, name, country, description, imagePath, status "

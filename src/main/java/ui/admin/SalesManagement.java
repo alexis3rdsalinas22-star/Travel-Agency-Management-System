@@ -93,11 +93,14 @@ public class SalesManagement extends Screen {
 
         // Mini Card: Sales Summary KPI Panel
         JPanel summaryBox = new JPanel(null);
-        summaryBox.setBounds(16, 238, 313, 195);
-        summaryBox.setBackground(COLOR_BG);
+        summaryBox.setBounds(16, 238, 313, 205);
+        summaryBox.setBackground(new Color(248, 250, 252));
         summaryBox.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(COLOR_BORDER, 1),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
+            BorderFactory.createMatteBorder(0, 3, 0, 0, COLOR_SUCCESS),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER, 1),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)
+            )
         ));
 
         JLabel sumTitle = createLabel(summaryBox, "REVENUE OVERVIEW", 12, 10, 280, 16);
@@ -109,32 +112,32 @@ public class SalesManagement extends Screen {
         setFontSize(revHeader, 11);
         setTextColor(revHeader, COLOR_TEXT_MUTED);
 
-        totalRevenueLbl = createLabel(summaryBox, "PHP 0.00", 12, 54, 280, 22);
+        totalRevenueLbl = createLabel(summaryBox, "PHP 0.00", 12, 54, 280, 24);
         setFontStyle(totalRevenueLbl, Font.BOLD);
-        setFontSize(totalRevenueLbl, 14);
+        setFontSize(totalRevenueLbl, 15);
         setTextColor(totalRevenueLbl, COLOR_SUCCESS);
 
-        JLabel payHeader = createLabel(summaryBox, "Total Transactions:", 12, 84, 130, 18);
+        JLabel payHeader = createLabel(summaryBox, "Total Transactions:", 12, 86, 130, 18);
         setFontSize(payHeader, 11);
         setTextColor(payHeader, COLOR_TEXT_MUTED);
 
-        totalPaymentsLbl = createLabel(summaryBox, "0 records", 12, 102, 280, 20);
+        totalPaymentsLbl = createLabel(summaryBox, "0 records", 12, 106, 280, 22);
         setFontStyle(totalPaymentsLbl, Font.BOLD);
-        setFontSize(totalPaymentsLbl, 13);
+        setFontSize(totalPaymentsLbl, 14);
         setTextColor(totalPaymentsLbl, COLOR_TEXT_MAIN);
 
-        JLabel avgHeader = createLabel(summaryBox, "Average Transaction:", 12, 130, 150, 18);
+        JLabel avgHeader = createLabel(summaryBox, "Average Transaction:", 12, 136, 150, 18);
         setFontSize(avgHeader, 11);
         setTextColor(avgHeader, COLOR_TEXT_MUTED);
 
-        avgPaymentLbl = createLabel(summaryBox, "PHP 0.00", 12, 148, 280, 20);
+        avgPaymentLbl = createLabel(summaryBox, "PHP 0.00", 12, 156, 280, 22);
         setFontStyle(avgPaymentLbl, Font.BOLD);
-        setFontSize(avgPaymentLbl, 13);
+        setFontSize(avgPaymentLbl, 14);
         setTextColor(avgPaymentLbl, COLOR_PRIMARY);
 
         formCard.add(summaryBox);
 
-        JLabel helperHint = createLabel(formCard, "Click any payment row in table to view breakdown", 16, 450, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Click any payment row in table to view breakdown", 16, 458, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -146,6 +149,7 @@ public class SalesManagement extends Screen {
 
         methodFilterCombo = new JComboBox<>(new String[]{"All Methods", "Cash", "Credit Card", "GCash", "Bank Transfer", "PayPal"});
         methodFilterCombo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        methodFilterCombo.setBackground(Color.WHITE);
         methodFilterCombo.setBounds(468, 88, 120, 34);
         methodFilterCombo.addActionListener(e -> applyFilters());
         add(methodFilterCombo);
@@ -155,19 +159,26 @@ public class SalesManagement extends Screen {
         setFontSize(searchLbl, 11);
 
         searchField = createTextField(648, 88, 170, 34);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        searchField.setBackground(Color.WHITE);
+        searchField.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 8, 2, 8)
+        ));
         searchField.addActionListener(e -> applyFilters());
 
-        JButton searchBtn = createButton("Search", 824, 88, 74, 34);
-        searchBtn.addActionListener(e -> applyFilters());
+        JButton searchBtn = createPrimaryButton(this, "Search", 824, 88, 74, 34, this::applyFilters);
+        setFontSize(searchBtn, 12);
 
-        JButton showAllBtn = createButton("Show All", 904, 88, 82, 34);
-        showAllBtn.addActionListener(e -> {
+        JButton showAllBtn = createSecondaryButton(this, "Show All", 904, 88, 82, 34, () -> {
             methodFilterCombo.setSelectedIndex(0);
             searchField.setText("");
             applyFilters();
         });
+        setFontSize(showAllBtn, 12);
 
         JButton exportBtn = createSuccessButton(this, "⬇ Export CSV", 992, 88, 163, 34, this::handleExportCSV);
+        setFontSize(exportBtn, 12);
 
         String[] columns = {"Date", "Amount", "Method", "Source"};
         tableModel = createReadOnlyTableModel(columns);

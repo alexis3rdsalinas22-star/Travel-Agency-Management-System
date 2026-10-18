@@ -7,8 +7,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import ui.customer.CustomerDashboard;
@@ -16,43 +18,66 @@ import ui.customer.CustomerDashboard;
 public class CustomerLogin extends Screen {
 
     public CustomerLogin() {
-        super("Account Login", 500, 500);
+        super("Customer Account Login", 540, 560);
 
-        getContentPane().setBackground(new Color(245, 247, 250));
+        getContentPane().setBackground(COLOR_BG);
+
+        initUI();
+    }
+
+    private void initUI() {
+        JPanel card = createCard(45, 30, 450, 465);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(3, 0, 0, 0, COLOR_PRIMARY),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER, 1),
+                BorderFactory.createEmptyBorder(20, 28, 20, 28)
+            )
+        ));
+
+        // Brand Pill Tag
+        createCardTag(card, "TRAVELER ACCESS  •  ACCOUNT LOGIN");
 
         // Header and subtitle
-        JLabel header = createHeader("Account Login", 60, 35, 380, 35);
-        setFontSize(header, 24);
-        setTextColor(header, new Color(28, 55, 90));
+        JLabel header = createHeader(card, "Sign In to Account", 28, 46, 394, 30);
+        setFontSize(header, 22);
+        setTextColor(header, COLOR_TEXT_MAIN);
 
-        JLabel subheader = createLabel("Please enter your credentials to log in.", 60, 75, 380, 25);
-        setFontSize(subheader, 13);
-        setTextColor(subheader, new Color(100, 116, 139));
+        JLabel subheader = createLabel(card, "Enter your credentials to manage trips and vouchers.", 28, 76, 394, 20);
+        setFontSize(subheader, 12);
+        setTextColor(subheader, COLOR_TEXT_MUTED);
 
         // Form Fields
-        JLabel userLabel = createLabel("Username", 60, 120, 380, 20);
+        JLabel userLabel = createLabel(card, "Username", 28, 110, 394, 18);
         setFontStyle(userLabel, Font.BOLD);
-        setFontSize(userLabel, 13);
-        setTextColor(userLabel, new Color(55, 65, 81));
+        setFontSize(userLabel, 12);
+        setTextColor(userLabel, new Color(51, 65, 85));
 
-        JTextField username = createTextField(60, 145, 380, 36);
-        setFontSize(username, 14);
+        JTextField username = createTextField(card, 28, 132, 394, 36);
+        setFontSize(username, 13);
+        username.setBackground(Color.WHITE);
+        username.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
 
-        JLabel passLabel = createLabel("Password", 60, 195, 380, 20);
+        JLabel passLabel = createLabel(card, "Password", 28, 178, 394, 18);
         setFontStyle(passLabel, Font.BOLD);
-        setFontSize(passLabel, 13);
-        setTextColor(passLabel, new Color(55, 65, 81));
+        setFontSize(passLabel, 12);
+        setTextColor(passLabel, new Color(51, 65, 85));
 
-        JPasswordField password = createPasswordField(60, 220, 380, 36);
-        setFontSize(password, 14);
+        JPasswordField password = createPasswordField(card, 28, 200, 394, 36);
+        setFontSize(password, 13);
+        password.setBackground(Color.WHITE);
+        password.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER_INPUT, 1, true),
+            BorderFactory.createEmptyBorder(2, 10, 2, 10)
+        ));
 
-        // Buttons
-        JButton loginBtn = createButton("Sign In to Account", 60, 280, 380, 42);
+        // Submit Button
+        JButton loginBtn = createPrimaryButton(card, "Sign In to Account", 28, 258, 394, 42, null);
         setFontStyle(loginBtn, Font.BOLD);
         setFontSize(loginBtn, 14);
-        setBackground(loginBtn, new Color(37, 99, 235));
-        setTextColor(loginBtn, Color.WHITE);
-        loginBtn.setFocusPainted(false);
 
         // Keyboard ergonomics
         username.addActionListener(e -> password.requestFocusInWindow());
@@ -71,7 +96,7 @@ public class CustomerLogin extends Screen {
                 CustomerAccountDAO.CustomerLoginResult result = new CustomerAccountDAO().login(con, user, pass);
                 if (result != null) {
                     common.Session.setCustomerSession(result.customerId, result.customerAccountId, user);
-                    showInfo("Welcome back! Login successful.");
+                    showInfo("Welcome back, " + user + "! Login successful.");
                     navigateTo(new CustomerDashboard(result.customerId));
                 } else {
                     showError("Invalid username or password, or account is not active.");
@@ -81,18 +106,13 @@ public class CustomerLogin extends Screen {
             }
         });
 
-        JButton registerBtn = createButton("Don't have an account? Register here", 60, 335, 380, 36);
-        setFontSize(registerBtn, 13);
-        setBackground(registerBtn, new Color(230, 235, 245));
-        setTextColor(registerBtn, new Color(37, 99, 235));
-        registerBtn.setFocusPainted(false);
-        registerBtn.addActionListener(e -> navigateTo(new CustomerRegister()));
+        // Register link button
+        JButton registerBtn = createStyledButton(card, "Don't have an account? Register here", 28, 312, 394, 36,
+            new Color(239, 246, 255), COLOR_PRIMARY, new Color(191, 219, 254), 12, () -> navigateTo(new CustomerRegister()));
+        setFontStyle(registerBtn, Font.BOLD);
 
-        JButton backBtn = createButton("Back to Home", 60, 380, 380, 36);
-        setFontSize(backBtn, 13);
-        setBackground(backBtn, new Color(229, 231, 235));
-        setTextColor(backBtn, new Color(55, 65, 81));
-        backBtn.setFocusPainted(false);
-        backBtn.addActionListener(e -> navigateTo(new Homepage()));
+        // Back to home
+        JButton backBtn = createSecondaryButton(card, "← Back to Home", 28, 360, 394, 36, () -> navigateTo(new Homepage()));
+        setFontSize(backBtn, 12);
     }
 }

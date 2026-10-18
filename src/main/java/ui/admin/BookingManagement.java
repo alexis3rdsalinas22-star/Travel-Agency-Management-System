@@ -77,42 +77,48 @@ public class BookingManagement extends Screen {
         idField = new JTextField();
 
         // Fields inside Card
-        customerField = addFormField(formCard, "Customer:", 36, false);
-        packageField = addFormField(formCard, "Package:", 70, false);
-        travelDateField = addFormField(formCard, "Travel Date:", 104, false);
-        bookingDateField = addFormField(formCard, "Booking Date:", 138, false);
+        customerField = addFormField(formCard, "Customer:", 40, false);
+        packageField = addFormField(formCard, "Package:", 74, false);
+        travelDateField = addFormField(formCard, "Travel Date:", 108, false);
+        bookingDateField = addFormField(formCard, "Booking Date:", 142, false);
 
         // Status Combo (Editable status transition)
-        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 172, 95, 26);
+        JLabel statusLbl = createLabel(formCard, "Status *:", 16, 176, 95, 28);
         setFontStyle(statusLbl, Font.BOLD);
         setFontSize(statusLbl, 11);
-        statusCombo = createComboBox(formCard, new String[]{"Pending", "Confirmed", "Completed", "Cancelled"}, 115, 172, 214, 26);
+        statusCombo = createComboBox(formCard, new String[]{"Pending", "Confirmed", "Completed", "Cancelled"}, 115, 176, 214, 28);
 
         // Payment Summary Box
         JPanel payCard = new JPanel(null);
-        payCard.setBounds(16, 212, 313, 62);
+        payCard.setBounds(16, 216, 313, 68);
         payCard.setBackground(new Color(248, 250, 252));
-        payCard.setBorder(BorderFactory.createLineBorder(COLOR_BORDER, 1));
+        payCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 3, 0, 0, COLOR_PRIMARY),
+            BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+            )
+        ));
 
-        JLabel payTitle = createLabel(payCard, "PAYMENT SUMMARY", 12, 6, 280, 16);
+        JLabel payTitle = createLabel(payCard, "PAYMENT SUMMARY", 12, 8, 280, 16);
         setFontStyle(payTitle, Font.BOLD);
         setFontSize(payTitle, 10);
         setTextColor(payTitle, COLOR_PRIMARY);
 
-        paymentStatusLbl = createLabel(payCard, "Select a booking to view payments", 12, 28, 280, 22);
+        paymentStatusLbl = createLabel(payCard, "Select a booking to view payments", 12, 32, 280, 24);
         setFontStyle(paymentStatusLbl, Font.BOLD);
         setFontSize(paymentStatusLbl, 12);
         setTextColor(paymentStatusLbl, COLOR_TEXT_MUTED);
         formCard.add(payCard);
 
         // Action Buttons inside Card
-        createStyledButton(formCard, "View Passenger Manifest", 16, 290, 313, 34,
+        createStyledButton(formCard, "View Passenger Manifest", 16, 296, 313, 34,
                 new Color(241, 245, 249), new Color(15, 23, 42), new Color(203, 213, 225), 12, this::handleViewManifest);
 
-        createPrimaryButton(formCard, "Update Status", 16, 334, 313, 34, this::handleUpdateStatus);
-        createSecondaryButton(formCard, "Clear Selection", 16, 376, 313, 28, this::clearForm);
+        createPrimaryButton(formCard, "Update Status", 16, 338, 313, 34, this::handleUpdateStatus);
+        createSecondaryButton(formCard, "Clear Selection", 16, 380, 313, 30, this::clearForm);
 
-        JLabel helperHint = createLabel(formCard, "Click any reservation in table to view or update", 16, 416, 313, 16);
+        JLabel helperHint = createLabel(formCard, "Click any reservation in table to view or update", 16, 424, 313, 16);
         setFontStyle(helperHint, Font.ITALIC);
         setFontSize(helperHint, 10);
         setTextColor(helperHint, COLOR_TEXT_MUTED);
@@ -125,52 +131,7 @@ public class BookingManagement extends Screen {
         tableModel = createReadOnlyTableModel(columns);
         bookingTable = createTable(tableModel, 410, 132, 745, 511);
         setColumnWidths(bookingTable, 175, 195, 105, 135, 135);
-
-        // Custom Status Badge Renderer on column 2 (Status)
-        bookingTable.getColumnModel().getColumn(2).setCellRenderer(new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
-                JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                c.setHorizontalAlignment(SwingConstants.CENTER);
-                c.setFont(new Font("Segoe UI", Font.BOLD, 11));
-                String status = value != null ? value.toString() : "";
-
-                if (!isSelected) {
-                    if ("Confirmed".equalsIgnoreCase(status)) {
-                        c.setBackground(new Color(220, 252, 231));
-                        c.setForeground(new Color(22, 101, 52));
-                    } else if ("Pending".equalsIgnoreCase(status)) {
-                        c.setBackground(new Color(254, 243, 199));
-                        c.setForeground(new Color(146, 64, 14));
-                    } else if ("Completed".equalsIgnoreCase(status)) {
-                        c.setBackground(new Color(224, 242, 254));
-                        c.setForeground(new Color(7, 89, 133));
-                    } else if ("Cancelled".equalsIgnoreCase(status)) {
-                        c.setBackground(new Color(254, 226, 226));
-                        c.setForeground(new Color(153, 27, 27));
-                    } else {
-                        c.setBackground(Color.WHITE);
-                        c.setForeground(COLOR_TEXT_MAIN);
-                    }
-                } else {
-                    c.setBackground(table.getSelectionBackground());
-                    if ("Confirmed".equalsIgnoreCase(status)) {
-                        c.setForeground(new Color(22, 101, 52));
-                    } else if ("Pending".equalsIgnoreCase(status)) {
-                        c.setForeground(new Color(146, 64, 14));
-                    } else if ("Completed".equalsIgnoreCase(status)) {
-                        c.setForeground(new Color(7, 89, 133));
-                    } else if ("Cancelled".equalsIgnoreCase(status)) {
-                        c.setForeground(new Color(153, 27, 27));
-                    } else {
-                        c.setForeground(table.getSelectionForeground());
-                    }
-                }
-                c.setOpaque(true);
-                return c;
-            }
-        });
+        setStatusBadgeRenderer(bookingTable, 2);
 
         bookingTable.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -273,28 +234,44 @@ public class BookingManagement extends Screen {
         dialog.add(topPanel, BorderLayout.NORTH);
 
         // Center Table
-        String[] columns = {"ID", "First Name", "Last Name", "Date of Birth", "Contact Number"};
+        String[] columns = {"First Name", "Last Name", "Date of Birth", "Contact Number"};
         DefaultTableModel manifestModel = createReadOnlyTableModel(columns);
         JTable manifestTable = new JTable(manifestModel);
         manifestTable.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        manifestTable.setRowHeight(26);
-        manifestTable.setGridColor(COLOR_SECONDARY);
+        manifestTable.setRowHeight(30);
+        manifestTable.setShowVerticalLines(false);
+        manifestTable.setShowHorizontalLines(true);
+        manifestTable.setGridColor(new Color(241, 245, 249));
         manifestTable.setSelectionBackground(new Color(219, 234, 254));
+
+        manifestTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable tbl, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                JLabel lbl = (JLabel) super.getTableCellRendererComponent(tbl, value, isSelected, hasFocus, row, column);
+                lbl.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                if (!isSelected) {
+                    lbl.setBackground(row % 2 == 0 ? Color.WHITE : new Color(248, 250, 252));
+                    lbl.setForeground(COLOR_TEXT_MAIN);
+                }
+                return lbl;
+            }
+        });
 
         if (manifestTable.getTableHeader() != null) {
             manifestTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 12));
-            manifestTable.getTableHeader().setBackground(COLOR_SECONDARY);
+            manifestTable.getTableHeader().setBackground(new Color(241, 245, 249));
             manifestTable.getTableHeader().setForeground(new Color(51, 65, 85));
+            manifestTable.getTableHeader().setPreferredSize(new Dimension(dialog.getWidth(), 32));
         }
 
         try {
             List<TravelerRecord> travelers = bookingDAO.getTravelersByBooking(bookingId);
             if (travelers.isEmpty()) {
-                manifestModel.addRow(new Object[]{"-", "No travelers recorded", "-", "-", "-"});
+                manifestModel.addRow(new Object[]{"No travelers recorded", "-", "-", "-"});
             } else {
                 for (TravelerRecord t : travelers) {
                     manifestModel.addRow(new Object[]{
-                        t.travelerID,
                         t.firstName != null ? t.firstName : "",
                         t.lastName != null ? t.lastName : "",
                         t.dateOfBirth != null ? t.dateOfBirth.toString() : "N/A",
@@ -303,7 +280,7 @@ public class BookingManagement extends Screen {
                 }
             }
         } catch (SQLException ex) {
-            manifestModel.addRow(new Object[]{"-", "Error loading travelers: " + ex.getMessage(), "-", "-", "-"});
+            manifestModel.addRow(new Object[]{"Error loading travelers: " + ex.getMessage(), "-", "-", "-"});
         }
 
         JScrollPane scrollPane = new JScrollPane(manifestTable);
