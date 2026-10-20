@@ -1,5 +1,6 @@
 import common.DBConnection;
 import common.SecurityUtil;
+import common.ValidationUtil;
 import dao.AdminAccountDAO;
 import dao.BookingDAO;
 import dao.CustomerAccountDAO;
@@ -38,6 +39,7 @@ public class SystemAuditVerificationTest {
         runTest("TC-08: Sales Reporting KPI Aggregations", SystemAuditVerificationTest::testSalesReporting);
         runTest("TC-09: Automated Trip Status Lifecycle (Priority 3)", SystemAuditVerificationTest::testTripStatusLifecycle);
         runTest("TC-10: Passenger Manifest & Itinerary Voucher Integrity (Priority 1)", SystemAuditVerificationTest::testVoucherAndManifestIntegrity);
+        runTest("TC-11: Payment Transaction Reference Validation", SystemAuditVerificationTest::testPaymentReferenceValidation);
 
         System.out.println("======================================================================");
         System.out.printf("   Audit Test Summary: %d PASSED, %d FAILED\n", testsPassed, testsFailed);
@@ -477,6 +479,41 @@ public class SystemAuditVerificationTest {
                 con.commit();
             }
         }
+    }
+
+    // TC-11: Payment Transaction Reference Validation
+    private static void testPaymentReferenceValidation() throws Exception {
+        // Cash does not require a reference
+        assertTrue(ValidationUtil.isValidPaymentReference("Cash", ""), "Cash payment requires no reference code");
+        assertTrue(ValidationUtil.isValidPaymentReference("Cash", null), "Cash payment accepts null reference");
+        assertNull(ValidationUtil.getPaymentReferenceError("Cash", ""), "Cash returns null error");
+
+        // GCash validation
+        assertFalse(ValidationUtil.isValidPaymentReference("GCash", ""), "GCash requires a non-empty reference");
+        assertFalse(ValidationUtil.isValidPaymentReference("GCash", "42424"), "GCash rejects 5-digit reference");
+        assertFalse(ValidationUtil.isValidPaymentReference("GCash", "123456789012"), "GCash rejects 12-digit reference");
+        assertFalse(ValidationUtil.isValidPaymentReference("GCash", "12345678901234"), "GCash rejects 14-digit reference");
+        assertFalse(ValidationUtil.isValidPaymentReference("GCash", "123456789012A"), "GCash rejects reference containing letters");
+        assertTrue(ValidationUtil.isValidPaymentReference("GCash", "1001234567890"), "GCash accepts valid 13-digit code");
+        assertTrue(ValidationUtil.isValidPaymentReference("GCash", "1001 234 567 890"), "GCash accepts formatted 13-digit code");
+        assertEquals("1001234567890", ValidationUtil.normalizePaymentReference("GCash", "1001 234 567 890"), "GCash normalizes formatting");
+
+        // Bank Transfer validation
+        assertFalse(ValidationUtil.isValidPaymentReference("Bank Transfer", ""), "Bank Transfer requires non-empty reference");
+        assertFalse(ValidationUtil.isValidPaymentReference("Bank Transfer", "123"), "Bank Transfer rejects references under 6 chars");
+        assertFalse(ValidationUtil.isValidPaymentReference("Bank Transfer", "BT@#$!"), "Bank Transfer rejects invalid special symbols");
+        assertTrue(ValidationUtil.isValidPaymentReference("Bank Transfer", "BT-98432178"), "Bank Transfer accepts valid alphanumeric reference");
+
+        // Credit Card validation
+        assertFalse(ValidationUtil.isValidPaymentReference("Credit Card", ""), "Credit Card requires reference code");
+        assertFalse(ValidationUtil.isValidPaymentReference("Credit Card", "123"), "Credit Card rejects auth codes under 6 chars");
+        assertTrue(ValidationUtil.isValidPaymentReference("Credit Card", "123456"), "Credit Card accepts 6-digit approval code");
+        assertTrue(ValidationUtil.isValidPaymentReference("Credit Card", "AUTH-987654"), "Credit Card accepts alphanumeric auth code");
+
+        // Debit Card validation
+        assertFalse(ValidationUtil.isValidPaymentReference("Debit Card", ""), "Debit Card requires reference code");
+        assertFalse(ValidationUtil.isValidPaymentReference("Debit Card", "123"), "Debit Card rejects auth codes under 6 chars");
+        assertTrue(ValidationUtil.isValidPaymentReference("Debit Card", "DB-123456"), "Debit Card accepts valid authorization code");
     }
 
     private static void assertTrue(boolean condition, String message) {

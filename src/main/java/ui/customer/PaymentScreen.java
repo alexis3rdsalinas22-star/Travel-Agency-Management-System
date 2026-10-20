@@ -1,6 +1,7 @@
 package ui.customer;
 
 import common.Screen;
+import common.ValidationUtil;
 import dao.BookingDAO;
 import dao.PaymentDAO;
 
@@ -150,7 +151,7 @@ public class PaymentScreen extends Screen {
                 new String[]{"GCash", "Credit Card", "Debit Card", "Bank Transfer", "Cash"}, 152);
         referenceField = addFormField(detailsCard, "Transaction Ref *", 204, true);
 
-        refHelperLbl = createLabel(detailsCard, "Required: enter your GCash reference or transaction code.", 140, 236, 280, 22);
+        refHelperLbl = createLabel(detailsCard, "Required: enter GCash 13-digit reference code.", 115, 236, 310, 22);
         setFontSize(refHelperLbl, 10);
         setTextColor(refHelperLbl, COLOR_TEXT_MUTED);
 
@@ -265,10 +266,41 @@ public class PaymentScreen extends Screen {
 
         String ref = getTrimmedText(referenceField);
         referenceValue.setText(cash ? "Not required (Counter Clearance)" : (ref.isEmpty() ? "Pending entry" : ref));
-        String hint = hintFor(method);
-        hintLabel.setText(hint);
+        String defaultHint = hintFor(method);
+        hintLabel.setText(defaultHint);
+
         if (refHelperLbl != null) {
-            refHelperLbl.setText(hint);
+            if (cash) {
+                refHelperLbl.setText(defaultHint);
+                refHelperLbl.setForeground(COLOR_TEXT_MUTED);
+            } else if (ref.isEmpty()) {
+                refHelperLbl.setText(defaultHint);
+                refHelperLbl.setForeground(COLOR_TEXT_MUTED);
+            } else if ("GCash".equalsIgnoreCase(method)) {
+                String digitsOnly = ref.replaceAll("[\\s\\-]", "");
+                if (!ref.matches("^[0-9\\s\\-]+$")) {
+                    refHelperLbl.setText("GCash code must contain numbers only.");
+                    refHelperLbl.setForeground(new Color(220, 38, 38));
+                } else if (digitsOnly.length() < 13) {
+                    refHelperLbl.setText(String.format("GCash reference code: %d/13 digits entered.", digitsOnly.length()));
+                    refHelperLbl.setForeground(new Color(217, 119, 6));
+                } else if (digitsOnly.length() == 13) {
+                    refHelperLbl.setText("✓ Valid 13-digit GCash reference code.");
+                    refHelperLbl.setForeground(new Color(5, 150, 105));
+                } else {
+                    refHelperLbl.setText(String.format("GCash reference exceeds 13 digits (%d/13).", digitsOnly.length()));
+                    refHelperLbl.setForeground(new Color(220, 38, 38));
+                }
+            } else {
+                String error = ValidationUtil.getPaymentReferenceError(method, ref);
+                if (error == null) {
+                    refHelperLbl.setText("✓ Valid " + method + " reference code format.");
+                    refHelperLbl.setForeground(new Color(5, 150, 105));
+                } else {
+                    refHelperLbl.setText(defaultHint);
+                    refHelperLbl.setForeground(new Color(217, 119, 6));
+                }
+            }
         }
     }
 
@@ -351,15 +383,13 @@ public class PaymentScreen extends Screen {
         String method = (String) methodCombo.getSelectedItem();
         String reference = getTrimmedText(referenceField);
         boolean needsReference = !"Cash".equals(method);
-        if (needsReference && reference.isEmpty()) {
-            showError("A transaction reference / confirmation code is required for " + method + ".");
-            referenceField.requestFocusInWindow();
-            return;
-        }
-        if (reference.length() > MAX_REFERENCE_LENGTH) {
-            showError("Reference must be " + MAX_REFERENCE_LENGTH + " characters or less.");
-            referenceField.requestFocusInWindow();
-            return;
+        if (needsReference) {
+            String refError = ValidationUtil.getPaymentReferenceError(method, reference);
+            if (refError != null) {
+                showError(refError);
+                referenceField.requestFocusInWindow();
+                return;
+            }
         }
 
         String targetPkg = (b.packageName != null && !b.packageName.isEmpty())
@@ -368,7 +398,9 @@ public class PaymentScreen extends Screen {
 
         if (confirm(String.format("Confirm payment of PHP %,.2f via %s for \"%s\"?", amount, method, targetPkg))) {
             try {
-                String source = reference != null && !reference.isEmpty() ? reference : "Cash / Counter Clearance";
+                String source = "Cash".equals(method)
+                    ? "Cash / Counter Clearance"
+                    : ValidationUtil.normalizePaymentReference(method, reference);
                 int payId = paymentDAO.recordPayment(bookingId, amount, method, source);
                 if (payId > 0) {
                     bookingDAO.updateBookingStatus(bookingId, "Confirmed");
