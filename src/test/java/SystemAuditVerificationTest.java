@@ -40,6 +40,7 @@ public class SystemAuditVerificationTest {
         runTest("TC-09: Automated Trip Status Lifecycle (Priority 3)", SystemAuditVerificationTest::testTripStatusLifecycle);
         runTest("TC-10: Passenger Manifest & Itinerary Voucher Integrity (Priority 1)", SystemAuditVerificationTest::testVoucherAndManifestIntegrity);
         runTest("TC-11: Payment Transaction Reference Validation", SystemAuditVerificationTest::testPaymentReferenceValidation);
+        runTest("TC-12: Package Catalog Search & Destination Filtering Integration", SystemAuditVerificationTest::testPackageSearchAndDestinationFiltering);
 
         System.out.println("======================================================================");
         System.out.printf("   Audit Test Summary: %d PASSED, %d FAILED\n", testsPassed, testsFailed);
@@ -514,6 +515,32 @@ public class SystemAuditVerificationTest {
         assertFalse(ValidationUtil.isValidPaymentReference("Debit Card", ""), "Debit Card requires reference code");
         assertFalse(ValidationUtil.isValidPaymentReference("Debit Card", "123"), "Debit Card rejects auth codes under 6 chars");
         assertTrue(ValidationUtil.isValidPaymentReference("Debit Card", "DB-123456"), "Debit Card accepts valid authorization code");
+    }
+
+    // TC-12: Package Catalog Search & Destination Filtering Integration
+    private static void testPackageSearchAndDestinationFiltering() throws Exception {
+        TravelPackageDAO packageDAO = new TravelPackageDAO();
+
+        // 1. Searching by full destination name (from Browse Destinations button click)
+        List<TravelPackageDAO.PackageRecord> boracayPkgs = packageDAO.searchPackage("Boracay Island");
+        assertFalse(boracayPkgs.isEmpty(), "Searching 'Boracay Island' must return packages");
+        assertEquals("Boracay Island", boracayPkgs.get(0).destinationName, "Matched package must belong to Boracay Island");
+
+        List<TravelPackageDAO.PackageRecord> banauePkgs = packageDAO.searchPackage("Banaue Rice Terraces");
+        assertFalse(banauePkgs.isEmpty(), "Searching 'Banaue Rice Terraces' must return packages");
+        assertEquals("Banaue Rice Terraces", banauePkgs.get(0).destinationName, "Matched package must belong to Banaue");
+
+        List<TravelPackageDAO.PackageRecord> palawanPkgs = packageDAO.searchPackage("El Nido, Palawan");
+        assertFalse(palawanPkgs.isEmpty(), "Searching 'El Nido, Palawan' must return packages");
+        assertEquals("El Nido, Palawan", palawanPkgs.get(0).destinationName, "Matched package must belong to El Nido");
+
+        // 2. Searching by country
+        List<TravelPackageDAO.PackageRecord> phPkgs = packageDAO.searchPackage("Philippines");
+        assertTrue(phPkgs.size() >= 3, "Searching 'Philippines' must return all Philippine tour packages");
+
+        // 3. Multi-word token fallback
+        List<TravelPackageDAO.PackageRecord> tokenPkgs = packageDAO.searchPackage("Boracay Getaway");
+        assertFalse(tokenPkgs.isEmpty(), "Multi-word search 'Boracay Getaway' must find the Boracay package");
     }
 
     private static void assertTrue(boolean condition, String message) {

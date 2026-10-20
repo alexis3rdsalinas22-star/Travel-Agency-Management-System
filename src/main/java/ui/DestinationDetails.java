@@ -193,7 +193,7 @@ public class DestinationDetails extends Screen {
 
         // Action Button
         JButton viewAllToursBtn = createPrimaryButton(leftColumn, "View All Packages for This Destination →", 20, startY + 160, 420, 44, () -> {
-            navigateTo(new BrowsePackages(dest.name));
+            navigateTo(new BrowsePackages(dest.destinationID, dest.name));
         });
         viewAllToursBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         viewAllToursBtn.setBackground(new Color(79, 70, 229));

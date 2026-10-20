@@ -301,7 +301,7 @@ public class PackageManagement extends Screen {
             if (keyword == null || keyword.trim().isEmpty()) {
                 list = packageDAO.getAllPackages();
             } else {
-                list = packageDAO.searchByName(keyword);
+                list = packageDAO.searchPackage(keyword);
             }
             currentRecords = list;
 

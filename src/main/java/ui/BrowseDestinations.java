@@ -400,7 +400,7 @@ public class BrowseDestinations extends Screen {
             add(detailsBtn);
 
             exploreBtn = createPrimaryButton(this, "Packages →", 0, 0, 10, 10, () -> {
-                navigateTo(new BrowsePackages(dest.name));
+                navigateTo(new BrowsePackages(dest.destinationID, dest.name));
             });
             exploreBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
             exploreBtn.setBackground(new Color(79, 70, 229));

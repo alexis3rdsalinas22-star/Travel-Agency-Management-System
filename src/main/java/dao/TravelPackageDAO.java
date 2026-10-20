@@ -109,6 +109,11 @@ public class TravelPackageDAO {
 
     
     public List<PackageRecord> searchPackage(String keyword) throws SQLException {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllPackages();
+        }
+
+        String trimmed = keyword.trim();
         String sql = BASE_SELECT
                    + "WHERE p.packageID = ? "
                    + "OR LOWER(p.name) LIKE ? "
@@ -118,12 +123,11 @@ public class TravelPackageDAO {
                    + "OR LOWER(p.status) LIKE ? "
                    + "ORDER BY d.name, p.name";
 
-        String like = "%" + keyword.trim().toLowerCase() + "%";
+        String like = "%" + trimmed.toLowerCase() + "%";
 
-       
         int id = -1;
         try {
-            id = Integer.parseInt(keyword.trim());
+            id = Integer.parseInt(trimmed);
         } catch (NumberFormatException ignored) { }
 
         List<PackageRecord> list = new ArrayList<>();
@@ -141,6 +145,30 @@ public class TravelPackageDAO {
                 }
             }
         }
+
+        // Multi-word fallback: if exact substring didn't match across fields,
+        // match if all tokens appear in (name + destination + country + description)
+        if (list.isEmpty() && (trimmed.contains(" ") || trimmed.contains(","))) {
+            String[] tokens = trimmed.toLowerCase().split("[,\\s]+");
+            List<PackageRecord> all = getAllPackages();
+            for (PackageRecord p : all) {
+                String fullText = ((p.name != null ? p.name : "") + " "
+                                + (p.destinationName != null ? p.destinationName : "") + " "
+                                + (p.country != null ? p.country : "") + " "
+                                + (p.description != null ? p.description : "")).toLowerCase();
+                boolean allMatch = true;
+                for (String token : tokens) {
+                    if (!token.isEmpty() && !fullText.contains(token)) {
+                        allMatch = false;
+                        break;
+                    }
+                }
+                if (allMatch) {
+                    list.add(p);
+                }
+            }
+        }
+
         return list;
     }
 

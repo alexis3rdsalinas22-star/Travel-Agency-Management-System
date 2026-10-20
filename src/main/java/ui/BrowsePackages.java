@@ -49,17 +49,28 @@ public class BrowsePackages extends Screen {
     private JButton searchBtn;
     private JButton showAllBtn;
 
+    private int filterDestinationId = -1;
+
     private JPanel cardsContainer;
     private JScrollPane cardsScrollPane;
     private final List<PackageCard> cardPanels = new ArrayList<>();
 
     public BrowsePackages() {
-        this(null);
+        this(null, -1);
     }
 
     public BrowsePackages(String initialSearch) {
+        this(initialSearch, -1);
+    }
+
+    public BrowsePackages(int destinationId, String destinationName) {
+        this(destinationName, destinationId);
+    }
+
+    public BrowsePackages(String initialSearch, int destinationId) {
         super("Browse Tour Packages - Travel Catalog", 1100, 650);
 
+        this.filterDestinationId = destinationId;
         setFullscreen(true);
         getContentPane().setBackground(COLOR_BG);
 
@@ -68,6 +79,8 @@ public class BrowsePackages extends Screen {
         if (initialSearch != null && !initialSearch.trim().isEmpty()) {
             searchField.setText(initialSearch.trim());
             loadPackages(initialSearch.trim());
+        } else if (destinationId > 0) {
+            loadPackages(null);
         } else {
             loadPackages(null);
         }
@@ -143,6 +156,7 @@ public class BrowsePackages extends Screen {
         setFontSize(searchBtn, 12);
 
         showAllBtn = createSecondaryButton(this, "Show All", 815, 88, 95, 34, () -> {
+            filterDestinationId = -1;
             searchField.setText("");
             loadPackages(null);
         });
@@ -243,9 +257,16 @@ public class BrowsePackages extends Screen {
         try {
             List<PackageRecord> list;
             if (keyword == null || keyword.trim().isEmpty()) {
-                list = packageDAO.getAllPackages();
+                if (filterDestinationId > 0) {
+                    list = packageDAO.getPackagesByDestination(filterDestinationId);
+                } else {
+                    list = packageDAO.getAllPackages();
+                }
             } else {
-                list = packageDAO.searchByName(keyword);
+                list = packageDAO.searchPackage(keyword);
+                if (list.isEmpty() && filterDestinationId > 0) {
+                    list = packageDAO.getPackagesByDestination(filterDestinationId);
+                }
             }
             currentPackages.addAll(list);
 
@@ -301,6 +322,7 @@ public class BrowsePackages extends Screen {
         emptyPanel.add(subLabel);
 
         JButton resetBtn = createSecondaryButton(emptyPanel, "View All Packages", 275, 140, 150, 34, () -> {
+            filterDestinationId = -1;
             searchField.setText("");
             loadPackages(null);
         });
@@ -310,6 +332,7 @@ public class BrowsePackages extends Screen {
     }
 
     private void handleSearch() {
+        filterDestinationId = -1;
         String keyword = searchField.getText().trim();
         if (keyword.isEmpty()) {
             loadPackages(null);
