@@ -41,18 +41,18 @@ public class BookingScreen extends Screen {
 
     private String preselectedPackageName;
 
-    // Header bar components
+   
     private JLabel logoLbl;
     private JLabel categoryTag;
     private JLabel header;
     private JLabel subheader;
     private JButton backBtn;
 
-    // Scrollable canvas
+ 
     private JScrollPane scrollPane;
     private JPanel container;
 
-    // 1. Trip & Package Specifications Card
+    
     private JPanel formCard;
     private JLabel pkgLbl;
     private JComboBox<String> packageCombo;
@@ -63,7 +63,7 @@ public class BookingScreen extends Screen {
     private JLabel notesLbl;
     private JTextField notesField;
 
-    // 2. Traveler Information Card (FR-09 Manifest)
+   
     public static class TravelerRow {
         public JPanel panel;
         public JLabel numLbl;
@@ -78,7 +78,7 @@ public class BookingScreen extends Screen {
     private JPanel tableHeaderPanel;
     private final List<TravelerRow> travelerRows = new ArrayList<>();
 
-    // 3. Reservation & Pricing Summary Card
+  
     private JPanel summaryCard;
     private JLabel pkgNameLabel;
     private JLabel destLabel;
@@ -91,7 +91,7 @@ public class BookingScreen extends Screen {
     private JLabel noteLbl;
     private JButton proceedBtn;
 
-    // Customer lead passenger cache
+   
     private String defaultLeadFirst = "";
     private String defaultLeadLast = "";
     private String defaultLeadDob = "2000-01-01";
@@ -212,7 +212,7 @@ public class BookingScreen extends Screen {
 
         createCardTag(formCard, "TRAVEL SPECIFICATIONS", "calendar.png");
 
-        // 1. Tour Package Dropdown
+        
         pkgLbl = new JLabel("Select Tour Package *");
         pkgLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         pkgLbl.setForeground(COLOR_TEXT_MAIN);
@@ -235,7 +235,7 @@ public class BookingScreen extends Screen {
         packageCombo.addActionListener(e -> onPackageChanged());
         formCard.add(packageCombo);
 
-        // 2. Travel Date (Default 14 days from now)
+      
         dateLbl = new JLabel("Departure Date (YYYY-MM-DD) *");
         dateLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         dateLbl.setForeground(COLOR_TEXT_MAIN);
@@ -245,21 +245,19 @@ public class BookingScreen extends Screen {
         travelDateField.setText(LocalDate.now().plusDays(14).toString());
         formCard.add(travelDateField);
 
-        // 3. Number of Travelers (Pax Spinner)
+        
         paxLbl = new JLabel("Number of Travelers *");
         paxLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         paxLbl.setForeground(COLOR_TEXT_MAIN);
         formCard.add(paxLbl);
 
-        int initialMin = 1;
         int initialMax = 10;
         PackageRecord sel = getSelectedPackage();
-        if (sel != null) {
-            initialMin = sel.minTraveller;
+        if (sel != null && sel.maxTraveller > 0) {
             initialMax = sel.maxTraveller;
         }
 
-        travelersSpinner = new JSpinner(new SpinnerNumberModel(initialMin, initialMin, initialMax, 1));
+        travelersSpinner = new JSpinner(new SpinnerNumberModel(1, 1, initialMax, 1));
         travelersSpinner.setFont(new Font("Segoe UI", Font.BOLD, 12));
         travelersSpinner.addChangeListener(e -> {
             int pax = (Integer) travelersSpinner.getValue();
@@ -269,7 +267,7 @@ public class BookingScreen extends Screen {
         });
         formCard.add(travelersSpinner);
 
-        // 4. Special Requests / Notes
+   
         notesLbl = new JLabel("Special Requests or Dietary Requirements (Optional)");
         notesLbl.setFont(new Font("Segoe UI", Font.BOLD, 11));
         notesLbl.setForeground(COLOR_TEXT_MAIN);
@@ -296,7 +294,7 @@ public class BookingScreen extends Screen {
         travelersSubLbl.setForeground(COLOR_TEXT_MUTED);
         travelersCard.add(travelersSubLbl);
 
-        // Table column headers bar
+ 
         tableHeaderPanel = new JPanel(null);
         tableHeaderPanel.setBackground(new Color(241, 245, 249));
         tableHeaderPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 1, 0, new Color(203, 213, 225)));
@@ -323,7 +321,7 @@ public class BookingScreen extends Screen {
     private void syncTravelerRows(int targetCount) {
         if (targetCount < 1) targetCount = 1;
 
-        // If we need to add rows
+       
         while (travelerRows.size() < targetCount) {
             int idx = travelerRows.size() + 1;
             TravelerRow row = new TravelerRow();
@@ -344,7 +342,7 @@ public class BookingScreen extends Screen {
             row.dobField = createStyledTextField();
             row.contactField = createStyledTextField();
 
-            // Restrict name fields: prevent numbers from being typed
+            
             java.awt.event.KeyAdapter nameKeyFilter = new java.awt.event.KeyAdapter() {
                 @Override
                 public void keyTyped(java.awt.event.KeyEvent e) {
@@ -360,7 +358,7 @@ public class BookingScreen extends Screen {
             row.firstNameField.addKeyListener(nameKeyFilter);
             row.lastNameField.addKeyListener(nameKeyFilter);
 
-            // Restrict contact field: prevent letters or invalid symbols from being typed
+           
             row.contactField.addKeyListener(new java.awt.event.KeyAdapter() {
                 @Override
                 public void keyTyped(java.awt.event.KeyEvent e) {
@@ -393,7 +391,7 @@ public class BookingScreen extends Screen {
             travelerRows.add(row);
         }
 
-        // If we need to remove extra rows
+      
         while (travelerRows.size() > targetCount) {
             TravelerRow last = travelerRows.remove(travelerRows.size() - 1);
             travelersCard.remove(last.panel);
@@ -480,9 +478,10 @@ public class BookingScreen extends Screen {
         PackageRecord p = getSelectedPackage();
         if (p != null) {
             int curVal = (Integer) travelersSpinner.getValue();
-            if (curVal < p.minTraveller) curVal = p.minTraveller;
-            if (curVal > p.maxTraveller) curVal = p.maxTraveller;
-            travelersSpinner.setModel(new SpinnerNumberModel(curVal, p.minTraveller, p.maxTraveller, 1));
+            int maxAllowed = p.maxTraveller > 0 ? p.maxTraveller : 10;
+            if (curVal < 1) curVal = 1;
+            if (curVal > maxAllowed) curVal = maxAllowed;
+            travelersSpinner.setModel(new SpinnerNumberModel(curVal, 1, maxAllowed, 1));
             syncTravelerRows(curVal);
         }
         updatePricingSummary();
@@ -613,7 +612,8 @@ public class BookingScreen extends Screen {
         destLabel.setText("Destination: " + (p.destinationName != null ? p.destinationName : "General"));
         String rateStr = p.pricePerTraveller != null ? String.format("PHP %,.2f", p.pricePerTraveller) : "PHP 0.00";
         rateLabel.setText("Rate: " + rateStr + " / traveler");
-        capacityLabel.setText("Allowed Group: " + p.minTraveller + " - " + p.maxTraveller + " pax");
+        int maxAllowed = p.maxTraveller > 0 ? p.maxTraveller : 10;
+        capacityLabel.setText("Allowed Group: 1 - " + maxAllowed + " pax");
 
         int pax = (Integer) travelersSpinner.getValue();
         if (p.pricePerTraveller != null) {
@@ -661,8 +661,9 @@ public class BookingScreen extends Screen {
         }
 
         int pax = (Integer) travelersSpinner.getValue();
-        if (pax < p.minTraveller || pax > p.maxTraveller) {
-            showError("This package requires between " + p.minTraveller + " and " + p.maxTraveller + " travelers.");
+        int maxAllowed = p.maxTraveller > 0 ? p.maxTraveller : 10;
+        if (pax < 1 || pax > maxAllowed) {
+            showError("This package requires between 1 and " + maxAllowed + " travelers.");
             return;
         }
 

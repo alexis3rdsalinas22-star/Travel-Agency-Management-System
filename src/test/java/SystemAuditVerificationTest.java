@@ -41,6 +41,7 @@ public class SystemAuditVerificationTest {
         runTest("TC-10: Passenger Manifest & Itinerary Voucher Integrity (Priority 1)", SystemAuditVerificationTest::testVoucherAndManifestIntegrity);
         runTest("TC-11: Payment Transaction Reference Validation", SystemAuditVerificationTest::testPaymentReferenceValidation);
         runTest("TC-12: Package Catalog Search & Destination Filtering Integration", SystemAuditVerificationTest::testPackageSearchAndDestinationFiltering);
+        runTest("TC-13: Solo Traveler Booking Support (minTraveller = 1)", SystemAuditVerificationTest::testSoloTravelerBooking);
 
         System.out.println("======================================================================");
         System.out.printf("   Audit Test Summary: %d PASSED, %d FAILED\n", testsPassed, testsFailed);
@@ -541,6 +542,47 @@ public class SystemAuditVerificationTest {
         // 3. Multi-word token fallback
         List<TravelPackageDAO.PackageRecord> tokenPkgs = packageDAO.searchPackage("Boracay Getaway");
         assertFalse(tokenPkgs.isEmpty(), "Multi-word search 'Boracay Getaway' must find the Boracay package");
+    }
+
+    // TC-13: Solo Traveler Booking Support (minTraveller = 1)
+    private static void testSoloTravelerBooking() throws Exception {
+        TravelPackageDAO packageDAO = new TravelPackageDAO();
+        BookingDAO bookingDAO = new BookingDAO();
+
+        List<TravelPackageDAO.PackageRecord> allPkgs = packageDAO.getAllPackages();
+        assertFalse(allPkgs.isEmpty(), "Package catalog must not be empty");
+
+        // Verify all tour packages permit solo travelers (minTraveller == 1)
+        for (TravelPackageDAO.PackageRecord p : allPkgs) {
+            assertEquals(1, p.minTraveller, "Package '" + p.name + "' must allow minTraveller = 1");
+        }
+
+        // Verify booking for 1 solo traveler
+        TravelPackageDAO.PackageRecord testPkg = allPkgs.get(0);
+        int custAccId = 1;
+        try (Connection con = DBConnection.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery("SELECT customerAccountID FROM customeraccount FETCH FIRST 1 ROWS ONLY")) {
+            if (rs.next()) custAccId = rs.getInt(1);
+        }
+
+        Timestamp travelDate = Timestamp.valueOf(LocalDate.now().plusDays(25).atStartOfDay());
+        int bookingId = bookingDAO.createBooking(custAccId, testPkg.packageID, travelDate);
+        assertTrue(bookingId > 0, "Solo traveler booking must be created");
+
+        try {
+            bookingDAO.addTraveler(bookingId, "Solo", "Traveler", java.sql.Date.valueOf(LocalDate.now().minusYears(28)), "+63 9123456789");
+            BookingDAO.BookingRecord rec = bookingDAO.getBookingById(bookingId);
+            assertNotNull(rec, "Booking record must exist");
+            assertEquals(1, rec.travelerCount, "Traveler count must be 1");
+            assertEquals(0, testPkg.pricePerTraveller.compareTo(rec.getTotalAmount()), "Total amount for 1 traveler must equal rate");
+        } finally {
+            try (Connection con = DBConnection.getConnection();
+                 Statement st = con.createStatement()) {
+                st.executeUpdate("DELETE FROM traveler WHERE bookingID = " + bookingId);
+                st.executeUpdate("DELETE FROM booking WHERE bookingID = " + bookingId);
+            }
+        }
     }
 
     private static void assertTrue(boolean condition, String message) {

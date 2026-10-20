@@ -12,6 +12,7 @@ import dao.TravelPackageDAO.PackageRecord;
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -54,7 +55,7 @@ public class DatabaseSeeder {
         }
     }
 
-    private static void ensureSchemaCompatibility(Connection con) {
+    public static void ensureSchemaCompatibility(Connection con) {
         try {
             DatabaseMetaData md = con.getMetaData();
             try (ResultSet rs = md.getColumns(null, null, "PAYMENT", "DATE")) {
@@ -65,6 +66,11 @@ public class DatabaseSeeder {
                     }
                 }
             }
+        } catch (Exception ignored) {}
+
+        // Ensure all packages allow solo travel (minTraveller = 1)
+        try (Statement st = con.createStatement()) {
+            st.executeUpdate("UPDATE package SET minTraveller = 1 WHERE minTraveller > 1");
         } catch (Exception ignored) {}
     }
 
@@ -164,8 +170,8 @@ public class DatabaseSeeder {
         // { destinationName, packageName, description, price, min, max, imagePath }
         Object[][] packages = {
             {"Boracay Island", "Boracay 4D3N Sun & Sand Getaway", "All-inclusive beachfront hotel stay with daily island buffet breakfast and sunset paraw sailing.", new BigDecimal("12500.00"), 1, 6, "pkg_boracay.jpg"},
-            {"El Nido, Palawan", "El Nido Lagoons & Coral Reef Explorer", "4-day expedition featuring Tour A and Tour C, kayaking in Big Lagoon, and premium seafood beach dinner.", new BigDecimal("16800.00"), 2, 10, "pkg_palawan.jpg"},
-            {"Banaue Rice Terraces", "Ifugao Cultural Heritage & Mountain Trek", "Guided trek through Batad amphitheater terraces with homestay experience and native weaving tour.", new BigDecimal("8900.00"), 2, 8, "pkg_banaue.jpg"},
+            {"El Nido, Palawan", "El Nido Lagoons & Coral Reef Explorer", "4-day expedition featuring Tour A and Tour C, kayaking in Big Lagoon, and premium seafood beach dinner.", new BigDecimal("16800.00"), 1, 10, "pkg_palawan.jpg"},
+            {"Banaue Rice Terraces", "Ifugao Cultural Heritage & Mountain Trek", "Guided trek through Batad amphitheater terraces with homestay experience and native weaving tour.", new BigDecimal("8900.00"), 1, 8, "pkg_banaue.jpg"},
             {"Tokyo", "Tokyo Neon Highlights & Modern Culture", "5-day city pass, Shibuya sky observatory, Akihabara tech tour, and authentic Tsukiji food crawl.", new BigDecimal("45000.00"), 1, 5, "pkg_tokyo.jpg"},
             {"Kyoto", "Kyoto Ancient Temples & Bamboo Forest", "Full-day kimono experience, Fushimi Inari shrine sunrise tour, and traditional matcha ceremony.", new BigDecimal("38500.00"), 1, 6, "pkg_kyoto.jpg"},
         };
@@ -180,7 +186,12 @@ public class DatabaseSeeder {
             String img = (String) p[6];
 
             if (pkgMap.containsKey(pkgName)) {
-                System.out.println("Package '" + pkgName + "' already exists, skipped.");
+                try (Connection con = DBConnection.getConnection();
+                     PreparedStatement ps = con.prepareStatement("UPDATE package SET minTraveller = 1 WHERE name = ? AND minTraveller > 1")) {
+                    ps.setString(1, pkgName);
+                    ps.executeUpdate();
+                } catch (Exception ignored) {}
+                System.out.println("Package '" + pkgName + "' already exists, ensured minTraveller=1.");
                 continue;
             }
 
