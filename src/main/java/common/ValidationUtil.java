@@ -156,4 +156,106 @@ public class ValidationUtil {
         String trimmed = email.trim();
         return trimmed.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     }
+
+    /**
+     * Validates a transaction/payment reference based on the selected payment method.
+     * Returns true if valid, false otherwise.
+     */
+    public static boolean isValidPaymentReference(String method, String reference) {
+        return getPaymentReferenceError(method, reference) == null;
+    }
+
+    /**
+     * Returns a human-readable error message explaining why a payment reference
+     * is invalid for the specified payment method, or null if it is valid.
+     */
+    public static String getPaymentReferenceError(String method, String reference) {
+        if (method == null || "Cash".equalsIgnoreCase(method)) {
+            return null; // Reference is not required for cash
+        }
+
+        if (reference == null || reference.trim().isEmpty()) {
+            return "A transaction reference / confirmation code is required for " + method + ".";
+        }
+
+        String trimmed = reference.trim();
+
+        if ("GCash".equalsIgnoreCase(method)) {
+            String digitsOnly = trimmed.replaceAll("[\\s\\-]", "");
+            if (!trimmed.matches("^[0-9\\s\\-]+$")) {
+                return "GCash reference code must contain only numbers.";
+            }
+            if (digitsOnly.length() != 13) {
+                return "GCash reference code must be exactly 13 digits (e.g., 1001234567890).";
+            }
+            return null;
+        }
+
+        if ("Bank Transfer".equalsIgnoreCase(method)) {
+            if (trimmed.length() > 45) {
+                return "Bank Transfer reference must be 45 characters or less.";
+            }
+            if (!trimmed.matches("^[A-Za-z0-9\\-\\s]+$")) {
+                return "Bank Transfer reference must contain only letters, numbers, and hyphens.";
+            }
+            String cleaned = trimmed.replaceAll("[\\s\\-]", "");
+            if (cleaned.length() < 6) {
+                return "Bank Transfer reference must be at least 6 alphanumeric characters (e.g., BT-98432178).";
+            }
+            return null;
+        }
+
+        if ("Credit Card".equalsIgnoreCase(method)) {
+            if (trimmed.length() > 20) {
+                return "Credit Card authorization code must be 20 characters or less.";
+            }
+            if (!trimmed.matches("^[A-Za-z0-9\\-\\s]+$")) {
+                return "Credit Card authorization code must contain only letters, numbers, and hyphens.";
+            }
+            String cleaned = trimmed.replaceAll("[\\s\\-]", "");
+            if (cleaned.length() < 6) {
+                return "Credit Card authorization code must be at least 6 alphanumeric characters (e.g., 123456 or AUTH12).";
+            }
+            return null;
+        }
+
+        if ("Debit Card".equalsIgnoreCase(method)) {
+            if (trimmed.length() > 20) {
+                return "Debit Card authorization code must be 20 characters or less.";
+            }
+            if (!trimmed.matches("^[A-Za-z0-9\\-\\s]+$")) {
+                return "Debit Card authorization code must contain only letters, numbers, and hyphens.";
+            }
+            String cleaned = trimmed.replaceAll("[\\s\\-]", "");
+            if (cleaned.length() < 6) {
+                return "Debit Card authorization code must be at least 6 alphanumeric characters (e.g., 123456 or DB1234).";
+            }
+            return null;
+        }
+
+        // Generic fallback
+        if (trimmed.length() < 4) {
+            return "Transaction reference must be at least 4 characters.";
+        }
+        if (trimmed.length() > 45) {
+            return "Transaction reference must be 45 characters or less.";
+        }
+        return null;
+    }
+
+    /**
+     * Normalizes a payment reference string for database persistence.
+     * For GCash, strips whitespace and hyphens to leave the pure 13-digit code.
+     * For other methods, returns the trimmed string.
+     */
+    public static String normalizePaymentReference(String method, String reference) {
+        if (reference == null) {
+            return "";
+        }
+        String trimmed = reference.trim();
+        if ("GCash".equalsIgnoreCase(method)) {
+            return trimmed.replaceAll("[\\s\\-]", "");
+        }
+        return trimmed;
+    }
 }
