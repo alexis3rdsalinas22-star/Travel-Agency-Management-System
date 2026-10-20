@@ -298,6 +298,23 @@ public class CustomerProfile extends Screen {
             return;
         }
 
+        if (!ValidationUtil.isValidName(first)) {
+            showError("First name can only contain letters, spaces, hyphens, and periods.");
+            return;
+        }
+        if (!middle.isEmpty() && !ValidationUtil.isValidName(middle)) {
+            showError("Middle name can only contain letters, spaces, hyphens, and periods.");
+            return;
+        }
+        if (!ValidationUtil.isValidName(last)) {
+            showError("Last name can only contain letters, spaces, hyphens, and periods.");
+            return;
+        }
+        if (!ValidationUtil.isValidEmail(email)) {
+            showError("Please enter a valid email address (e.g. user@example.com).");
+            return;
+        }
+
         Integer ageValue = ValidationUtil.parsePositiveInt(ageStr);
         if (ageValue == null || ageValue > 130) {
             showError("Please enter a valid age.");

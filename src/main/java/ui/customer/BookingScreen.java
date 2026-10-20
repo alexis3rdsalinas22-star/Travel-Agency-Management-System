@@ -2,6 +2,7 @@ package ui.customer;
 
 import common.Screen;
 import common.Session;
+import common.ValidationUtil;
 import dao.BookingDAO;
 import dao.CustomerDAO;
 import dao.TravelPackageDAO;
@@ -343,6 +344,36 @@ public class BookingScreen extends Screen {
             row.dobField = createStyledTextField();
             row.contactField = createStyledTextField();
 
+            // Restrict name fields: prevent numbers from being typed
+            java.awt.event.KeyAdapter nameKeyFilter = new java.awt.event.KeyAdapter() {
+                @Override
+                public void keyTyped(java.awt.event.KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (Character.isISOControl(c)) {
+                        return;
+                    }
+                    if (Character.isDigit(c)) {
+                        e.consume();
+                    }
+                }
+            };
+            row.firstNameField.addKeyListener(nameKeyFilter);
+            row.lastNameField.addKeyListener(nameKeyFilter);
+
+            // Restrict contact field: prevent letters or invalid symbols from being typed
+            row.contactField.addKeyListener(new java.awt.event.KeyAdapter() {
+                @Override
+                public void keyTyped(java.awt.event.KeyEvent e) {
+                    char c = e.getKeyChar();
+                    if (Character.isISOControl(c)) {
+                        return;
+                    }
+                    if (!Character.isDigit(c) && c != '+' && c != ' ' && c != '-' && c != '(' && c != ')') {
+                        e.consume();
+                    }
+                }
+            });
+
             if (idx == 1) {
                 row.firstNameField.setText(defaultLeadFirst);
                 row.lastNameField.setText(defaultLeadLast);
@@ -654,8 +685,18 @@ public class BookingScreen extends Screen {
                 row.firstNameField.requestFocusInWindow();
                 return;
             }
+            if (!ValidationUtil.isValidName(fName)) {
+                showError("Traveler #" + passengerNum + ": First name can only contain letters, spaces, hyphens, and periods.");
+                row.firstNameField.requestFocusInWindow();
+                return;
+            }
             if (lName.isEmpty()) {
                 showError("Traveler #" + passengerNum + ": Please enter a last name.");
+                row.lastNameField.requestFocusInWindow();
+                return;
+            }
+            if (!ValidationUtil.isValidName(lName)) {
+                showError("Traveler #" + passengerNum + ": Last name can only contain letters, spaces, hyphens, and periods.");
                 row.lastNameField.requestFocusInWindow();
                 return;
             }
@@ -675,7 +716,13 @@ public class BookingScreen extends Screen {
             }
 
             if (contact.isEmpty() || contact.equals("+63 9")) {
-                showError("Traveler #" + passengerNum + ": Please enter a valid contact number.");
+                showError("Traveler #" + passengerNum + ": Please enter a contact number.");
+                row.contactField.requestFocusInWindow();
+                return;
+            }
+            if (!ValidationUtil.isValidPhoneNumber(contact)) {
+                showError("Traveler #" + passengerNum + ": Invalid contact number format (\"" + contact + "\").\n"
+                        + "Please enter a valid 11-digit mobile number (e.g., +63 912 345 6789 or 09123456789).");
                 row.contactField.requestFocusInWindow();
                 return;
             }

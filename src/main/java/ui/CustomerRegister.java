@@ -2,6 +2,7 @@ package ui;
 
 import common.DBConnection;
 import common.Screen;
+import common.ValidationUtil;
 import dao.CustomerAccountDAO;
 import dao.CustomerDAO;
 import java.awt.Color;
@@ -119,6 +120,23 @@ public class CustomerRegister extends Screen {
             if (first.isEmpty() || last.isEmpty() || mail.isEmpty() || ageStr.isEmpty()
                     || user.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
                 showError("Please fill in all required fields (*).");
+                return;
+            }
+
+            if (!ValidationUtil.isValidName(first)) {
+                showError("First name can only contain letters, spaces, hyphens, and periods.");
+                return;
+            }
+            if (!middle.isEmpty() && !ValidationUtil.isValidName(middle)) {
+                showError("Middle name can only contain letters, spaces, hyphens, and periods.");
+                return;
+            }
+            if (!ValidationUtil.isValidName(last)) {
+                showError("Last name can only contain letters, spaces, hyphens, and periods.");
+                return;
+            }
+            if (!ValidationUtil.isValidEmail(mail)) {
+                showError("Please enter a valid email address (e.g. user@example.com).");
                 return;
             }
 
